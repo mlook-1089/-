@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1b30">
+<title>حلقة ابن كثير - منصة رصد</title>
+
+<!-- الخطوط والمكتبات -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        ink: {50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',300:'#cbd5e1',400:'#94a3b8',500:'#64748b',600:'#475569',700:'#334155',800:'#1e293b',900:'#0f172a'},
+        brand: {50:'#f0f4f8',100:'#d9e2ec',400:'#5b8def',500:'#334e68',600:'#2a54c3',800:'#102a43',900:'#0d1b30'},
+        gold: {100:'#fcf6e3',400:'#e6c05a',500:'#d4af37',600:'#b5952f',700:'#8a6b1e'},
+        accent: {300:'#f5d78a',400:'#e6c05a',500:'#d4af37',600:'#b89129',700:'#8a6b1e'},
+        success: '#10b981', danger: '#ef4444', surface: '#f8fafc'
+      },
+      fontFamily: { sans: ['Cairo', 'Tajawal', 'sans-serif'] },
+      boxShadow: { soft: '0 8px 30px -12px rgba(2,6,23,0.15)', saas: '0 4px 20px -2px rgba(0, 0, 0, 0.05)', 'saas-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.1)', glow: '0 0 20px -5px rgba(212,175,55,0.4)' },
+      borderRadius: { '3xl': '1.5rem', '4xl': '2rem' }
+    }
+  }
+};
+</script>
+
+<style>
+* { -webkit-tap-highlight-color: transparent; }
+body { background-color: #f4f7fa; -webkit-font-smoothing: antialiased; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.transition-all-fast { transition: all 0.2s ease-in-out; }
+
+/* Utilities from original */
+.spinner{width:38px;height:38px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fade-in{animation:fade .3s cubic-bezier(.2,.7,.3,1)}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.slide-up{animation:sup .35s cubic-bezier(.2,.7,.3,1)}
+@keyframes sup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-bg{background:rgba(2,6,23,.6);backdrop-filter:blur(8px)}
+
+/* Forms & Inputs */
+input, select, textarea { transition: all .18s; }
+.input { width: 100%; padding: 11px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; font-size: 14px; outline: none; }
+.input:focus { border-color: #0d1b30; box-shadow: 0 0 0 3px rgba(13,27,48,.1); }
+
+/* Buttons & Chips */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 12px; font-weight: 700; transition: all .18s; cursor: pointer; user-select: none; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: #0d1b30; color: #fff; }
+.btn-primary:hover { background: #102a43; box-shadow: 0 6px 20px -4px rgba(13,27,48,.4); }
+.btn-accent { background: #d4af37; color: #0f172a; }
+.btn-ghost { background: #f1f5f9; color: #334155; }
+.btn-ghost:hover { background: #e2e8f0; }
+.btn-red { background: #fee2e2; color: #991b1b; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+
+/* Status & Attendance Toggle Buttons */
+.status-btn { padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 700; text-align: center; transition: all .18s; border: 2px solid transparent; cursor: pointer; }
+.status-btn.on-done { background: #d1fae5; color: #065f46; border-color: #10b981; }
+.status-btn.on-partial { background: #fef3c7; color: #92400e; border-color: #d4af37; }
+.status-btn.on-missed { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+.status-btn.off { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+
+.att-chip { flex: 1; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .18s; border: 2px solid transparent; text-align: center; background: #f8fafc; color: #64748b; }
+.att-chip.on-present { background: #d1fae5; color: #065f46; border-color: #10b981; }
+.att-chip.on-late { background: #fef3c7; color: #92400e; border-color: #d4af37; }
+.att-chip.on-absent { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+
+/* Custom Login BG */
+.islamic-pattern-bg { background-color: #0d1b30; background-image: radial-gradient(#d4af37 0.5px, transparent 0.5px), radial-gradient(#d4af37 0.5px, #0d1b30 0.5px); background-size: 40px 40px; background-position: 0 0, 20px 20px; background-attachment: fixed; opacity: 0.98; }
+
+/* Print Styles */
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  #sidebar, header, .no-print { display: none !important; }
+}
+</style>
+</head>
+<body class="text-gray-800 antialiased overflow-hidden flex h-screen">
+
+<!-- Overlays -->
+<div id="loader" class="fixed inset-0 modal-bg z-[60] hidden items-center justify-center"><div class="text-center"><div class="spinner mx-auto"></div><p id="loaderMsg" class="text-white/90 font-bold text-sm mt-3 hidden"></p></div></div>
+<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[80] hidden"><div id="toastBox" class="px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up bg-brand-900 text-white"><span id="toastIcon">✅</span><span id="toastMsg" class="text-sm font-bold"></span></div></div>
+<div id="modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-bg" onclick="if(event.target===this)closeModal()"><div class="bg-white w-full max-w-lg slide-up rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"><div class="px-5 py-4 flex items-center justify-between border-b border-gray-100"><h3 id="modalTitle" class="font-bold text-brand-900 text-lg"></h3><button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">&times;</button></div><div id="modalBody" class="p-5 overflow-y-auto"></div></div></div>
+<div id="searchOverlay" class="fixed inset-0 z-[75] hidden modal-bg pt-24" onclick="if(event.target===this)toggleSearch(false)"><div class="max-w-xl mx-auto px-4 slide-up"><div class="bg-white rounded-2xl shadow-2xl overflow-hidden"><input id="globalSearch" oninput="doGlobalSearch(this.value)" placeholder="ابحث عن طالب…" class="w-full px-5 py-4 border-b border-gray-100 outline-none text-lg bg-transparent font-bold"><div id="searchResults" class="max-h-[50vh] overflow-y-auto p-2"></div></div></div></div>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center islamic-pattern-bg transition-opacity duration-300">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-10 m-4 relative overflow-hidden slide-up">
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-gold-500 to-gold-600"></div>
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-brand-50 text-brand-900 mb-4 shadow-sm border border-brand-100 brand-logo-slot overflow-hidden">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h1 class="text-2xl font-extrabold text-brand-900 brand-name-slot">منصة رصد</h1>
+            <p class="text-sm font-semibold text-gray-500 mt-1"><span class="brand-tag-slot">حلقة ابن كثير – مجمع حلق الراجحي</span></p>
+        </div>
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">المعرّف</label>
+                <input id="loginId" type="text" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all-fast bg-surface" placeholder="U_001">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور</label>
+                <input id="loginPass" type="password" onkeydown="if(event.key==='Enter')handleLogin()" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all-fast bg-surface" placeholder="••••••••">
+            </div>
+            <label class="flex items-center gap-2 text-gray-600 text-sm font-bold cursor-pointer">
+                <input type="checkbox" id="rememberMe" class="accent-gold-500 w-4 h-4"> تذكرني على هذا الجهاز
+            </label>
+            <button onclick="handleLogin()" class="w-full bg-brand-900 hover:bg-brand-800 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-900/30 transition-all-fast mt-2">
+                تسجيل الدخول
+            </button>
+            <p id="loginErr" class="text-danger text-sm font-bold text-center hidden bg-red-50 py-2 rounded-xl border border-red-100"></p>
+        </div>
+    </div>
+</div>
+
+<!-- App Shell -->
+<div id="app" class="hidden flex w-full h-full">
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed inset-y-0 right-0 z-40 w-64 bg-white border-l border-gray-100 shadow-saas transform translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+        <div class="p-6 border-b border-gray-100 text-center">
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-brand-900 text-gold-500 mb-3 shadow-md brand-logo-slot overflow-hidden">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            </div>
+            <h2 class="font-extrabold text-brand-900 text-lg brand-name-slot">منصة حلقة ابن كثير</h2>
+        </div>
+        
+        <nav id="mainNav" class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <!-- سيتم حقن الأزرار هنا بناءً على الصلاحية عبر JS -->
+        </nav>
+
+        <div class="p-4 border-t border-gray-100 bg-gray-50/50">
+            <div class="flex items-center gap-3">
+                <div id="avatar" class="w-10 h-10 rounded-full shadow-sm bg-gold-500 text-white flex items-center justify-center font-bold text-lg"></div>
+                <div class="flex-1 min-w-0">
+                    <p id="userName" class="text-sm font-bold text-gray-900 truncate"></p>
+                    <p id="roleLabel" class="text-xs text-gray-500 truncate"></p>
+                </div>
+                <button onclick="logout()" class="text-gray-400 hover:text-danger transition-all-fast p-2 rounded-lg hover:bg-red-50" title="خروج">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-gray-900/50 z-30 hidden md:hidden" onclick="toggleSidebar(false)"></div>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col md:mr-64 h-screen overflow-hidden transition-all duration-300">
+        
+        <!-- Topbar -->
+        <header class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-8 z-20 shadow-sm no-print">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar(true)" class="md:hidden text-gray-500 hover:text-brand-900 p-2 rounded-lg hover:bg-gray-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 id="topbar-title" class="text-lg font-extrabold text-brand-900 hidden sm:block">الرئيسية</h2>
+            </div>
+            <div class="flex items-center gap-3 sm:gap-4">
+                <button onclick="toggleSearch(true)" class="relative text-gray-500 hover:text-brand-900 p-2 rounded-full hover:bg-gray-50 transition-all-fast">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <button class="relative text-gray-500 hover:text-brand-900 p-2 rounded-full hover:bg-gray-50 transition-all-fast">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Portal -->
+        <main id="portal" class="flex-1 overflow-y-auto p-4 sm:p-8"></main>
+    </div>
+</div>
+
+<script>
+/* ============ Icons ============ */
+const IC={
+  home:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+  users:'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+  check:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+  book:'M12 6.5C10.5 5 7.5 4.5 4 5v13c3.5-.5 6.5 0 8 1.5M12 6.5C13.5 5 16.5 4.5 20 5v13c-3.5-.5-6.5 0-8 1.5M12 6.5v13',
+  news:'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h9l5 5v9a2 2 0 01-2 2zM9 9h4M9 13h6M9 17h6',
+  cog:'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  plus:'M12 4v16m8-8H4',
+  edit:'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L12 15l-4 1 1-4 8.6-8.6z',
+  trash:'M19 7l-.87 12.14A2 2 0 0116.14 21H7.86a2 2 0 01-1.99-1.86L5 7m5 4v6m4-6v6M4 7h16M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3',
+  wa:'M20 12a8 8 0 01-11.3 7.3L3 21l1.7-5.7A8 8 0 1120 12z',
+  points:'M11.48 3.5l2.34 4.74 5.23.76-3.78 3.69.89 5.2-4.68-2.46-4.68 2.46.89-5.2L4.9 9l5.23-.76z',
+  bolt:'M13 10V3L4 14h7v7l9-11h-7z',
+  trophy:'M8 21h8m-4-4v4m-5-17h10v3a5 5 0 01-10 0V4zM7 4H4v2a3 3 0 003 3m10-5h3v2a3 3 0 01-3 3',
+  location:'M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z',
+  history:'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+  print:'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2z',
+  chart:'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055zM20.488 9H15V3.512A9.025 9.025 0 0120.488 9z',
+  cloud:'M3 15a4 4 0 004 4h9a5 5 0 10-1-9.9A5 5 0 003 15z'
+};
+const svg=(k,cls='w-5 h-5')=>`<svg class="${cls}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${IC[k]}"/></svg>`;
+
+/* ============ DataService ============ */
+const DS = {
+  T:30000,
+  async c(fn, ...a){
+    // Map Apps-Script api names to REST endpoints
+    const M = {
+      apiLogin:                 () => ['POST','/api/auth/login',{id:a[0],password:a[1]}],
+      apiVerifyUser:            () => ['GET','/api/auth/me'],
+      apiGetTeacherData:        () => ['GET','/api/teacher-data'],
+      apiGetStudentDashboard:   () => ['GET','/api/students/'+encodeURIComponent(a[0])+'/dashboard'],
+      apiGetChildren:           () => ['GET','/api/children'],
+      apiGetFeed:               () => ['GET','/api/feed?role='+encodeURIComponent(a[0]||'')],
+      apiAddGroup:              () => ['POST','/api/groups',{name:a[0]}],
+      apiDeleteGroup:           () => ['DELETE','/api/groups',{id:a[0]}],
+      apiUpdateGroup:           () => ['PATCH','/api/groups',{id:a[0],upd:a[1]}],
+      apiAddGroupPoints:        () => ['POST','/api/groups',{action:'add-points',groupId:a[0],points:a[1]}],
+      apiAddPointsToGroupStudents:()=>['POST','/api/groups',{action:'distribute-points',groupId:a[0],itemId:a[1]}],
+      apiSetGroupStudents:      () => ['POST','/api/groups',{action:'members-set',groupId:a[0],ids:a[1]}],
+      apiDbHealthCheck:         () => ['GET','/api/db-health'],
+      apiDbRepair:              () => ['POST','/api/db-health'],
+      apiAddStudent:            () => ['POST','/api/students',a[0]],
+      apiUpdateStudent:         () => ['PATCH','/api/students',{id:a[0],upd:a[1]}],
+      apiDeleteStudent:         () => ['DELETE','/api/students',{id:a[0]}],
+      apiAddPlan:               () => ['POST','/api/plans',{studentId:a[0],plan:a[1]}],
+      apiUpdatePlan:            () => ['PATCH','/api/plans',{id:a[0],upd:a[1]}],
+      apiDeletePlan:            () => ['DELETE','/api/plans',{id:a[0]}],
+      apiUpdatePlanStatus:      () => ['PATCH','/api/plans',{id:a[0],upd:{Accomplishment_Status:a[1]}}],
+      apiAddPointItem:          () => ['POST','/api/point-items',{description:a[0],pointValue:a[1],trigger:a[2]}],
+      apiUpdatePointItem:       () => ['PATCH','/api/point-items',{id:a[0],upd:a[1]}],
+      apiDeletePointItem:       () => ['DELETE','/api/point-items',{id:a[0]}],
+      apiLogPoints:             () => ['POST','/api/logs',{studentId:a[0],itemId:a[1]}],
+      apiAddNews:               () => ['POST','/api/news',{title:a[0],body:a[1],visibility:a[2]}],
+      apiDeleteNews:            () => ['DELETE','/api/news',{id:a[0]}],
+      apiAddEvent:              () => ['POST','/api/events',{title:a[0],description:a[1],date:a[2],type:a[3]}],
+      apiDeleteEvent:           () => ['DELETE','/api/events',{id:a[0]}],
+      apiSaveAttendance:        () => ['POST','/api/attendance',{studentId:a[0],date:a[1],status:a[2],note:a[3]}],
+      apiBulkAttendance:        () => ['POST','/api/attendance/bulk',{date:a[0],list:a[1]}],
+      apiNazemStatus:           () => ['GET','/api/nazem/status'],
+      apiSaveNazemCredentials:  () => ['POST','/api/nazem/creds',{username:a[0],password:a[1]}],
+      apiTestNazem:             () => ['GET','/api/nazem/test'],
+      apiClearNazemCredentials: () => ['DELETE','/api/nazem/creds'],
+      apiNazemTerms:            () => ['GET','/api/nazem/terms'],
+      apiNazemPlans:            () => ['GET','/api/nazem/plans?term='+encodeURIComponent(a[0]||'')],
+      apiNazemFollowUp:         () => ['GET','/api/nazem/follow-up?planId='+encodeURIComponent(a[0])+'&date='+encodeURIComponent(a[1])],
+      apiNazemSavePartial:      () => ['POST','/api/nazem/save-partial',{itemDayId:a[0],payload:a[1]}],
+      apiNazemSyncPlanDay:      () => ['POST','/api/nazem/sync',{planId:a[0],date:a[1],autoCreate:a[2]}],
+      apiLinkNazemStudent:      () => ['POST','/api/nazem/link',{studentId:a[0],nazemId:a[1]}],
+      apiExportStudentReport:   () => ['GET','/api/reports/student?id='+encodeURIComponent(a[0])],
+      apiGetSettings:           () => ['GET','/api/settings?keys='+encodeURIComponent((a[0]||[]).join(','))],
+      apiSetSetting:            () => ['POST','/api/settings',{key:a[0],value:a[1]}],
+      apiGetStudentProgress:    () => ['GET','/api/students/'+encodeURIComponent(a[0])+'/progress']
+    };
+    const spec = M[fn] ? M[fn]() : null;
+    if(!spec) throw new Error('Unknown API: '+fn);
+    const [method, path, body] = spec;
+    const opts = { method, credentials:'include', headers:{} };
+    if (body !== undefined) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+    const res = await fetch(path, opts);
+    const text = await res.text();
+    let data; try { data = text ? JSON.parse(text) : {}; } catch(e){ data = {success:false, message:text}; }
+    if (!res.ok && !data.message) data.message = 'HTTP '+res.status;
+    return data;
+  },
+  login(i,p){return this.c('apiLogin',i,p)},verifyUser(i){return this.c('apiVerifyUser',i)},
+  getTeacherData(){return this.c('apiGetTeacherData')},
+  getDailyBoard(d){return this.c('apiGetDailyBoard',d)},
+  getStudentDashboard(s){return this.c('apiGetStudentDashboard',s)},
+  getChildren(p){return this.c('apiGetChildren',p)},getFeed(r){return this.c('apiGetFeed',r)},
+  addGroup(n){return this.c('apiAddGroup',n)},deleteGroup(i){return this.c('apiDeleteGroup',i)},updateGroup(i,u){return this.c('apiUpdateGroup',i,u)},
+  addGroupPoints(g,p,t){return this.c('apiAddGroupPoints',g,p,t)},addPointsToGroupStudents(g,i,t){return this.c('apiAddPointsToGroupStudents',g,i,t)},
+  getGroupStudents(g){return this.c('apiGetGroupStudents',g)},setGroupStudents(g,ids){return this.c('apiSetGroupStudents',g,ids)},
+  dbHealthCheck(){return this.c('apiDbHealthCheck')},dbRepair(){return this.c('apiDbRepair')},
+  addStudent(d){return this.c('apiAddStudent',d)},updateStudent(i,u){return this.c('apiUpdateStudent',i,u)},deleteStudent(i){return this.c('apiDeleteStudent',i)},
+  addPlan(s,p){return this.c('apiAddPlan',s,p)},updatePlan(i,u){return this.c('apiUpdatePlan',i,u)},deletePlan(i){return this.c('apiDeletePlan',i)},
+  getStudentPlans(s){return this.c('apiGetStudentPlans',s)},updatePlanStatus(p,s,t){return this.c('apiUpdatePlanStatus',p,s,t)},
+  addPointItem(d,v,t){return this.c('apiAddPointItem',d,v,t)},updatePointItem(i,u){return this.c('apiUpdatePointItem',i,u)},deletePointItem(i){return this.c('apiDeletePointItem',i)},logPoints(s,i,t){return this.c('apiLogPoints',s,i,t)},
+  addNews(t,b,v){return this.c('apiAddNews',t,b,v)},deleteNews(i){return this.c('apiDeleteNews',i)}, /* MARK_DS_START */
+  addEvent(t,d,dt,ty){return this.c('apiAddEvent',t,d,dt,ty)},deleteEvent(i){return this.c('apiDeleteEvent',i)},
+  saveAttendance(s,d,st,n,t){return this.c('apiSaveAttendance',s,d,st,n,t)},bulkAttendance(d,l,t){return this.c('apiBulkAttendance',d,l,t)},
+  nazemStatus(){return this.c('apiNazemStatus')},saveNazemCreds(u,p){return this.c('apiSaveNazemCredentials',u,p)},testNazem(){return this.c('apiTestNazem')},clearNazemCreds(){return this.c('apiClearNazemCredentials')},
+  nazemTerms(){return this.c('apiNazemTerms')},nazemPlans(t){return this.c('apiNazemPlans',t)},nazemFollowUp(p,d){return this.c('apiNazemFollowUp',p,d)},nazemSavePartial(i,p){return this.c('apiNazemSavePartial',i,p)},nazemSyncPlanDay(p,d,ac){return this.c('apiNazemSyncPlanDay',p,d,ac)},linkNazemStudent(l,n){return this.c('apiLinkNazemStudent',l,n)},
+  exportStudentReport(s){return this.c('apiExportStudentReport',s)},
+  getSettings(k){return this.c('apiGetSettings',k)},setSetting(k,v){return this.c('apiSetSetting',k,v)},
+  getStudentProgress(s){return this.c('apiGetStudentProgress',s)}
+};
+
+const $=id=>document.getElementById(id);
+let currentUser=null,_tData=null,_teacherTab='overview',_settingsSub='students',_newsSub='news';
+
+function loader(on,m){$('loader').classList.toggle('hidden',!on);$('loader').classList.toggle('flex',on);const el=$('loaderMsg');if(m){el.textContent=m;el.classList.remove('hidden')}else el.classList.add('hidden')}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(msg,type='success'){const b=$('toastBox');const c={success:'bg-success',error:'bg-danger',warn:'bg-gold-500 text-brand-900',info:'bg-brand-900'};b.className='px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up '+(c[type]||c.info)+' '+(type==='warn'?'':'text-white');$('toastIcon').textContent=type==='error'?'⚠️':type==='warn'?'⏳':type==='info'?'ℹ️':'✅';$('toastMsg').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(window._tt);window._tt=setTimeout(()=>$('toast').classList.add('hidden'),3200)}
+async function guard(pr,msg){try{loader(true,msg);return await pr}catch(e){toast('خطأ: '+(e&&e.message||e),'error');return null}finally{loader(false)}}
+function normAr(s){if(!s)return'';return String(s).toLowerCase().replace(/[ً-ْٰـ]/g,'').replace(/[إأآا]/g,'ا').replace(/[ىئ]/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/\s+/g,' ').trim()}
+function arMatches(t,q){const x=normAr(t),w=normAr(q).split(' ').filter(Boolean);return w.length?w.every(y=>x.includes(y)):true}
+function ymd(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function toHijri(g){try{const d=new Date(String(g)+'T12:00:00');if(isNaN(d))return'';return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d)+' هـ'}catch(e){return''}}
+function hijriDay(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric'}).format(d)}catch(e){return''}}
+function openModal(t,b){$('modalTitle').textContent=t;$('modalBody').innerHTML=b;$('modal').classList.remove('hidden');$('modal').classList.add('flex')}
+function closeModal(){$('modal').classList.add('hidden');$('modal').classList.remove('flex')}
+function toggleSidebar(force) { const sb=$('sidebar'), ov=$('mobile-overlay'); const open=force!==undefined?force:sb.classList.contains('translate-x-full'); if(open){sb.classList.remove('translate-x-full');ov.classList.remove('hidden')}else{sb.classList.add('translate-x-full');ov.classList.add('hidden')} }
+const ROLE_AR={Teacher:'بوابة المعلم',Student:'بوابة الطالب',Parent:'ولي أمر'};
+
+/* ============ Search ============ */
+function toggleSearch(on){$('searchOverlay').classList.toggle('hidden',!on);if(on){setTimeout(()=>$('globalSearch').focus(),40);$('globalSearch').value='';$('searchResults').innerHTML='';}}
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();toggleSearch(!$('searchOverlay').classList.contains('hidden')?false:true)}if(e.key==='Escape'){toggleSearch(false)}});
+function doGlobalSearch(q){const box=$('searchResults');if(!q||q.length<2){box.innerHTML='<p class="text-gray-400 text-center p-4 text-sm font-bold">اكتب اسم طالب…</p>';return}if(!_tData){box.innerHTML='<p class="text-gray-400 text-center p-4 text-sm font-bold">افتح بوابة المعلم أولاً</p>';return}const {nameMap,groupMap}=tMaps();const st=_tData.students.filter(s=>arMatches(nameMap[s.Student_ID]||'',q));let h='';if(st.length){h+='<div class="text-[11px] text-gray-400 px-2 mt-1 font-bold">طلاب</div>';h+=st.slice(0,15).map(s=>`<button onclick="openStudentProfile('${esc(s.Student_ID)}');toggleSearch(false)" class="w-full text-right p-3 rounded-xl hover:bg-gray-50 flex items-center gap-3 transition"><div class="w-10 h-10 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div><div class="flex-1 text-right"><div class="font-bold text-gray-900">${esc(nameMap[s.Student_ID])}</div><div class="text-xs text-gray-500">${esc(groupMap[s.Group_ID]||'—')}</div></div></button>`).join('')}box.innerHTML=h||'<p class="text-gray-400 text-center p-4 text-sm font-bold">لا نتائج</p>'}
+
+/* ============ Session & Auth ============ */
+const SK='ibnkathir_v3';
+function saveSession(u,p){try{(p?localStorage:sessionStorage).setItem(SK,JSON.stringify(u))}catch(e){}}
+function readSession(){try{return JSON.parse(localStorage.getItem(SK)||sessionStorage.getItem(SK)||'null')}catch(e){return null}}
+function clearSession(){try{localStorage.removeItem(SK);sessionStorage.removeItem(SK)}catch(e){}}
+
+window.addEventListener('DOMContentLoaded',async()=>{loadBrandingOnce();const s=readSession();if(!s||!s.ID)return;const r=await guard(DS.verifyUser(s.ID),'استعادة الجلسة…');if(r&&r.success)enterApp(r.user);else clearSession()});
+async function handleLogin(){const id=$('loginId').value.trim(),p=$('loginPass').value.trim();if(!id||!p){$('loginErr').textContent='أدخل البيانات';$('loginErr').classList.remove('hidden');return}const r=await guard(DS.login(id,p),'جارٍ الدخول…');if(!r)return;if(!r.success){$('loginErr').textContent=r.message;$('loginErr').classList.remove('hidden');return}saveSession(r.user,$('rememberMe').checked);enterApp(r.user)}
+function enterApp(u){
+  currentUser=u; $('loginErr').classList.add('hidden'); $('loginScreen').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('userName').textContent=u.Name; $('roleLabel').textContent=ROLE_AR[u.Role]||''; $('avatar').textContent=(u.Name||'?').trim().charAt(0);
+  routePortal();
+}
+function logout(){clearSession();currentUser=null;$('app').classList.add('hidden');$('loginScreen').classList.remove('hidden');$('loginId').value='';$('loginPass').value=''}
+function routePortal(){if(currentUser.Role==='Teacher')renderTeacher();else if(currentUser.Role==='Student')renderStudent();else renderParent()}
+
+/* ============================================================
+   بوابة المعلم
+   ============================================================ */
+const TEACHER_TABS=[
+  {k:'overview', i:'home',     t:'الرئيسية'},
+  {k:'students', i:'users',    t:'الطلاب'},
+  {k:'nazem',    i:'check',    t:'المتابعة'}, // الاعتماد على ناظم والمتابعة هنا فقط
+  {k:'news',     i:'news',     t:'الأخبار'},
+  {k:'settings', i:'cog',      t:'الإعدادات'}
+];
+async function renderTeacher(){
+  const d=await guard(DS.getTeacherData(),'تحميل البيانات…');if(!d)return; _tData=d;
+  $('mainNav').innerHTML=TEACHER_TABS.map(t=>`<button data-tab="${t.k}" onclick="switchTeacherTab('${t.k}', this)" class="w-full nav-item flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-gray-600 hover:bg-brand-50 hover:text-brand-900 transition-all-fast">${svg(t.i,'w-5 h-5')} ${t.t}</button>`).join('');
+  switchTeacherTab('overview', $('mainNav').querySelector('[data-tab="overview"]'));
+}
+function switchTeacherTab(k, btn){
+  _teacherTab=k;
+  if(btn){
+    document.querySelectorAll('.nav-item').forEach(el=>{el.classList.remove('bg-brand-50','text-brand-900');el.classList.add('text-gray-600')});
+    btn.classList.remove('text-gray-600'); btn.classList.add('bg-brand-50','text-brand-900');
+    $('topbar-title').textContent = TEACHER_TABS.find(x=>x.k===k)?.t || 'المنصة';
+  }
+  if(window.innerWidth < 768) toggleSidebar(false);
+  renderTeacherTab();
+}
+function renderTeacherTab(){
+  const b=$('portal');if(!b)return;
+  ({overview:renderOverviewTab, students:renderStudentsTab, nazem:renderNazemTab, news:renderNewsCombinedTab, settings:renderSettingsTab}[_teacherTab]||renderOverviewTab)(b);
+}
+function tMaps(){
+  const nameMap={},groupMap={};
+  _tData.users.forEach(u=>nameMap[u.ID]=u.Name);
+  // Fallback: استخدم _Name المدمج من Students_Data إذا لم يوجد في Users
+  (_tData.students||[]).forEach(s=>{ if(!nameMap[s.Student_ID] && s._Name) nameMap[s.Student_ID]=s._Name; });
+  _tData.groups.forEach(g=>groupMap[g.Group_ID]=g.Group_Name);
+  return{nameMap,groupMap};
+}
+function studentOptions(){const {nameMap}=tMaps();return _tData.students.map(s=>`<option value="${esc(s.Student_ID)}">${esc(nameMap[s.Student_ID]||s.Student_ID)}</option>`).join('')}
+function groupOptions(sel){return _tData.groups.map(g=>`<option value="${esc(g.Group_ID)}" ${String(sel)===String(g.Group_ID)?'selected':''}>${esc(g.Group_Name)}</option>`).join('')}
+
+/* ---------- الرئيسية ---------- */
+function renderOverviewTab(body){
+  const {nameMap,groupMap}=tMaps();
+  const totalPts=_tData.students.reduce((a,s)=>a+(Number(s.Total_Points)||0),0);
+  const doneToday=_tData.plans.filter(p=>p.Date===ymd(new Date())&&p.Accomplishment_Status==='Done').length;
+  const presentToday=_tData.attendance.filter(a=>a.Date===ymd(new Date())&&(a.Status==='Present'||a.Status==='Late')).length;
+  
+  const stats=[
+    ['users','الطلاب',_tData.students.length,'text-blue-600 bg-blue-50'],
+    ['check','حضور اليوم',presentToday,'text-success bg-green-50'],
+    ['points','النقاط المكتسبة',totalPts,'text-purple-600 bg-purple-50'],
+    ['book','خطط منجزة اليوم',doneToday,'text-gold-600 bg-gold-100']
+  ];
+  
+  const top=[..._tData.students].sort((a,b)=>(Number(b.Total_Points)||0)-(Number(a.Total_Points)||0)).slice(0,5);
+  body.innerHTML=`<div class="fade-in space-y-6">
+    <div class="mb-4">
+      <h1 class="text-2xl font-extrabold text-gray-900">أهلًا بك، ${esc(currentUser.Name)} 👋</h1>
+      <p class="text-gray-500 mt-1 font-semibold">حلقة ابن كثير – مجمع حلق الراجحي</p>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      ${stats.map(s=>`<div class="bg-white p-5 rounded-2xl shadow-saas border border-gray-50 hover:shadow-saas-hover transition-all-fast"><div class="flex items-center justify-between mb-3"><h3 class="text-sm font-bold text-gray-500">${s[1]}</h3><div class="p-2 rounded-lg ${s[3]}">${svg(s[0],'w-5 h-5')}</div></div><p class="text-2xl font-extrabold text-brand-900">${s[2]}</p></div>`).join('')}
+    </div>
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="bg-white lg:col-span-2 p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('chart','w-5 h-5 text-gold-500')} أداء آخر ١٤ يوم</h3><canvas id="ch_days" height="120"></canvas></div>
+      <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('trophy','w-5 h-5 text-gold-500')} المتصدرون</h3><div class="space-y-3">${top.map((s,i)=>`<div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition"><div class="text-xl w-8 text-center">${['🥇','🥈','🥉'][i]||i+1}</div><div class="w-10 h-10 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div><div class="flex-1 min-w-0"><div class="font-bold text-gray-900 truncate">${esc(nameMap[s.Student_ID]||s.Student_ID)}</div><div class="text-xs text-gray-500">${esc(groupMap[s.Group_ID]||'—')}</div></div><div class="px-3 py-1 bg-gold-100 text-gold-700 text-xs font-bold rounded-full">${s.Total_Points} نقطة</div></div>`).join('')||'<p class="text-gray-400 text-center py-4 font-bold">لا يوجد</p>'}</div></div>
+    </div>
+  </div>`;
+  setTimeout(drawCharts, 50);
+}
+function drawCharts(){
+  const tick='#64748b',grid='rgba(15,23,42,.05)';
+  const days=[],labels=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const s=ymd(d);days.push(s);labels.push(s.slice(5))}
+  const done=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Done').length);
+  const par=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Partial').length);
+  const mis=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Missed').length);
+  const ctx=$('ch_days'); if(!ctx)return;
+  new Chart(ctx.getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'مكتمل',data:done,backgroundColor:'#10b981',stack:'s',borderRadius:6},{label:'جزئي',data:par,backgroundColor:'#d4af37',stack:'s',borderRadius:6},{label:'لم يحفظ',data:mis,backgroundColor:'#ef4444',stack:'s',borderRadius:6}]},options:{plugins:{legend:{labels:{font:{family:'Cairo'},color:tick}}},scales:{x:{stacked:true,ticks:{color:tick},grid:{color:grid}},y:{stacked:true,ticks:{color:tick},grid:{color:grid}}}}});
+}
+
+/* ---------- الطلاب ---------- */
+let _stSearch='',_stPage=1,_stGroupFilter='all';
+async function renderStudentsTab(body){
+  // تحديث بيانات المعلم عند فتح التبويب لضمان ظهور الطلاب الجدد
+  const isRefresh = _tData && _tData.students;
+  if (!isRefresh) {
+    body.innerHTML='<div class="text-center py-12"><div class="spinner mx-auto"></div><p class="text-gray-500 font-bold mt-4 text-sm">تحميل بيانات الطلاب...</p></div>';
+    await refreshTeacherStudents();
+  }
+
+  const groupFilterOpts = `<option value="all">جميع المجموعات</option>${_tData.groups.map(g=>`<option value="${esc(g.Group_ID)}" ${_stGroupFilter===g.Group_ID?'selected':''}>${esc(g.Group_Name)}</option>`).join('')}<option value="none">بدون مجموعة</option>`;
+
+  body.innerHTML=`<div class="fade-in space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900">طلاب الحلقة</h1>
+        <p class="text-gray-500 font-bold text-sm mt-1">إجمالي: <span class="text-brand-900 font-extrabold">${_tData.students.length}</span> طالب</p>
+      </div>
+      <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+        <div class="relative flex-1 sm:w-56">
+          <input id="st_search" value="${esc(_stSearch)}" oninput="onStSearch(this.value)" placeholder="بحث بالاسم…" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-sm bg-white font-bold text-gray-900">
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <select id="st_groupF" onchange="onStGroupFilter(this.value)" class="input py-2 text-sm w-40">${groupFilterOpts}</select>
+        <button onclick="doRefreshStudents()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="تحديث">🔄</button>
+        <button onclick="openAddStudent()" class="bg-brand-900 hover:bg-brand-800 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">${svg('plus','w-4 h-4')} إضافة</button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-saas border border-gray-50 overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-right border-collapse"><thead class="bg-surface border-b border-gray-100 text-gray-500 text-sm font-bold"><tr><th class="py-4 px-6">الطالب</th><th class="py-4 px-6">المجموعة</th><th class="py-4 px-6">النقاط</th><th class="py-4 px-6">ناظم</th><th class="py-4 px-6 text-center">إجراءات</th></tr></thead><tbody id="stListBody" class="text-sm font-semibold divide-y divide-gray-100"></tbody></table></div><div id="stPager" class="p-4 border-t border-gray-100 bg-surface flex justify-between items-center"></div></div>
+  </div>`;
+  renderStList();
+}
+function onStGroupFilter(v){_stGroupFilter=v;_stPage=1;renderStList();}
+async function doRefreshStudents(){
+  await guard(refreshTeacherStudents(),'تحديث...');
+  renderStudentsTab(_teacherTab==='students'?$('portal'):$('settingsSubBody'));
+  toast('تم التحديث');
+}
+function onStSearch(v){_stSearch=v;_stPage=1;renderStList()}
+function renderStList(){
+  const {nameMap,groupMap}=tMaps();
+  let list=_tData.students.slice();
+  if(_stGroupFilter==='none') list=list.filter(s=>!s.Group_ID);
+  else if(_stGroupFilter && _stGroupFilter!=='all') list=list.filter(s=>String(s.Group_ID)===String(_stGroupFilter));
+  if(_stSearch)list=list.filter(s=>arMatches(nameMap[s.Student_ID]||s.Student_ID,_stSearch));
+  const SZ=15,total=list.length,pages=Math.max(1,Math.ceil(total/SZ));
+  if(_stPage>pages)_stPage=pages; const start=(_stPage-1)*SZ;
+  const rows=list.slice(start,start+SZ).map(s=>{
+    const badges=(_tData.badges||[]).filter(b=>String(b.Student_ID)===String(s.Student_ID)).slice(0,3).map(b=>b.Icon||'🏅').join(' ');
+    const wa=s.Parent_Phone?waLink(s.Parent_Phone,'السلام عليكم'):'';
+    return `<tr class="hover:bg-gray-50 transition">
+      <td class="py-4 px-6"><div class="flex items-center gap-3 cursor-pointer" onclick="openStudentProfile('${esc(s.Student_ID)}')"><div class="w-10 h-10 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold text-lg">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div><div><span class="text-gray-900 font-bold block">${esc(nameMap[s.Student_ID]||s.Student_ID)}</span><span class="text-xs text-gray-500">${badges}</span></div></div></td>
+      <td class="py-4 px-6 text-gray-600">${esc(groupMap[s.Group_ID]||'—')}</td>
+      <td class="py-4 px-6"><span class="px-3 py-1 bg-gold-100 text-gold-700 text-xs font-bold rounded-full">${esc(s.Total_Points)}</span></td>
+      <td class="py-4 px-6 text-gray-500 text-xs">${s.Nazem_ID?`<span class="px-2 py-1 bg-blue-50 text-blue-600 rounded font-bold">${esc(s.Nazem_ID)}</span>`:'—'}</td>
+      <td class="py-4 px-6 text-center"><div class="flex items-center justify-center gap-2">
+        ${wa?`<a href="${wa}" target="_blank" class="p-2 bg-green-50 text-success rounded-lg hover:bg-green-100 transition" title="واتساب">${svg('wa','w-4 h-4')}</a>`:''}
+        <button onclick="doExportReport('${esc(s.Student_ID)}')" class="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition" title="تقرير">${svg('print','w-4 h-4')}</button>
+        <button onclick="openEditStudent('${esc(s.Student_ID)}')" class="p-2 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 transition" title="تعديل">${svg('edit','w-4 h-4')}</button>
+        <button onclick="confirmDeleteStudent('${esc(s.Student_ID)}','${esc(nameMap[s.Student_ID]||'')}')" class="p-2 bg-red-50 text-danger rounded-lg hover:bg-red-100 transition" title="حذف">${svg('trash','w-4 h-4')}</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  const emptyState = _tData.students.length===0
+    ? `<tr><td colspan="5" class="py-12 text-center">
+        <div class="text-5xl mb-3">👥</div>
+        <p class="text-gray-700 font-extrabold text-lg mb-2">لا يوجد أي طلاب في النظام بعد</p>
+        <p class="text-gray-400 font-bold text-sm mb-5">أضف أول طالب يدوياً أو استورد من ناظم بلس</p>
+        <div class="flex justify-center gap-2">
+          <button onclick="openAddStudent()" class="btn bg-brand-900 text-white shadow-md">${svg('plus','w-4 h-4')} أضف طالب</button>
+          <button onclick="switchTeacherTab('nazem', document.querySelector('[data-tab=nazem]'))" class="btn bg-gold-100 text-gold-700">☁ استيراد من ناظم</button>
+        </div>
+      </td></tr>`
+    : `<tr><td colspan="5" class="py-8 text-center text-gray-500 font-bold">
+        <div class="text-3xl mb-2">🔍</div>
+        <p>لا نتائج مطابقة${_stSearch?` لـ "${esc(_stSearch)}"`:''}</p>
+        ${(_stSearch||_stGroupFilter!=='all')?`<button onclick="_stSearch='';_stGroupFilter='all';renderStudentsTab(_teacherTab==='students'?$('portal'):$('settingsSubBody'))" class="mt-3 btn bg-gray-100 text-gray-700 text-xs">إعادة ضبط الفلاتر</button>`:''}
+      </td></tr>`;
+  $('stListBody').innerHTML=rows||emptyState;
+  let pager='';if(pages>1){let b='';for(let p=1;p<=pages;p++)b+=`<button onclick="_stPage=${p};renderStList()" class="w-8 h-8 rounded-lg text-sm font-bold ${p===_stPage?'bg-brand-900 text-white':'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}">${p}</button>`;pager=`<div class="flex gap-1">${b}</div>`}
+  $('stPager').innerHTML=`<span class="text-xs font-bold text-gray-500">إجمالي ${total} طالب</span>${pager}`;
+}
+
+async function openStudentProfile(sid){
+  const d=await guard(DS.getStudentDashboard(sid),'تحميل…');if(!d)return;
+  const u=_tData.users.find(x=>String(x.ID)===String(sid))||{}; const prog=d.progress||{};
+  const posBox=(p,lbl,c)=>p&&p.surah?`<div class="rounded-xl p-3 ${c}"><div class="text-xs opacity-80 font-bold">${lbl}</div><div class="font-extrabold mt-1 text-lg">${esc(p.surah)}${p.ayah?' <span class="text-sm font-normal">آية '+esc(p.ayah)+'</span>':''}</div></div>`:`<div class="rounded-xl p-3 bg-gray-50 border border-gray-100 text-gray-400"><div class="text-xs font-bold">${lbl}</div><div class="font-bold mt-1 text-sm">لم يبدأ</div></div>`;
+  const badges=(d.badges||[]).map(b=>`<span class="chip bg-gold-100 text-gold-700 font-bold px-3 py-1.5 text-xs">${b.Icon||'🏅'} ${esc(b.Title)}</span>`).join(' ')||'<span class="text-gray-400 text-sm font-bold">لا شارات</span>';
+  const last5=d.plans.slice(0,5).map(p=>`<tr class="border-b border-gray-100"><td class="p-2 text-xs text-gray-500 font-bold">${esc(p.Date)}</td><td class="p-2 text-sm font-bold text-gray-900">${esc(p.Daily_Target)}</td><td class="p-2 text-xs"><span class="px-2 py-1 rounded bg-gray-100 font-bold text-gray-600">${statusAr(p.Accomplishment_Status)}</span></td></tr>`).join('');
+  openModal('ملف — '+esc(u.Name),`
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="rounded-xl bg-brand-900 text-white p-4 shadow-md"><div class="text-xs text-gold-500 font-bold">النقاط</div><div class="text-3xl font-extrabold mt-1">${d.totalPoints}</div></div>
+      <div class="rounded-xl bg-success text-white p-4 shadow-md"><div class="text-xs opacity-90 font-bold">نسبة الإنجاز</div><div class="text-3xl font-extrabold mt-1">${d.stats.donePct}%</div></div>
+      <div class="rounded-xl bg-gold-100 text-gold-700 p-4 shadow-sm border border-gold-200"><div class="text-xs font-bold">السلسلة 🔥</div><div class="text-3xl font-extrabold mt-1">${d.stats.streak}</div></div>
+      <div class="rounded-xl bg-purple-50 text-purple-700 p-4 shadow-sm border border-purple-100"><div class="text-xs font-bold">شارات 🏅</div><div class="text-3xl font-extrabold mt-1">${(d.badges||[]).length}</div></div>
+    </div>
+    <h4 class="font-extrabold text-brand-900 mb-3 text-sm">أين وصل؟</h4>
+    <div class="grid grid-cols-3 gap-2 mb-6">${posBox(prog.conserve,'حفظ','bg-green-50 text-green-900 border border-green-100')}${posBox(prog.revision,'مراجعة','bg-blue-50 text-blue-900 border border-blue-100')}${posBox(prog.mastery,'إتقان','bg-gold-50 text-gold-900 border border-gold-100')}</div>
+    <h4 class="font-extrabold text-brand-900 mb-3 text-sm">الشارات المكتسبة</h4>
+    <div class="mb-6 flex flex-wrap gap-2">${badges}</div>
+    <h4 class="font-extrabold text-brand-900 mb-3 text-sm">آخر ٥ أوراد مستوردة</h4>
+    <table class="w-full text-right border border-gray-100 rounded-xl overflow-hidden mb-6"><thead class="bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الورد</th><th class="p-3">الحالة</th></tr></thead><tbody class="divide-y divide-gray-50 text-sm">${last5||'<tr><td colspan="3" class="p-4 text-center text-gray-400 font-bold">لا يوجد خطط</td></tr>'}</tbody></table>
+    <div class="flex gap-3"><button onclick="doExportReport('${esc(sid)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">${svg('print','w-4 h-4')} تصدير تقرير</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إغلاق</button></div>`);
+}
+function statusAr(s){return s==='Done'?'مكتمل':s==='Partial'?'جزئي':s==='Missed'?'لم يحفظ':'قيد التنفيذ'}
+async function doExportReport(sid){const r=await guard(DS.exportStudentReport(sid),'إنشاء تقرير…');if(!r||!r.success)return toast((r&&r.message)||'فشل','error');toast('تم الإنشاء');window.open(r.url,'_blank')}
+function openEditStudent(sid){
+  const {nameMap}=tMaps();const s=_tData.students.find(x=>String(x.Student_ID)===String(sid));
+  openModal('تعديل الطالب',`
+    <div class="space-y-4">
+      <div><label class="block text-sm font-bold text-gray-700 mb-2">الاسم</label><input id="ed_name" value="${esc(nameMap[sid]||'')}" class="input"></div>
+      <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة مرور جديدة (اختياري)</label><input id="ed_pass" placeholder="••••" class="input"></div>
+      <div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-bold text-gray-700 mb-2">جوال الطالب</label><input id="ed_sphone" value="${esc(s.Student_Phone||'')}" class="input"></div><div><label class="block text-sm font-bold text-gray-700 mb-2">جوال الولي</label><input id="ed_pphone" value="${esc(s.Parent_Phone||'')}" class="input"></div></div>
+      <div><label class="block text-sm font-bold text-gray-700 mb-2">ولي الأمر (ID)</label><input id="ed_parent" value="${esc(s.Parent_ID||'')}" class="input"></div>
+      <div><label class="block text-sm font-bold text-gray-700 mb-2">معرّف ناظم</label><input id="ed_nazem" value="${esc(s.Nazem_ID||'')}" class="input"></div>
+      <div><label class="block text-sm font-bold text-gray-700 mb-2">المجموعة</label><select id="ed_group" class="input"><option value="">بدون</option>${groupOptions(s.Group_ID)}</select></div>
+      <div class="flex gap-3 pt-2"><button onclick="saveEditStudent('${esc(sid)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
+    </div>`);
+}
+async function saveEditStudent(sid){const upd={Name:$('ed_name').value.trim(),Password:$('ed_pass').value.trim(),Parent_ID:$('ed_parent').value.trim(),Group_ID:$('ed_group').value,Student_Phone:$('ed_sphone').value.trim(),Parent_Phone:$('ed_pphone').value.trim(),Nazem_ID:$('ed_nazem').value.trim()};const r=await guard(DS.updateStudent(sid,upd),'حفظ…');if(!r||!r.success)return r&&toast(r.message,'error');closeModal();const u=_tData.users.find(x=>String(x.ID)===String(sid));if(u&&upd.Name)u.Name=upd.Name;const s=_tData.students.find(x=>String(x.Student_ID)===String(sid));if(s)Object.assign(s,{Parent_ID:upd.Parent_ID,Student_Phone:upd.Student_Phone,Parent_Phone:upd.Parent_Phone,Nazem_ID:upd.Nazem_ID,Group_ID:upd.Group_ID});toast('تم');renderStList()}
+function confirmDeleteStudent(sid,name){openModal('حذف طالب',`<p class="text-gray-700 font-bold mb-2">هل أنت متأكد من حذف <b>${esc(name||sid)}</b>؟</p><p class="text-sm text-danger mb-6 font-bold bg-red-50 p-3 rounded-xl border border-red-100">تحذير: سيتم حذف كافة خططه ونقاطه بشكل نهائي.</p><div class="flex gap-3"><button onclick="doDeleteStudent('${esc(sid)}')" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+async function doDeleteStudent(sid){const r=await guard(DS.deleteStudent(sid),'حذف…');if(!r||!r.success)return;closeModal();toast('تم');refreshTeacherStudents().then(()=>renderStList())}
+function openAddStudent(){openModal('طالب جديد',`<div class="space-y-4">
+  <div><label class="block text-sm font-bold text-gray-700 mb-2">الاسم الكامل</label><input id="s_name" class="input"></div>
+  <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور</label><input id="s_pass" class="input"></div>
+  <div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-bold text-gray-700 mb-2">جوال الطالب</label><input id="s_sphone" class="input"></div><div><label class="block text-sm font-bold text-gray-700 mb-2">جوال الولي</label><input id="s_pphone" class="input"></div></div>
+  <div class="grid grid-cols-2 gap-3"><div><label class="block text-sm font-bold text-gray-700 mb-2">ID الولي</label><input id="s_parent" class="input"></div><div><label class="block text-sm font-bold text-gray-700 mb-2">معرف ناظم</label><input id="s_nazem" class="input"></div></div>
+  <div><label class="block text-sm font-bold text-gray-700 mb-2">المجموعة</label><select id="s_group" class="input"><option value="">بدون مجموعة</option>${groupOptions('')}</select></div>
+  <div class="flex gap-3 pt-2"><button onclick="doAddStudent()" class="btn bg-brand-900 text-white flex-1 shadow-md">إضافة الطالب</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div></div>`)}
+async function doAddStudent(){const n=$('s_name').value.trim(),p=$('s_pass').value.trim();if(!n||!p)return toast('الاسم وكلمة المرور مطلوبان','warn');const d={Name:n,Password:p,Student_Phone:$('s_sphone').value.trim(),Parent_Phone:$('s_pphone').value.trim(),Parent_ID:$('s_parent').value.trim(),Nazem_ID:$('s_nazem').value.trim(),Group_ID:$('s_group').value};const r=await guard(DS.addStudent(d),'إضافة…');if(!r||!r.success)return r&&toast(r.message,'error');closeModal();await refreshTeacherStudents();toast('تمت الإضافة');renderStList()}
+async function refreshTeacherStudents(){const d=await DS.getTeacherData();if(d)_tData=d}
+function waLink(phone,text){const p=String(phone||'').replace(/[^0-9]/g,'');if(!p)return'';return `https://wa.me/${p.startsWith('0')?'966'+p.slice(1):p}?text=${encodeURIComponent(text||'السلام عليكم')}`}
+
+/* ---------- المتابعة (ناظم حصراً) — إصدار مطور v3.2 ---------- */
+let _nz={termId:'',planId:'',date:ymd(new Date()),terms:[],plans:[],data:null,linked:false,typeFilter:'all',search:''};
+
+const NZ_TYPES = {
+  all:      {label:'الكل',     icon:'📚', activeCls:'bg-brand-900 text-white shadow-md',    badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-gray-100 text-gray-600', chipCls:'bg-gray-100 text-gray-700'},
+  conserve: {label:'الحفظ',    icon:'🌱', activeCls:'bg-success text-white shadow-md',      badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-green-100 text-green-700', chipCls:'bg-green-100 text-green-700'},
+  revision: {label:'المراجعة', icon:'🔄', activeCls:'bg-blue-600 text-white shadow-md',     badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-blue-100 text-blue-700',  chipCls:'bg-blue-100 text-blue-700'},
+  mastery:  {label:'الإتقان',  icon:'💎', activeCls:'bg-gold-500 text-brand-900 shadow-md', badgeActiveCls:'bg-brand-900/20 text-brand-900', badgeCls:'bg-gold-100 text-gold-700', chipCls:'bg-gold-100 text-gold-700'}
+};
+
+async function renderNazemTab(body){
+  body.innerHTML=`<div class="text-center py-12"><div class="spinner mx-auto"></div></div>`;
+  const st=await guard(DS.nazemStatus(),'التحقق من الاتصال بنظام ناظم...');
+  if(!st){body.innerHTML='<div class="bg-white p-8 text-center rounded-2xl shadow-saas border border-red-100"><p class="text-danger font-bold">فشل الاتصال بالخادم، يرجى المحاولة لاحقاً</p></div>';return}
+
+  if(!st.configured){
+    body.innerHTML=`<div class="bg-white p-8 max-w-lg mx-auto rounded-2xl shadow-saas border border-gray-50 fade-in text-center">
+      <div class="w-16 h-16 rounded-2xl bg-brand-50 text-brand-900 flex items-center justify-center mb-6 mx-auto shadow-sm">${svg('check','w-8 h-8')}</div>
+      <h3 class="text-xl font-extrabold text-brand-900 mb-2">إعداد نظام المتابعة (ناظم بلس)</h3>
+      <p class="text-sm text-gray-500 font-bold mb-8">سيتم الاعتماد على ناظم لجلب خطط ومتابعة وتقييم الطلاب.</p>
+      <div class="space-y-4 text-right">
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">اسم المستخدم في ناظم</label><input id="nz_user" class="input"></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور</label><input id="nz_pass" type="password" class="input"></div>
+        <button onclick="doSaveNazem()" class="w-full bg-brand-900 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4 transition">حفظ وربط الحساب</button>
+      </div>
+    </div>`;return;
+  }
+
+  const sett = await guard(DS.getSettings(['nz_term','nz_plan']), 'تحميل إعدادات الحلقة...');
+  if (!sett) { body.innerHTML='<div class="bg-white p-8 text-center rounded-2xl shadow-saas border border-red-100"><p class="text-danger font-bold">حدث خطأ في تحميل إعدادات الحلقة.</p></div>'; return; }
+
+  const saved=sett.values||{};
+  _nz.termId=saved.nz_term||'';_nz.planId=saved.nz_plan||'';
+
+  body.innerHTML=`<div class="fade-in space-y-5">
+    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-2">
+      <div>
+        <h1 class="text-2xl font-extrabold text-gray-900">المتابعة اليومية للطلاب</h1>
+        <p class="text-gray-500 font-bold text-sm mt-1">واجهة موحدة مرتبطة مع ناظم بلس</p>
+      </div>
+    </div>
+
+    <!-- Connection Bar (Gradient) -->
+    <div class="bg-gradient-to-l from-brand-900 to-brand-800 text-white p-5 rounded-2xl shadow-saas flex items-center justify-between flex-wrap gap-4">
+      <div class="flex items-center gap-4">
+        <div class="relative">
+          <div class="w-12 h-12 bg-white/10 backdrop-blur rounded-full flex items-center justify-center text-gold-500">${svg('cloud','w-6 h-6')}</div>
+          <span class="absolute top-0 right-0 w-3 h-3 bg-success rounded-full border-2 border-brand-900"></span>
+        </div>
+        <div>
+          <div class="font-extrabold text-lg">متصل بنظام ناظم</div>
+          <div class="text-sm font-bold text-gold-100/80">${esc(st.user)}</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <div id="nz_planLabel" class="hidden md:block px-4 py-2 bg-white/10 backdrop-blur rounded-xl text-sm font-bold text-white/90 max-w-xs truncate">— (اختر من الإعدادات)</div>
+        <button onclick="openNazemSettings()" class="btn bg-white/10 backdrop-blur text-white hover:bg-white/20 border border-white/20">${svg('cog','w-4 h-4')} إعدادات</button>
+      </div>
+    </div>
+
+    <!-- Control Bar -->
+    <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">📅 التاريخ</label>
+          <input type="date" id="nz_date" value="${_nz.date}" onchange="loadNzFollow()" class="input font-extrabold text-brand-900 py-2.5">
+        </div>
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">🔍 بحث عن طالب</label>
+          <input type="text" id="nz_search" placeholder="اكتب اسم الطالب..." oninput="nzSetSearch(this.value)" class="input py-2.5">
+        </div>
+        <button onclick="doNzSyncDay()" class="btn bg-gradient-to-l from-success to-emerald-600 text-white shadow-md py-2.5 px-5 text-sm hover:shadow-lg">${svg('bolt','w-4 h-4')} استيراد اليوم</button>
+      </div>
+    </div>
+    <div id="nz_body"></div>
+  </div>`;
+
+  if(!_nz.termId||!_nz.planId){
+    $('nz_body').innerHTML=`<div class="bg-white p-12 text-center rounded-2xl shadow-saas border-2 border-dashed border-gray-200">
+      <div class="w-20 h-20 mx-auto rounded-2xl bg-gold-100 text-gold-600 flex items-center justify-center mb-4">${svg('cog','w-10 h-10')}</div>
+      <p class="text-gray-700 font-extrabold mb-2 text-lg">لم يتم اختيار الحلقة بعد</p>
+      <p class="text-gray-500 font-bold mb-6 text-sm">اضبط الفصل الدراسي والحلقة أولاً لتتمكن من عرض ومتابعة الطلاب</p>
+      <button onclick="openNazemSettings()" class="btn bg-brand-900 text-white shadow-md">${svg('cog','w-4 h-4')} افتح إعدادات المتابعة</button>
+    </div>`;
+    return;
+  }
+
+  const plansRes=await guard(DS.nazemPlans(_nz.termId), 'جلب بيانات الحلقة...');
+  if(plansRes?.success){
+    _nz.plans=plansRes.plans;
+    const p=plansRes.plans.find(x=>String(x.id)===String(_nz.planId));
+    if(p) $('nz_planLabel').textContent=p.class_name+' · '+(p.company||'');
+  }
+
+  loadNzFollow();
+}
+
+function nzSetFilter(t){ _nz.typeFilter = t; renderNzBody(); }
+function nzSetSearch(v){ _nz.search = v||''; renderNzBody(); }
+function nzFilterItems(items){
+  if(_nz.typeFilter==='all') return items||[];
+  return (items||[]).filter(it => String(it.type||'conserve') === _nz.typeFilter);
+}
+
+function openNazemSettings(){
+  openModal('إعدادات المتابعة مع ناظم',`<div class="space-y-4">
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">الفصل الدراسي</label><select id="nzs_term" class="input" onchange="onNzsTermChange()"></select></div>
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">الخطة (الحلقة)</label><select id="nzs_plan" class="input"></select></div>
+    <div class="h-px bg-gray-100 my-4"></div>
+    <div class="flex gap-3"><button onclick="doTestNazem()" class="btn bg-blue-50 text-blue-700 flex-1 font-bold shadow-sm">اختبار الاتصال</button><button onclick="doClearNazem()" class="btn bg-red-50 text-danger flex-1 font-bold shadow-sm">فصل الحساب</button></div>
+    <button onclick="saveNazemSettings()" class="btn bg-brand-900 text-white w-full py-3 mt-2 shadow-md">حفظ الإعدادات</button>
+  </div>`);
+  loadNzsTerms();
+}
+async function loadNzsTerms(){const r=await guard(DS.nazemTerms(),'جلب الفصول…');if(!r||!r.success)return;$('nzs_term').innerHTML=r.terms.map(t=>`<option value="${esc(t.id)}" ${String(t.id)===String(_nz.termId)?'selected':''}>${esc(t.name)}</option>`).join('');onNzsTermChange();}
+async function onNzsTermChange(){const tid=$('nzs_term').value;const r=await guard(DS.nazemPlans(tid),'جلب الخطط…');if(!r||!r.success)return;$('nzs_plan').innerHTML=r.plans.map(p=>`<option value="${esc(p.id)}" ${String(p.id)===String(_nz.planId)?'selected':''}>${esc(p.class_name)} — ${esc(p.company||'')} (${p.students_count} طالب)</option>`).join('');}
+async function saveNazemSettings(){const tid=$('nzs_term').value,pid=$('nzs_plan').value;if(!tid||!pid)return toast('اختر الفصل والخطة','warn');await guard(Promise.all([DS.setSetting('nz_term',tid),DS.setSetting('nz_plan',pid)]),'حفظ…');_nz.termId=tid;_nz.planId=pid;closeModal();toast('تم الحفظ');renderNazemTab($('portal'));}
+
+async function loadNzFollow(){
+  const box=$('nz_body');
+  if(box) box.innerHTML='<div class="text-center py-12"><div class="spinner mx-auto"></div><p class="text-gray-500 font-bold mt-4 text-sm">جاري تحميل بيانات المتابعة...</p></div>';
+  _nz.date=$('nz_date').value;
+  const r=await guard(DS.nazemFollowUp(_nz.planId,_nz.date),'تحميل سجل المتابعة من ناظم…');
+  if(!r||!r.success){
+    if(box) box.innerHTML=`<div class="bg-white p-8 rounded-2xl shadow-saas border border-red-100 text-center">
+      <div class="text-4xl mb-3">⚠️</div>
+      <p class="text-danger font-extrabold text-lg mb-2">تعذر جلب البيانات</p>
+      <p class="text-gray-500 font-bold text-sm">${esc((r&&r.message)||'حدث خطأ في جلب البيانات')}</p>
+    </div>`;
+    return;
+  }
+  _nz.data=r.data;
+  renderNzBody();
+}
+
+function renderNzBody(){
+  const d=_nz.data||{}; let students=d.students||[];
+
+  // إحصائيات لكل نوع
+  const allItems = [];
+  (d.students||[]).forEach(s => (s.items||[]).forEach(it => allItems.push(it)));
+  const countByType = {conserve:0, revision:0, mastery:0};
+  allItems.forEach(it => { const t=String(it.type||'conserve'); if(countByType[t]!==undefined) countByType[t]++; });
+
+  const doneCount = allItems.filter(it => it.today && it.today.status==='completed').length;
+  const pendingCount = allItems.filter(it => it.today && it.today.status!=='completed' && !it.is_blocked_by_late).length;
+  const progressPct = allItems.length ? Math.round((doneCount/allItems.length)*100) : 0;
+
+  // بحث بالاسم
+  if(_nz.search){
+    students = students.filter(s => arMatches(s.student_name||'', _nz.search));
+  }
+
+  // فلترة الطلاب حسب النوع
+  let filteredStudents = students;
+  if(_nz.typeFilter !== 'all'){
+    filteredStudents = students.filter(s => nzFilterItems(s.items).length > 0);
+  }
+
+  // شريط الإحصائيات
+  const info=`<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+    <div class="bg-gradient-to-br from-brand-900 to-brand-800 text-white p-4 rounded-2xl shadow-md">
+      <p class="text-[11px] font-bold text-gold-500 mb-1">📖 الحلقة</p>
+      <p class="font-extrabold truncate text-sm">${esc(d.class_name||'—')}</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
+      <p class="text-[11px] font-bold text-gray-500 mb-1">📊 تقدم اليوم</p>
+      <div class="flex items-center gap-2">
+        <p class="font-extrabold text-success text-xl tabular-nums">${progressPct}%</p>
+        <div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden"><div class="h-full bg-success rounded-full transition-all" style="width:${progressPct}%"></div></div>
+      </div>
+      <p class="text-[10px] font-bold text-gray-400 mt-1">${doneCount} من ${allItems.length} بند</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
+      <p class="text-[11px] font-bold text-gray-500 mb-1">👥 الطلاب</p>
+      <p class="font-extrabold text-gray-900 text-xl tabular-nums">${(d.students||[]).length}</p>
+      <p class="text-[10px] font-bold text-gray-400 mt-1">${filteredStudents.length} معروض</p>
+    </div>
+    <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
+      <p class="text-[11px] font-bold text-gray-500 mb-1">📅 التاريخ الهجري</p>
+      <p class="font-extrabold text-gold-600 text-sm leading-tight mt-1">${toHijri(d.date)}</p>
+    </div>
+  </div>`;
+
+  // تبويبات الفلترة (كل / حفظ / مراجعة / إتقان)
+  const tabs = Object.keys(NZ_TYPES).map(k => {
+    const t = NZ_TYPES[k];
+    const active = _nz.typeFilter === k;
+    const count = k==='all' ? allItems.length : (countByType[k]||0);
+    const baseCls = active ? t.activeCls : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200';
+    const bCls   = active ? t.badgeActiveCls : t.badgeCls;
+    return `<button onclick="nzSetFilter('${k}')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border transition-all-fast ${baseCls}">
+      <span>${t.icon}</span>
+      <span>${t.label}</span>
+      <span class="px-2 py-0.5 rounded-full text-[11px] tabular-nums ${bCls}">${count}</span>
+    </button>`;
+  }).join('');
+
+  const filterBar = `<div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50 mb-5">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex flex-wrap gap-2">${tabs}</div>
+      <div class="flex gap-2">
+        <button onclick="doNzExpandAll(true)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3" title="فتح الكل">⬇ فتح الكل</button>
+        <button onclick="doNzExpandAll(false)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3" title="طي الكل">⬆ طي الكل</button>
+        <button onclick="doNzBulkAttendance()" class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-sm py-2 px-3">${svg('check','w-4 h-4')} حضور الكل</button>
+        <button onclick="doNzSaveAll()" class="btn bg-gradient-to-l from-brand-900 to-brand-800 text-white text-sm py-2 px-4 shadow-md hover:shadow-lg" title="حفظ كل التقييمات المعبأة">
+          ${svg('cloud','w-4 h-4')} حفظ الكل
+          <span class="px-2 py-0.5 rounded-full bg-white/20 text-[11px] tabular-nums">${pendingCount}</span>
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  // شبكة البطاقات
+  const html = filteredStudents.length
+    ? filteredStudents.map((st,i)=>renderNzStudent(st,i<4)).filter(Boolean).join('')
+    : `<div class="col-span-full bg-white p-12 text-center rounded-2xl shadow-saas border-2 border-dashed border-gray-200">
+        <div class="text-5xl mb-3">${_nz.search?'🔍':(students.length===0?'📭':'🗂️')}</div>
+        <p class="text-gray-700 font-extrabold text-lg mb-2">${_nz.search?'لا توجد نتائج للبحث':(students.length===0?'لا يوجد طلاب في هذه الحلقة':'لا يوجد طلاب في هذا التصنيف')}</p>
+        <p class="text-gray-400 font-bold text-sm">${_nz.search?'جرّب كلمة بحث أخرى':(students.length===0?'تحقق من إعدادات الحلقة أو حاول الاستيراد من ناظم':'جرّب اختيار تصنيف آخر أو "الكل"')}</p>
+      </div>`;
+
+  $('nz_body').innerHTML = info + filterBar + '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + html + '</div>';
+}
+
+function doNzExpandAll(open){
+  document.querySelectorAll('#nz_body details').forEach(d => { d.open = !!open; });
+}
+
+function renderNzStudent(st,open){
+  const items = nzFilterItems(st.items);
+  if(!items.length && _nz.typeFilter!=='all') return '';
+
+  const itemsHtml = items.map(it=>renderNzItem(it,st)).join('');
+  const c=(st.student_name||'?').trim().charAt(0);
+  const attSt=st.attendance_status;
+  const attBadge = attSt==2 ? '<span class="chip bg-green-100 text-green-700">✓ حاضر</span>'
+                : attSt==1 ? '<span class="chip bg-gold-100 text-gold-700">⏱ متأخر</span>'
+                : attSt==0 ? '<span class="chip bg-red-100 text-red-700">✗ غائب</span>'
+                : '<span class="chip bg-gray-100 text-gray-500">— لم يسجَّل</span>';
+
+  const doneItems = items.filter(it => it.today && it.today.status==='completed').length;
+  const totalItems = items.length;
+  const pct = totalItems ? Math.round((doneItems/totalItems)*100) : 0;
+  const progressColor = pct>=100?'bg-success':pct>=50?'bg-gold-500':'bg-brand-500';
+
+  const localMatch = _tData?.students?.find(x=>String(x.Nazem_ID||'')===String(st.student_id||''))
+                  || _tData?.users?.find(u=>u.Role==='Student' && normAr(u.Name)===normAr(st.student_name));
+  const localId = localMatch ? (localMatch.Student_ID || localMatch.ID) : '';
+  const localPts = localMatch ? (_tData.students.find(x=>String(x.Student_ID)===String(localId))?.Total_Points||0) : null;
+
+  const quickBtn = localId
+    ? `<button onclick="event.preventDefault();event.stopPropagation();fQuickPoint('${esc(localId)}')" title="نقاط إضافية" class="w-9 h-9 rounded-lg bg-gold-100 text-gold-700 hover:bg-gold-200 flex items-center justify-center shrink-0 transition">${svg('plus','w-4 h-4')}</button>`
+    : `<button onclick="event.preventDefault();event.stopPropagation();nzLinkStudentPrompt('${esc(st.student_id||'')}','${esc(st.student_name||'')}')" title="اربطه بحسابه" class="px-3 h-9 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 flex items-center justify-center shrink-0 font-bold text-xs transition">🔗 ربط</button>`;
+
+  return `<details class="bg-white rounded-2xl shadow-saas border border-gray-50 overflow-hidden hover:shadow-saas-hover transition-all-fast" ${open?'open':''} data-nz-student="${esc(st.student_id||'')}">
+    <summary class="p-4 cursor-pointer hover:bg-gray-50 transition select-none outline-none" style="list-style:none">
+      <div class="flex items-start gap-3">
+        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-900 to-brand-800 text-gold-500 flex items-center justify-center font-extrabold text-lg shadow-sm shrink-0">${esc(c)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1.5">
+            <div class="font-extrabold text-gray-900 truncate text-base">${esc(st.student_name)}</div>
+            ${attBadge}
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden"><div class="h-full ${progressColor} rounded-full transition-all" style="width:${pct}%"></div></div>
+            <span class="text-xs font-extrabold text-gray-700 tabular-nums shrink-0">${doneItems}/${totalItems}</span>
+          </div>
+          <div class="text-[11px] text-gray-500 font-bold mt-1 flex items-center gap-2 flex-wrap">
+            <span>${items.length} بند ${_nz.typeFilter==='all'?'':`(${NZ_TYPES[_nz.typeFilter].label})`}</span>
+            ${localPts!==null?`<span>·</span><span class="text-gold-600">${localPts} نقطة</span>`:''}
+          </div>
+        </div>
+        ${quickBtn}
+      </div>
+    </summary>
+    <div class="px-4 pb-4 space-y-2 border-t border-gray-100 pt-3 bg-surface">
+      ${itemsHtml||'<p class="text-gray-400 text-sm font-bold text-center py-4">لا توجد بنود</p>'}
+    </div>
+  </details>`;
+}
+
+function nzLinkStudentPrompt(nazemId,name){
+  openModal('ربط الطالب — '+esc(name),`<p class="text-sm text-gray-600 font-bold mb-4">لم يتم التعرف على حساب محلي للطالب "${esc(name)}". اختر الطالب المناسب من قائمتك لربطه:</p>
+    <label class="block text-sm font-bold text-gray-700 mb-2">الطالب في المنصة</label>
+    <select id="nzlink_sel" class="input mb-6">${'<option value="">— اختر طالب —</option>'+studentOptions()}</select>
+    <div class="flex gap-3"><button onclick="doNzLink('${esc(nazemId)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">تأكيد الربط</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`);
+}
+async function doNzLink(nazemId){const lid=$('nzlink_sel').value; if(!lid) return toast('اختر طالباً','warn');const r=await guard(DS.linkNazemStudent(lid,nazemId),'ربط…');if(r&&r.success){toast('تم الربط');const s=_tData.students.find(x=>String(x.Student_ID)===String(lid)); if(s) s.Nazem_ID=nazemId;closeModal(); renderNzBody();}}
+
+function renderNzItem(it, st){
+  const td=it.today;
+  const tKey = String(it.type||'conserve');
+  const tInfo = NZ_TYPES[tKey] || NZ_TYPES.conserve;
+  const typeBadge = `<span class="chip ${tInfo.chipCls}">${tInfo.icon} ${tInfo.label}</span>`;
+
+  const status = td && td.status==='completed'
+    ? '<span class="chip bg-green-100 text-green-700">✓ مكتمل</span>'
+    : (it.is_blocked_by_late ? '<span class="chip bg-red-100 text-red-700">⛔ متأخر</span>'
+    : (td ? '<span class="chip bg-gold-100 text-gold-700">◐ قيد التنفيذ</span>' : ''));
+
+  const surs=_tData?.surahs||[];
+  const canEdit = td && td.status!=='completed' && !it.is_blocked_by_late;
+  const attS = st?.attendance_status;
+
+  const form = canEdit ? `
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mt-3 pt-3 border-t border-dashed border-gray-200" data-nz-form="${td.id}">
+      <div class="col-span-2 md:col-span-3">
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">آخر سورة</label>
+        <select data-k="actual_end_surah" class="input py-2 text-sm">${surs.map(s=>`<option value="${esc(s)}" ${s===td.surah_to_name?'selected':''}>${esc(s)}</option>`).join('')}</select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">الآية</label>
+        <input type="number" data-k="actual_end_aya" value="${td.verse_to||''}" class="input py-2 text-sm text-center font-bold">
+      </div>
+      <div class="col-span-2">
+        <label class="block text-[10px] font-bold text-gray-500 mb-1">الحضور</label>
+        <select data-k="attendance_status" class="input py-2 text-sm">
+          <option value="2" ${attS==2?'selected':''}>حاضر</option>
+          <option value="1" ${attS==1?'selected':''}>متأخر</option>
+          <option value="0" ${attS==0?'selected':''}>غائب</option>
+        </select>
+      </div>
+      <div><label class="block text-[10px] font-bold text-gray-500 mb-1">أخطاء</label><input type="number" data-k="mistake" value="0" min="0" class="input py-2 text-sm text-center"></div>
+      <div><label class="block text-[10px] font-bold text-gray-500 mb-1">استماع</label><input type="number" data-k="hearing" value="1" min="0" class="input py-2 text-sm text-center"></div>
+      <div><label class="block text-[10px] font-bold text-gray-500 mb-1">تكرار</label><input type="number" data-k="repetition" value="${it.repetition||0}" min="0" class="input py-2 text-sm text-center"></div>
+      <div><label class="block text-[10px] font-bold text-gray-500 mb-1">ربط</label><input type="number" data-k="link" value="${it.link||0}" min="0" class="input py-2 text-sm text-center"></div>
+      <div class="col-span-2 md:col-span-6 mt-1">
+        <button onclick="doNzSavePartial(this,${td.id})" class="btn bg-brand-900 hover:bg-brand-800 text-white w-full py-2 shadow-md text-sm">
+          ${svg('cloud','w-4 h-4')} حفظ التقييم في ناظم
+        </button>
+      </div>
+    </div>` : '';
+
+  return `<div class="bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:border-brand-500/50 transition">
+    <div class="flex items-start justify-between flex-wrap gap-2 mb-1.5">
+      <div class="flex items-center gap-2 flex-wrap">
+        ${typeBadge}
+        ${status}
+      </div>
+    </div>
+    <div class="text-sm font-bold text-gray-900">من ${esc(it.surah_from_name)} (${it.verse_from}) → ${esc(it.surah_to_name)} (${it.verse_to})</div>
+    <div class="text-[11px] font-bold text-gray-500 mt-0.5">📌 اليوم: ${td?`${esc(td.surah_from_name)} (${td.verse_from}) → ${esc(td.surah_to_name)} (${td.verse_to})`:'—'}</div>
+    ${form}
+  </div>`;
+}
+
+async function doNzSavePartial(btn,itemDayId){
+  const row=btn.closest('[data-nz-form]');
+  const p={}; row.querySelectorAll('[data-k]').forEach(el=>p[el.dataset.k]=el.value);
+  const surs=_tData?.surahs||[]; const surIdx=surs.indexOf(p.actual_end_surah)+1;
+  if(!surIdx) return toast('اختر السورة','warn');
+  p.actual_end_surah=surIdx; btn.disabled=true;
+  const r=await guard(DS.nazemSavePartial(itemDayId,p),'حفظ في ناظم…'); btn.disabled=false;
+  if(r&&r.success){ toast(r.message||'تم الحفظ'); loadNzFollow(); } else toast((r&&r.message)||'فشل','error');
+}
+
+/* حفظ الكل — يحفظ جميع النماذج المعبأة دفعة واحدة */
+async function doNzSaveAll(){
+  const forms = document.querySelectorAll('#nz_body [data-nz-form]');
+  if(!forms.length) return toast('لا توجد بنود قابلة للحفظ في هذا التصنيف','warn');
+  const surs = _tData?.surahs||[];
+  const tasks = [];
+  forms.forEach(f=>{
+    const itemDayId = f.getAttribute('data-nz-form');
+    const p = {}; f.querySelectorAll('[data-k]').forEach(el=>p[el.dataset.k]=el.value);
+    const surIdx = surs.indexOf(p.actual_end_surah)+1;
+    if(!surIdx || !p.actual_end_aya) return;
+    p.actual_end_surah = surIdx;
+    tasks.push({itemDayId, payload:p});
+  });
+  if(!tasks.length) return toast('لا توجد بيانات صالحة للحفظ','warn');
+
+  openModal('تأكيد الحفظ الجماعي', `
+    <div class="text-center py-2">
+      <div class="text-4xl mb-3">☁️</div>
+      <p class="font-extrabold text-gray-900 text-lg mb-2">سيتم حفظ ${tasks.length} تقييم في ناظم</p>
+      <p class="text-sm font-bold text-gray-500 mb-6">قد تستغرق العملية عدة ثوانٍ حسب عدد البنود.</p>
+      <div class="flex gap-3">
+        <button onclick="doNzSaveAllRun()" class="btn bg-gradient-to-l from-brand-900 to-brand-800 text-white flex-1 shadow-md">☁ ابدأ الحفظ</button>
+        <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>
+      </div>
+    </div>`);
+  window._nzSaveTasks = tasks;
+}
+
+async function doNzSaveAllRun(){
+  const tasks = window._nzSaveTasks || [];
+  closeModal();
+  if(!tasks.length) return;
+
+  loader(true, `جاري حفظ ${tasks.length} بند...`);
+  let ok=0, fail=0;
+  for(let i=0; i<tasks.length; i++){
+    const t = tasks[i];
+    const msgEl = $('loaderMsg'); if(msgEl){ msgEl.textContent = `حفظ ${i+1}/${tasks.length}...`; msgEl.classList.remove('hidden'); }
+    try{
+      const r = await DS.nazemSavePartial(t.itemDayId, t.payload);
+      if(r && r.success) ok++; else fail++;
+    }catch(e){ fail++; }
+  }
+  loader(false);
+  window._nzSaveTasks = null;
+  toast(`تم حفظ ${ok} بند${fail?` · فشل ${fail}`:''}`, fail? 'warn':'success');
+  loadNzFollow();
+}
+
+/* تسجيل الحضور الجماعي */
+function doNzBulkAttendance(){
+  const d = _nz.data || {}; const students = d.students || [];
+  if(!students.length) return toast('لا يوجد طلاب','warn');
+  openModal('تسجيل الحضور للجميع', `
+    <p class="text-sm font-bold text-gray-600 mb-4">اختر حالة تُطبَّق على جميع الطلاب المعروضين (${students.length}):</p>
+    <div class="grid grid-cols-3 gap-2 mb-4">
+      <button onclick="doNzBulkAttSet('Present')" class="btn bg-green-100 text-green-700 hover:bg-green-200 py-4 text-base">✓ حاضر</button>
+      <button onclick="doNzBulkAttSet('Late')" class="btn bg-gold-100 text-gold-700 hover:bg-gold-200 py-4 text-base">⏱ متأخر</button>
+      <button onclick="doNzBulkAttSet('Absent')" class="btn bg-red-100 text-red-700 hover:bg-red-200 py-4 text-base">✗ غائب</button>
+    </div>
+    <p class="text-[11px] font-bold text-gray-400 text-center mb-3">* يتم الحفظ محلياً فقط للطلاب المرتبطين بحسابات في المنصة</p>
+    <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 w-full">إلغاء</button>
+  `);
+}
+async function doNzBulkAttSet(status){
+  closeModal();
+  const d = _nz.data || {}; const students = d.students || [];
+  loader(true, 'حفظ الحضور الجماعي...');
+  let ok=0, skipped=0;
+  for(let i=0; i<students.length; i++){
+    const st = students[i];
+    const msgEl = $('loaderMsg'); if(msgEl){ msgEl.textContent = `حفظ ${i+1}/${students.length}...`; msgEl.classList.remove('hidden'); }
+    const localMatch = _tData?.students?.find(x=>String(x.Nazem_ID||'')===String(st.student_id||''))
+                    || _tData?.users?.find(u=>u.Role==='Student' && normAr(u.Name)===normAr(st.student_name));
+    const localId = localMatch ? (localMatch.Student_ID || localMatch.ID) : null;
+    if(!localId){ skipped++; continue; }
+    try{
+      const r = await DS.saveAttendance(localId, _nz.date, status, 'حضور جماعي', currentUser.ID);
+      if(r && r.success!==false) ok++;
+    }catch(e){}
+  }
+  loader(false);
+  toast(`تم تسجيل الحضور لـ ${ok} طالب${skipped?` · تُخُطّي ${skipped}`:''}`, skipped?'warn':'success');
+}
+
+async function doNzSyncDay(){
+  if(!_nz.planId||!_nz.date)return toast('اضبط الفصل والخطة من الإعدادات','warn');
+  openModal('مزامنة مع ناظم',`<p class="text-sm font-bold text-gray-600 mb-6 leading-relaxed">سيتم استيراد خطط اليوم من ناظم إلى المنصة. الخطط المستوردة سيتم تمييزها وحمايتها بقفل.</p>
+    <label class="flex items-center gap-3 text-sm font-bold text-gray-900 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-200 cursor-pointer"><input type="checkbox" id="nz_ac" class="accent-brand-900 w-5 h-5">إنشاء حسابات للطلاب الجدد تلقائياً في حال عدم التطابق</label>
+    <div class="flex gap-3"><button onclick="confirmNzSync()" class="btn bg-success text-white flex-1 shadow-md">بدء المزامنة</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`);
+}
+
+async function confirmNzSync(){
+  const ac=$('nz_ac').checked;closeModal(); 
+  const r=await guard(DS.nazemSyncPlanDay(_nz.planId,_nz.date,ac),'جارٍ المزامنة واستيراد الخطط…');
+  if(!r||!r.success)return toast((r&&r.message)||'فشل المزامنة','error'); 
+  toast(r.message);
+  if(r.unmatched&&r.unmatched.length){
+    openModal('طلاب بدون تطابق',`<p class="text-sm font-bold text-gray-600 mb-4">اربط هؤلاء الطلاب بحساباتهم في المنصة:</p><div class="space-y-3">${r.unmatched.map(u=>`<div class="bg-gray-50 border border-gray-200 rounded-xl p-3"><div class="font-extrabold text-gray-900 mb-2">${esc(u.name||'?')} <span class="text-xs text-gray-500 font-normal">(${esc(u.nazem_id||'')})</span></div><div class="flex gap-2"><select id="link_${esc(u.nazem_id)}" class="input flex-1 py-2 text-sm">${'<option value="">— اختر طالب —</option>'+studentOptions()}</select><button onclick="doLinkNazem('${esc(u.nazem_id)}')" class="btn bg-brand-900 text-white text-sm px-4">ربط</button></div></div>`).join('')}</div>`);
+  }
+  const d=await DS.getTeacherData();if(d)_tData=d;
+}
+
+async function doSaveNazem(){const u=$('nz_user').value.trim(),p=$('nz_pass').value.trim();if(!u||!p)return toast('أدخل البيانات','warn');const r=await guard(DS.saveNazemCreds(u,p),'حفظ…');if(!r||!r.success)return r&&toast(r.message,'error');const t=await guard(DS.testNazem(),'اختبار…');if(t&&t.success)toast('تم الربط بنجاح');else toast((t&&t.message)||'فشل الاتصال','warn');renderNazemTab($('portal'))}
+async function doTestNazem(){const t=await guard(DS.testNazem(),'اختبار…');if(!t)return;toast(t.message,t.success?'success':'error')}
+async function doClearNazem(){const r=await guard(DS.clearNazemCreds(),'فصل الحساب…');if(!r)return;closeModal();toast('تم فصل الحساب');renderNazemTab($('portal'))}
+
+// دالة تسجيل نقاط سريعة مستخدمة في ناظم
+function fQuickPoint(sid){
+  const opts=_tData.items.map(i=>`<button onclick="doQuickPoint('${esc(sid)}','${esc(i.Item_ID)}')" class="w-full text-right p-3 rounded-xl border border-gray-100 hover:bg-gray-50 flex items-center justify-between transition font-bold text-gray-700"><span>${esc(i.Description)}</span><span class="px-2 py-1 rounded-md text-xs ${Number(i.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(i.Point_Value)>=0?'+':''}${esc(i.Point_Value)}</span></button>`).join('');
+  openModal('تسجيل نقاط سريع',`<div class="space-y-2">${opts}</div>`);
+}
+async function doQuickPoint(sid,iid){const r=await guard(DS.logPoints(sid,iid,currentUser.ID),'حفظ…');if(!r||!r.success)return toast((r&&r.message)||'خطأ','error');closeModal();toast((r.points>=0?'+':'')+r.points+' نقطة');await refreshTeacherStudents();if(_teacherTab==='nazem'&&_nz.data) renderNzBody();}
+
+/* ---------- الأخبار والإعدادات ---------- */
+function renderNewsCombinedTab(body){
+  body.innerHTML=`<div class="fade-in space-y-6">
+    <div class="flex gap-2 border-b border-gray-200 pb-2">
+      <button onclick="_newsSub='news';renderNewsCombinedTab($('portal'))" class="px-6 py-2 rounded-xl font-bold transition-all-fast ${_newsSub==='news'?'bg-brand-900 text-white shadow-md':'bg-white text-gray-600 hover:bg-gray-50'}">الإعلانات</button>
+      <button onclick="_newsSub='cal';renderNewsCombinedTab($('portal'))" class="px-6 py-2 rounded-xl font-bold transition-all-fast ${_newsSub==='cal'?'bg-brand-900 text-white shadow-md':'bg-white text-gray-600 hover:bg-gray-50'}">التقويم والفعاليات</button>
+    </div>
+    <div id="newsSubBody"></div>
+  </div>`;
+  if(_newsSub==='news') renderNewsTab($('newsSubBody')); else renderCalendarTab($('newsSubBody'));
+}
+function renderSettingsTab(body){
+  const tab=(k,label)=>`<button onclick="_settingsSub='${k}';renderSettingsTab($('portal'))" class="whitespace-nowrap px-6 py-2 rounded-xl font-bold transition-all-fast ${_settingsSub===k?'bg-brand-900 text-white shadow-md':'bg-white text-gray-600 hover:bg-gray-50'}">${label}</button>`;
+  body.innerHTML=`<div class="fade-in space-y-6">
+    <div class="flex gap-2 overflow-x-auto pb-2 border-b border-gray-200">
+      ${tab('students','إدارة الطلاب')}
+      ${tab('groups','المجموعات')}
+      ${tab('items','إعدادات النقاط')}
+      ${tab('appearance','المظهر والشعار')}
+    </div>
+    <div id="settingsSubBody"></div>
+  </div>`;
+  if(_settingsSub==='students') renderStudentsTab($('settingsSubBody'));
+  else if(_settingsSub==='groups') renderManageTab($('settingsSubBody'));
+  else if(_settingsSub==='appearance') renderAppearanceTab($('settingsSubBody'));
+  else renderItemsTab($('settingsSubBody'));
+}
+
+/* ---------- المظهر والشعار ---------- */
+async function renderAppearanceTab(body){
+  body.innerHTML='<div class="text-center py-12"><div class="spinner mx-auto"></div></div>';
+  const r=await guard(DS.getSettings(['logo_url','halaqa_name','halaqa_tagline']),'تحميل الإعدادات…');
+  const v=(r&&r.values)||{};
+  const currentLogo = v.logo_url||'';
+  const currentName = v.halaqa_name||'';
+  const currentTag  = v.halaqa_tagline||'';
+
+  body.innerHTML=`<div class="grid md:grid-cols-2 gap-6 fade-in">
+
+    <!-- بطاقة صحة قاعدة البيانات (تظهر أعلى القسمين) -->
+    <div class="md:col-span-2 bg-gradient-to-l from-brand-900 to-brand-800 text-white p-6 rounded-2xl shadow-saas">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center text-gold-500 text-2xl">🩺</div>
+          <div>
+            <h3 class="text-lg font-extrabold">صحة قاعدة البيانات</h3>
+            <p class="text-sm font-bold text-gold-100/80">فحص وإصلاح الربط بين المستخدمين وسجلات الطلاب والمجموعات</p>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="doDbHealthCheck()" class="btn bg-white/10 backdrop-blur text-white hover:bg-white/20 border border-white/20 text-sm">🔍 فحص</button>
+          <button onclick="doDbRepair(true)" class="btn bg-gold-500 text-brand-900 hover:bg-gold-400 shadow-md text-sm">🔧 إصلاح تلقائي</button>
+        </div>
+      </div>
+      <div id="db_health_result" class="mt-4"></div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">🎨 شعار الحلقة والهوية</h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">رابط الشعار (URL)</label>
+          <input id="ap_logo" value="${esc(currentLogo)}" placeholder="https://example.com/logo.png" class="input" oninput="apPreviewLogo(this.value)">
+          <p class="text-[11px] font-bold text-gray-500 mt-2 leading-relaxed">💡 ارفع الشعار على Google Drive أو أي خدمة استضافة، وانسخ الرابط المباشر هنا. الأفضل PNG بخلفية شفافة، أبعاد مربّعة (256×256).</p>
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">اسم الحلقة (يظهر في الشريط الجانبي)</label>
+          <input id="ap_name" value="${esc(currentName)}" placeholder="حلقة ابن كثير" class="input">
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-2">الشعار الفرعي (Tagline)</label>
+          <input id="ap_tag" value="${esc(currentTag)}" placeholder="مجمع حلق الراجحي" class="input">
+        </div>
+        <button onclick="doSaveAppearance()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-2">💾 حفظ وتطبيق</button>
+        ${currentLogo?`<button onclick="doClearLogo()" class="w-full bg-red-50 text-danger font-bold py-2 rounded-xl border border-red-100 hover:bg-red-100 transition text-sm">إزالة الشعار الحالي</button>`:''}
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">👁 معاينة الشعار</h3>
+      <div class="bg-gradient-to-br from-brand-900 to-brand-800 p-8 rounded-2xl text-center min-h-[240px] flex flex-col items-center justify-center">
+        <div id="ap_preview_wrap" class="w-32 h-32 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mb-4 overflow-hidden">
+          ${currentLogo
+            ? `<img id="ap_preview" src="${esc(currentLogo)}" alt="Logo" class="w-full h-full object-contain">`
+            : `<span class="text-gold-500 text-5xl">📖</span>`}
+        </div>
+        <div class="text-white font-extrabold text-lg">${esc(currentName||'حلقة ابن كثير')}</div>
+        <div class="text-gold-500 font-bold text-xs mt-1">${esc(currentTag||'مجمع حلق الراجحي')}</div>
+      </div>
+      <p class="text-[11px] font-bold text-gray-500 mt-4 text-center leading-relaxed">سيظهر الشعار في: <br>▪ الشريط الجانبي ▪ شاشة تسجيل الدخول ▪ التقارير المُصدَّرة</p>
+    </div>
+  </div>`;
+}
+function apPreviewLogo(url){
+  const wrap = $('ap_preview_wrap'); if(!wrap) return;
+  if(!url){ wrap.innerHTML = '<span class="text-gold-500 text-5xl">📖</span>'; return; }
+  wrap.innerHTML = `<img src="${esc(url)}" alt="Logo" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 text-3xl\\'>⚠️</span>'">`;
+}
+async function doSaveAppearance(){
+  const logo=$('ap_logo').value.trim(), name=$('ap_name').value.trim(), tag=$('ap_tag').value.trim();
+  await guard(Promise.all([
+    DS.setSetting('logo_url', logo),
+    DS.setSetting('halaqa_name', name),
+    DS.setSetting('halaqa_tagline', tag)
+  ]),'حفظ…');
+  toast('تم الحفظ');
+  applyBranding({logo_url:logo, halaqa_name:name, halaqa_tagline:tag});
+  renderAppearanceTab($('settingsSubBody'));
+}
+async function doClearLogo(){
+  await guard(DS.setSetting('logo_url',''),'إزالة الشعار…');
+  toast('تمت إزالة الشعار');
+  applyBranding({logo_url:'', halaqa_name:$('ap_name').value.trim(), halaqa_tagline:$('ap_tag').value.trim()});
+  renderAppearanceTab($('settingsSubBody'));
+}
+
+/* تطبيق الهوية على الشريط الجانبي وشاشة الدخول */
+function applyBranding(v){
+  v = v || {};
+  const logo = v.logo_url || '';
+  const name = v.halaqa_name || 'حلقة ابن كثير';
+  const tag  = v.halaqa_tagline || 'مجمع حلق الراجحي';
+
+  // Sidebar
+  const sbLogo = document.querySelector('#sidebar .brand-logo-slot');
+  if(sbLogo){
+    sbLogo.innerHTML = logo
+      ? `<img src="${esc(logo)}" alt="Logo" class="w-full h-full object-contain rounded-xl">`
+      : `<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>`;
+  }
+  const sbName = document.querySelector('#sidebar .brand-name-slot');
+  if(sbName) sbName.textContent = name;
+
+  // Login screen
+  const lgLogo = document.querySelector('#loginScreen .brand-logo-slot');
+  if(lgLogo){
+    lgLogo.innerHTML = logo
+      ? `<img src="${esc(logo)}" alt="Logo" class="w-full h-full object-contain rounded-xl">`
+      : `<svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`;
+  }
+  const lgName = document.querySelector('#loginScreen .brand-name-slot');
+  if(lgName) lgName.textContent = name;
+  const lgTag  = document.querySelector('#loginScreen .brand-tag-slot');
+  if(lgTag) lgTag.textContent = tag;
+}
+
+/* ---------- فحص وإصلاح قاعدة البيانات ---------- */
+async function doDbHealthCheck(){
+  const box = $('db_health_result');
+  if(box) box.innerHTML = '<div class="text-white/70 text-sm font-bold">جارٍ الفحص...</div>';
+  const r = await guard(DS.dbHealthCheck(),'فحص قاعدة البيانات…');
+  if(!r || !r.success) return toast('فشل الفحص','error');
+  renderDbHealthResult(r);
+}
+
+function renderDbHealthResult(r){
+  const box = $('db_health_result'); if(!box) return;
+  const iss = r.issues || {};
+  const totalIssues = (iss.usersWithoutSd?.length||0) + (iss.sdWithoutUser?.length||0) + (iss.sdInvalidGroup?.length||0) + (iss.duplicates?.length||0);
+
+  const stat = (label, val, color)=>`<div class="bg-white/10 backdrop-blur rounded-xl p-3">
+    <div class="text-[11px] font-bold text-white/70">${label}</div>
+    <div class="text-xl font-extrabold ${color||'text-white'} tabular-nums">${val}</div>
+  </div>`;
+
+  const issList = (title, arr, formatter)=>arr && arr.length ? `
+    <details class="bg-white/10 backdrop-blur rounded-xl p-3 mt-2">
+      <summary class="cursor-pointer font-bold text-white text-sm">⚠️ ${title} (${arr.length})</summary>
+      <div class="mt-2 text-xs text-white/80 font-bold space-y-1 max-h-40 overflow-y-auto">
+        ${arr.slice(0,50).map(formatter).join('')}
+      </div>
+    </details>` : '';
+
+  box.innerHTML = `
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+      ${stat('👤 المستخدمون', r.counts.users)}
+      ${stat('🎓 طلاب في Users', r.counts.studentUsers)}
+      ${stat('📋 Students_Data', r.counts.studentsData)}
+      ${stat('👥 المجموعات', r.counts.groups)}
+    </div>
+    ${totalIssues===0
+      ? `<div class="bg-success/20 border border-success/40 rounded-xl p-3 text-white font-extrabold text-center">✅ قاعدة البيانات سليمة تماماً — لا توجد مشاكل</div>`
+      : `<div class="bg-gold-500/20 border border-gold-500/40 rounded-xl p-3 text-gold-100 font-extrabold mb-2">⚠️ عثرنا على ${totalIssues} مشكلة — انقر "إصلاح تلقائي" لإصلاحها</div>
+        ${issList('طلاب في Users بدون Students_Data', iss.usersWithoutSd, x=>`<div>• ${esc(x.name||'—')} (${esc(x.id)})</div>`)}
+        ${issList('يتامى في Students_Data بلا Users', iss.sdWithoutUser, x=>`<div>• ${esc(x.id)}</div>`)}
+        ${issList('طلاب في مجموعات محذوفة', iss.sdInvalidGroup, x=>`<div>• طالب ${esc(x.id)} — مجموعة ${esc(x.group)}</div>`)}
+        ${issList('معرفات مكررة', iss.duplicates, x=>`<div>• ${esc(x.id)} (${x.count} مرات)</div>`)}
+      `}
+  `;
+}
+
+async function doDbRepair(confirmFirst){
+  if(confirmFirst && !confirm('سيتم إصلاح الربط بين الجداول تلقائياً. هذه العملية آمنة ولن تحذف أي بيانات. المتابعة؟')) return;
+  const r = await guard(DS.dbRepair(),'إصلاح قاعدة البيانات…');
+  if(!r || !r.success) return toast('فشل الإصلاح','error');
+  toast(r.message || 'تم الإصلاح','success');
+  await refreshTeacherStudents();
+  doDbHealthCheck();
+}
+
+/* تحميل الهوية عند فتح التطبيق */
+async function loadBrandingOnce(){
+  try{
+    const r = await DS.getSettings(['logo_url','halaqa_name','halaqa_tagline']);
+    if(r && r.values) applyBranding(r.values);
+  }catch(e){}
+}
+
+/* ---------------------------------------------------------------
+   تكملة دوال الإعدادات والأخبار
+   --------------------------------------------------------------- */
+function renderNewsTab(body){
+  const va={Students:'الطلاب',Parents:'الأولياء',All:'الجميع'};
+  const rows=(_tData.news||[]).map(n=>`<div class="bg-white border border-gray-100 rounded-xl p-5 mb-3 shadow-sm hover:shadow-saas transition"><div class="flex items-start justify-between gap-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap mb-2"><h4 class="font-extrabold text-brand-900 text-lg">${esc(n.Title)}</h4><span class="px-2 py-1 rounded bg-gold-100 text-gold-700 text-xs font-bold">${esc(va[n.Visibility]||n.Visibility)}</span><span class="text-xs font-bold text-gray-400">${esc(n.Date)}</span></div><p class="text-sm font-bold text-gray-600 whitespace-pre-line leading-relaxed">${esc(n.Body)}</p></div><button onclick="confirmDeleteNews('${esc(n.News_ID)}')" class="w-10 h-10 rounded-xl bg-red-50 text-danger hover:bg-red-100 flex items-center justify-center transition shrink-0">${svg('trash','w-5 h-5')}</button></div></div>`).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات منشورة</p></div>';
+  body.innerHTML=`<div class="grid lg:grid-cols-5 gap-6 fade-in">
+    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-5 h-5 text-gold-500')} نشر إعلان جديد</h3>
+      <div class="space-y-4">
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">العنوان</label><input id="nw_title" class="input"></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">النص</label><textarea id="nw_body" rows="4" class="input"></textarea></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">الظهور لـ</label><select id="nw_vis" class="input"><option value="All">الجميع</option><option value="Students">الطلاب فقط</option><option value="Parents">الأولياء فقط</option></select></div>
+        <button onclick="doAddNews()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-2">نشر الإعلان</button>
+      </div>
+    </div>
+    <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('history','w-5 h-5 text-gold-500')} الإعلانات المنشورة</h3><div class="max-h-[600px] overflow-y-auto pr-2">${rows}</div></div></div>`;
+}
+async function doAddNews(){const t=$('nw_title').value.trim(),b=$('nw_body').value.trim(),v=$('nw_vis').value;if(!t||!b)return toast('أكمل الحقول','warn');const r=await guard(DS.addNews(t,b,v),'نشر…');if(!r||!r.success)return;_tData.news.unshift(r.news);toast('تم النشر بنجاح');renderNewsTab($('newsSubBody'))}
+function confirmDeleteNews(id){openModal('حذف إعلان',`<p class="text-gray-700 font-bold mb-6">هل أنت متأكد من حذف هذا الإعلان؟</p><div class="flex gap-3"><button onclick="doDeleteNews('${esc(id)}')" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+async function doDeleteNews(id){const r=await guard(DS.deleteNews(id),'حذف…');if(!r)return;closeModal();_tData.news=_tData.news.filter(n=>String(n.News_ID)!==String(id));toast('تم الحذف');renderNewsTab($('newsSubBody'))}
+
+/* Calendar & Events */
+let _calDate=new Date(),_calEvents=[];
+function renderCalendarTab(body){_calEvents=(_tData.events||[]).slice();_calDate=new Date();
+  const up=_calEvents.filter(e=>e.Date>=ymd(new Date())).sort((a,b)=>String(a.Date).localeCompare(String(b.Date))).slice(0,8);
+  body.innerHTML=`<div class="grid lg:grid-cols-5 gap-6 fade-in">
+    <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-2 flex items-center gap-2">${svg('calendar','w-5 h-5 text-gold-500')} التقويم</h3><p class="text-sm font-bold text-gray-500 mb-6">اضغط على أي يوم لإضافة فعالية أو برنامج</p><div id="teacherCal" class="bg-surface p-4 rounded-xl border border-gray-100"></div></div>
+    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('history','w-5 h-5 text-gold-500')} الفعاليات القادمة</h3>
+      <div class="max-h-[460px] overflow-y-auto space-y-3 pr-2">${up.map(e=>`<div class="bg-white border border-gray-100 rounded-xl p-4 flex items-start justify-between gap-3 shadow-sm"><div class="flex-1"><p class="font-extrabold text-brand-900 text-base mb-1">${esc(e.Title)}</p><div class="flex gap-3 text-xs font-bold"><span class="text-gray-500">${esc(e.Date)}</span><span class="text-gold-600">${toHijri(e.Date)}</span></div></div><button onclick="confirmDeleteEvent('${esc(e.Event_ID)}')" class="w-8 h-8 rounded-lg bg-red-50 text-danger flex items-center justify-center hover:bg-red-100 transition">${svg('trash','w-4 h-4')}</button></div>`).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-6 text-center"><p class="text-gray-400 font-bold">لا يوجد فعاليات مجدولة</p></div>'}</div></div></div>`;
+  renderCalendarInto('teacherCal',_calEvents,true);
+}
+function renderCalendarInto(id,events,editable){const c=$(id);if(!c)return;const y=_calDate.getFullYear(),m=_calDate.getMonth();const first=new Date(y,m,1),startDow=first.getDay(),days=new Date(y,m+1,0).getDate();const gMonth=new Intl.DateTimeFormat('ar',{month:'long',year:'numeric'}).format(first);const hRange=toHijri(ymd(new Date(y,m,1)))+' — '+toHijri(ymd(new Date(y,m,days)));const evMap={};(events||[]).forEach(e=>{(evMap[e.Date]=evMap[e.Date]||[]).push(e)});const dow=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];let cells='';for(let i=0;i<startDow;i++)cells+='<div></div>';const t=ymd(new Date());for(let day=1;day<=days;day++){const dobj=new Date(y,m,day),ds=ymd(dobj),has=evMap[ds],isT=ds===t;cells+=`<div onclick="${editable?`openAddEvent('${ds}')`:`showDayEvents('${ds}')`}" class="relative bg-white border border-gray-100 rounded-xl p-2 min-h-[70px] cursor-pointer hover:border-brand-500 transition shadow-sm ${isT?'ring-2 ring-gold-500':''} ${has?'bg-brand-50/30':''}"><div class="flex justify-between items-start"><span class="text-sm font-extrabold ${isT?'text-gold-600':'text-gray-900'}">${day}</span><span class="text-[10px] font-bold text-gray-400">${hijriDay(dobj)}</span></div>${has?`<div class="mt-2 space-y-1">${has.slice(0,2).map(e=>`<div class="text-[9px] font-bold bg-brand-900 text-white rounded px-1.5 py-0.5 truncate">${esc(e.Title)}</div>`).join('')}${has.length>2?`<div class="text-[10px] font-bold text-gray-500 text-center bg-gray-100 rounded mt-1">+${has.length-2}</div>`:''}</div>`:''}</div>`}c.innerHTML=`<div class="flex items-center justify-between mb-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100"><button onclick="_calDate.setMonth(_calDate.getMonth()-1);renderCalendarInto('${id}',_calEvents,${editable})" class="w-10 h-10 rounded-lg bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 flex items-center justify-center transition">&lt;</button><div class="text-center"><div class="font-extrabold text-brand-900 text-lg">${gMonth}</div><div class="text-xs font-bold text-gold-600">${hRange}</div></div><button onclick="_calDate.setMonth(_calDate.getMonth()+1);renderCalendarInto('${id}',_calEvents,${editable})" class="w-10 h-10 rounded-lg bg-gray-50 hover:bg-gray-100 font-bold text-gray-600 flex items-center justify-center transition">&gt;</button></div><div class="grid grid-cols-7 gap-2 mb-2">${dow.map(d=>`<div class="text-center text-xs font-extrabold text-gray-500 bg-white py-2 rounded-lg shadow-sm border border-gray-100">${d}</div>`).join('')}</div><div class="grid grid-cols-7 gap-2">${cells}</div>`}
+function showDayEvents(ds){const l=_calEvents.filter(e=>e.Date===ds);if(!l.length)return;openModal('فعاليات '+ds,`<p class="text-sm font-bold text-gold-600 mb-4">${toHijri(ds)}</p>`+l.map(e=>`<div class="bg-surface border border-gray-100 rounded-xl p-4 mb-3"><div class="flex items-center gap-2 mb-2"><p class="font-extrabold text-brand-900 text-lg">${esc(e.Title)}</p>${e.Type?`<span class="px-2 py-1 bg-brand-100 text-brand-700 text-xs font-bold rounded">${esc(e.Type)}</span>`:''}</div>${e.Description?`<p class="text-sm font-bold text-gray-600 leading-relaxed">${esc(e.Description)}</p>`:''}</div>`).join(''))}
+function openAddEvent(ds){openModal('إضافة فعالية · '+ds,`<p class="text-sm font-bold text-gold-600 mb-6">${toHijri(ds)}</p><div class="space-y-4"><div><label class="block text-sm font-bold text-gray-700 mb-2">عنوان الفعالية</label><input id="ev_title" class="input"></div><div><label class="block text-sm font-bold text-gray-700 mb-2">النوع</label><select id="ev_type" class="input"><option value="اختبار">اختبار</option><option value="فعالية">فعالية</option><option value="برنامج">برنامج</option><option value="عام">عام</option></select></div><div><label class="block text-sm font-bold text-gray-700 mb-2">التفاصيل والوصف</label><textarea id="ev_desc" rows="3" class="input"></textarea><input type="hidden" id="ev_date" value="${esc(ds)}"></div><div class="flex gap-3 pt-2"><button onclick="doAddEvent()" class="btn bg-brand-900 text-white flex-1 shadow-md">إضافة الفعالية</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div></div>`)}
+async function doAddEvent(){const t=$('ev_title').value.trim();if(!t)return toast('العنوان مطلوب','warn');const r=await guard(DS.addEvent(t,$('ev_desc').value.trim(),$('ev_date').value,$('ev_type').value),'إضافة…');if(!r||!r.success)return;_tData.events.push(r.event);closeModal();toast('تمت الإضافة');renderCalendarTab($('newsSubBody'))}
+function confirmDeleteEvent(id){openModal('حذف فعالية',`<p class="text-gray-700 font-bold mb-6">هل أنت متأكد من حذف هذه الفعالية؟</p><div class="flex gap-3"><button onclick="doDeleteEvent('${esc(id)}')" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+async function doDeleteEvent(id){const r=await guard(DS.deleteEvent(id),'حذف…');if(!r)return;closeModal();_tData.events=_tData.events.filter(e=>String(e.Event_ID)!==String(id));toast('تم الحذف');renderCalendarTab($('newsSubBody'))}
+
+/* Items */
+const TRIGGER_OPTS=[['none','بدون ربط'],['on_done','عند إتمام الحفظ ✅'],['on_partial','عند حفظ جزئي ⚠️'],['on_review_done','عند إتمام المراجعة 📗'],['on_attend_present','عند تسجيل حاضر 🟢'],['on_attend_late','عند تسجيل متأخر 🟡']];
+function triggerLabel(t){const f=TRIGGER_OPTS.find(x=>x[0]===t);return f?f[1]:t}
+function renderItemsTab(body){
+  const rows=_tData.items.map(i=>`<div class="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-4 hover:shadow-sm transition mb-3">
+    <div class="w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-lg ${Number(i.Point_Value)>=0?'bg-green-50 text-success':'bg-red-50 text-danger'}">${Number(i.Point_Value)>=0?'+':''}${esc(i.Point_Value)}</div>
+    <div class="flex-1 min-w-0"><div class="font-extrabold text-gray-900 text-base">${esc(i.Description)}</div><div class="text-xs font-bold text-gray-500 mt-1 bg-surface inline-block px-2 py-1 rounded">${esc(triggerLabel(i.Trigger||'none'))}</div></div>
+    <div class="flex flex-col gap-2 shrink-0"><button onclick="openEditItem('${esc(i.Item_ID)}')" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 hover:bg-brand-50 hover:text-brand-700 flex items-center justify-center transition">${svg('edit','w-4 h-4')}</button><button onclick="confirmDeleteItem('${esc(i.Item_ID)}','${esc(i.Description)}')" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-danger flex items-center justify-center transition">${svg('trash','w-4 h-4')}</button></div>
+  </div>`).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا يوجد بنود نقاط حالياً</p></div>';
+  body.innerHTML=`<div class="grid md:grid-cols-2 gap-6 fade-in">
+    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('plus','w-5 h-5 text-gold-500')} إضافة بند جديد</h3>
+      <div class="space-y-4">
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">وصف البند</label><input id="it_desc" class="input"></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">قيمة النقاط (+ أو -)</label><input id="it_val" type="number" class="input" placeholder="مثال: 5 أو -3"></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">الربط التلقائي بنظام المتابعة</label><select id="it_trig" class="input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('')}</select></div>
+        <p class="text-xs font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed mt-2">💡 عند اختيار "ربط تلقائي"، سيتم منح (أو خصم) هذه النقاط للطالب آلياً عند تسجيل الحدث المرتبط في شاشة المتابعة (مرة واحدة يومياً).</p>
+        <button onclick="doAddItem()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-4">حفظ البند</button>
+      </div>
+    </div>
+    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('history','w-5 h-5 text-gold-500')} بنود النقاط الحالية</h3><div class="max-h-[550px] overflow-y-auto pr-2">${rows}</div></div></div>`;
+}
+async function doAddItem(){const d=$('it_desc').value.trim(),v=$('it_val').value,tr=$('it_trig').value;if(!d||v==='')return toast('أكمل البيانات','warn');const r=await guard(DS.addPointItem(d,v,tr),'إضافة…');if(!r||!r.success)return;_tData.items.push(r.item);toast('تمت الإضافة');renderItemsTab($('settingsSubBody'))}
+function openEditItem(id){const it=_tData.items.find(x=>String(x.Item_ID)===String(id));if(!it)return;
+  openModal('تعديل البند',`<div class="space-y-4">
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">الوصف</label><input id="ei_desc" value="${esc(it.Description)}" class="input"></div>
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">القيمة</label><input id="ei_val" type="number" value="${esc(it.Point_Value)}" class="input"></div>
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">الربط التلقائي</label><select id="ei_trig" class="input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}" ${(it.Trigger||'none')===t[0]?'selected':''}>${t[1]}</option>`).join('')}</select></div>
+    <div class="flex gap-3 pt-2"><button onclick="saveEditItem('${esc(id)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">تحديث التغييرات</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
+  </div>`);
+}
+async function saveEditItem(id){const upd={Description:$('ei_desc').value.trim(),Point_Value:Number($('ei_val').value)||0,Trigger:$('ei_trig').value};const r=await guard(DS.updatePointItem(id,upd),'حفظ…');if(!r||!r.success)return;const it=_tData.items.find(x=>String(x.Item_ID)===String(id));if(it)Object.assign(it,upd);closeModal();toast('تم التحديث');renderItemsTab($('settingsSubBody'))}
+function confirmDeleteItem(id,d){openModal('حذف بند',`<p class="text-gray-700 font-bold mb-6">هل أنت متأكد من حذف البند «${esc(d)}»؟</p><div class="flex gap-3"><button onclick="doDeleteItem('${esc(id)}')" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+async function doDeleteItem(id){const r=await guard(DS.deletePointItem(id),'حذف…');if(!r)return;closeModal();_tData.items=_tData.items.filter(i=>String(i.Item_ID)!==String(id));toast('تم الحذف');renderItemsTab($('settingsSubBody'))}
+
+/* Manage Groups — نسخة v3.3 مع إدارة أعضاء ونقاط جماعية */
+function renderManageTab(body){
+  const {nameMap}=tMaps();
+  const gRows=_tData.groups.map(g=>{
+    const inGroup=_tData.students.filter(s=>String(s.Group_ID)===String(g.Group_ID));
+    const c=inGroup.length;
+    const preview = inGroup.slice(0,4).map(s => `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-50 text-brand-800 rounded-md text-[11px] font-bold border border-brand-100">${esc(nameMap[s.Student_ID]||s.Student_ID)}</span>`).join(' ') + (c>4?` <span class="text-[11px] font-bold text-gray-500">+${c-4}</span>`:'');
+    return `<div class="bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-saas-hover transition mb-4">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-900 to-brand-800 text-gold-500 flex items-center justify-center shadow-sm shrink-0">${svg('users','w-7 h-7')}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-extrabold text-gray-900 text-lg truncate">${esc(g.Group_Name)}</div>
+          <div class="text-xs font-bold text-gray-500 mt-1 flex items-center gap-3 flex-wrap">
+            <span>👥 ${c} طلاب</span>
+            <span class="text-gold-600">⭐ ${esc(g.Group_Total_Points)} نقطة</span>
+          </div>
+        </div>
+      </div>
+      ${c?`<div class="flex flex-wrap gap-1 mb-4 pr-2">${preview}</div>`:''}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <button onclick="openGroupMembers('${esc(g.Group_ID)}','${esc(g.Group_Name)}')" class="btn bg-brand-50 text-brand-900 hover:bg-brand-100 text-xs py-2">${svg('users','w-4 h-4')} الأعضاء</button>
+        <button onclick="openAddGroupPoints('${esc(g.Group_ID)}','${esc(g.Group_Name)}')" class="btn bg-gold-100 text-gold-700 hover:bg-gold-200 text-xs py-2">${svg('trophy','w-4 h-4')} +نقاط للمجموعة</button>
+        <button onclick="openBulkGroupPoints('${esc(g.Group_ID)}','${esc(g.Group_Name)}')" class="btn bg-green-100 text-green-700 hover:bg-green-200 text-xs py-2">${svg('points','w-4 h-4')} +نقاط للأفراد</button>
+        <button onclick="confirmDeleteGroup('${esc(g.Group_ID)}','${esc(g.Group_Name)}')" class="btn bg-red-50 text-danger hover:bg-red-100 text-xs py-2">${svg('trash','w-4 h-4')} حذف</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا يوجد مجموعات مسجلة</p></div>';
+
+  body.innerHTML=`<div class="grid md:grid-cols-3 gap-6 fade-in">
+    <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit">
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('plus','w-5 h-5 text-gold-500')} إضافة مجموعة جديدة</h3>
+      <div class="space-y-4">
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">اسم المجموعة</label><input id="g_name" class="input" placeholder="مثال: مجموعة الأنبياء"></div>
+        <button onclick="doAddGroup()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition">إضافة</button>
+      </div>
+      <div class="mt-6 pt-6 border-t border-gray-100">
+        <p class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed">💡 من زر <b>"الأعضاء"</b> يمكنك تحديد الطلاب المنضمين للمجموعة بنقرة واحدة، ومن زر <b>"+نقاط للأفراد"</b> يمكنك منح نقاط لكل طلاب المجموعة دفعة واحدة.</p>
+      </div>
+    </div>
+    <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('users','w-5 h-5 text-gold-500')} المجموعات الحالية</h3>
+      <div class="max-h-[600px] overflow-y-auto pr-2">${gRows}</div>
+    </div>
+  </div>`;
+}
+
+async function doAddGroup(){const n=$('g_name').value.trim();if(!n)return toast('أدخل الاسم','warn');const r=await guard(DS.addGroup(n),'إضافة…');if(!r)return;_tData.groups.push(r.group);toast('تمت الإضافة');renderManageTab($('settingsSubBody'))}
+function confirmDeleteGroup(id,n){openModal('حذف مجموعة',`<p class="text-gray-700 font-bold mb-6">هل أنت متأكد من حذف «${esc(n)}»؟ (يجب ألا تحتوي على طلاب)</p><div class="flex gap-3"><button onclick="doDeleteGroup('${esc(id)}')" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+async function doDeleteGroup(id){const r=await guard(DS.deleteGroup(id),'حذف…');if(!r)return;if(!r.success){closeModal();return toast(r.message,'error')}closeModal();_tData.groups=_tData.groups.filter(g=>String(g.Group_ID)!==String(id));toast('تم الحذف');renderManageTab($('settingsSubBody'))}
+
+/* --- إدارة أعضاء المجموعة (Checklist) --- */
+let _grpEditSearch = '';
+async function openGroupMembers(gid, gname){
+  _grpEditSearch = '';
+  openModal('👥 أعضاء — '+esc(gname), `<div class="text-center py-8"><div class="spinner mx-auto"></div></div>`);
+  await refreshTeacherStudents();
+  renderGroupMembersModal(gid, gname);
+}
+function renderGroupMembersModal(gid, gname){
+  const {nameMap, groupMap} = tMaps();
+  const all = _tData.students.slice();
+  const currentInGroup = new Set(all.filter(s => String(s.Group_ID)===String(gid)).map(s => String(s.Student_ID)));
+
+  const filtered = _grpEditSearch
+    ? all.filter(s => arMatches(nameMap[s.Student_ID]||s.Student_ID, _grpEditSearch))
+    : all;
+
+  const list = filtered.map(s => {
+    const sid = String(s.Student_ID);
+    const inThis = currentInGroup.has(sid);
+    const otherGroup = s.Group_ID && String(s.Group_ID)!==String(gid) ? (groupMap[s.Group_ID]||'—') : '';
+    return `<label class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition ${inThis?'bg-brand-50 border-brand-200':''}">
+      <input type="checkbox" data-sid="${esc(sid)}" ${inThis?'checked':''} class="grp_sel w-5 h-5 accent-brand-900">
+      <div class="w-9 h-9 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold shrink-0">${esc((nameMap[sid]||'?').charAt(0))}</div>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-gray-900 truncate text-sm">${esc(nameMap[sid]||sid)}</div>
+        ${otherGroup?`<div class="text-[11px] font-bold text-orange-600">حالياً في: ${esc(otherGroup)}</div>`:''}
+      </div>
+      <span class="text-[11px] font-bold text-gold-600 shrink-0">${s.Total_Points||0} نقطة</span>
+    </label>`;
+  }).join('') || '<p class="text-gray-400 text-center py-8 font-bold">لا نتائج</p>';
+
+  const totalSelected = currentInGroup.size;
+
+  const body = `<div class="space-y-3">
+    <div class="flex items-center gap-2">
+      <input type="text" id="grp_search" value="${esc(_grpEditSearch)}" oninput="grpEditSearchChange(this.value,'${esc(gid)}','${esc(gname)}')" placeholder="🔍 ابحث عن طالب..." class="input flex-1 py-2 text-sm">
+      <div class="text-xs font-bold text-gray-500 whitespace-nowrap px-3 py-2 bg-brand-50 rounded-lg" id="grp_selCount">${totalSelected} محدد</div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="grpSelectAll(true)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-1.5 flex-1">تحديد الظاهرين</button>
+      <button onclick="grpSelectAll(false)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-1.5 flex-1">إلغاء تحديد الظاهرين</button>
+    </div>
+    <div class="max-h-[420px] overflow-y-auto space-y-2 border border-gray-100 rounded-xl p-2 bg-surface">${list}</div>
+    <div class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100">💡 عند نقل طالب من مجموعة إلى أخرى، ستُنقل نقاطه الكلية معه.</div>
+    <div class="flex gap-3 pt-2">
+      <button onclick="saveGroupMembers('${esc(gid)}','${esc(gname)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">💾 حفظ التغييرات</button>
+      <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>
+    </div>
+  </div>`;
+  $('modalBody').innerHTML = body;
+
+  // Auto-update count
+  document.querySelectorAll('.grp_sel').forEach(cb => cb.addEventListener('change', ()=>{
+    const n = document.querySelectorAll('.grp_sel:checked').length;
+    const el = $('grp_selCount'); if(el) el.textContent = n+' محدد';
+  }));
+}
+function grpEditSearchChange(v, gid, gname){ _grpEditSearch = v; renderGroupMembersModal(gid, gname); }
+function grpSelectAll(on){ document.querySelectorAll('.grp_sel').forEach(cb => cb.checked = !!on); const n = document.querySelectorAll('.grp_sel:checked').length; const el = $('grp_selCount'); if(el) el.textContent = n+' محدد'; }
+async function saveGroupMembers(gid){
+  const ids = Array.from(document.querySelectorAll('.grp_sel:checked')).map(cb => cb.dataset.sid);
+  const r = await guard(DS.setGroupStudents(gid, ids),'حفظ التعديلات…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  closeModal();
+  toast(`تم · +${r.added||0} / -${r.removed||0}`);
+  await refreshTeacherStudents();
+  renderManageTab($('settingsSubBody'));
+}
+
+/* --- إضافة نقاط للمجموعة ككل --- */
+function openAddGroupPoints(gid, gname){
+  openModal('⭐ إضافة نقاط للمجموعة — '+esc(gname), `<div class="space-y-4">
+    <p class="text-sm font-bold text-gray-600 leading-relaxed bg-gold-50 border border-gold-100 rounded-xl p-3">هذه النقاط تُضاف إلى <b>رصيد المجموعة</b> فقط ولا تُوزّع على الأفراد. تظهر في لوحة ترتيب المجموعات.</p>
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">القيمة (يمكن سالبة)</label><input type="number" id="gpt_val" class="input text-center font-extrabold text-lg" placeholder="10"></div>
+    <div class="grid grid-cols-4 gap-2">
+      ${[5,10,20,50].map(v=>`<button onclick="$('gpt_val').value=${v}" class="btn bg-gold-100 text-gold-700 hover:bg-gold-200 py-2 text-sm">+${v}</button>`).join('')}
+    </div>
+    <div class="flex gap-3 pt-2">
+      <button onclick="doAddGroupPoints('${esc(gid)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">إضافة النقاط</button>
+      <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>
+    </div>
+  </div>`);
+}
+async function doAddGroupPoints(gid){
+  const v = Number($('gpt_val').value)||0;
+  if(!v) return toast('أدخل قيمة','warn');
+  const r = await guard(DS.addGroupPoints(gid, v, currentUser?.ID||''), 'حفظ…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  closeModal();
+  toast(`${v>=0?'+':''}${v} للمجموعة`);
+  await refreshTeacherStudents();
+  renderManageTab($('settingsSubBody'));
+}
+
+/* --- إضافة نقاط لكل أفراد المجموعة (اختيار بند) --- */
+function openBulkGroupPoints(gid, gname){
+  const inGroup = _tData.students.filter(s=>String(s.Group_ID)===String(gid));
+  if(!inGroup.length){
+    return openModal('لا يوجد أعضاء', `<p class="text-gray-600 font-bold mb-4">هذه المجموعة فارغة. أضف طلاباً أولاً من زر "الأعضاء".</p><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 w-full">حسناً</button>`);
+  }
+  const opts = _tData.items.map(i=>`<button onclick="doBulkGroupPoints('${esc(gid)}','${esc(i.Item_ID)}',${inGroup.length})" class="w-full text-right p-3 rounded-xl border border-gray-100 hover:bg-gray-50 flex items-center justify-between transition font-bold text-gray-700">
+    <span>${esc(i.Description)}</span>
+    <span class="px-2 py-1 rounded-md text-xs ${Number(i.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(i.Point_Value)>=0?'+':''}${esc(i.Point_Value)}</span>
+  </button>`).join('') || '<p class="text-gray-400 text-center py-6 font-bold">لا يوجد بنود نقاط</p>';
+  openModal(`⭐ +نقاط لأفراد "${esc(gname)}" (${inGroup.length})`, `<div class="space-y-3">
+    <p class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100">سيتم منح البند المختار لكل طالب في المجموعة (${inGroup.length} طالب).</p>
+    <div class="space-y-2 max-h-[400px] overflow-y-auto">${opts}</div>
+    <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 w-full mt-2">إلغاء</button>
+  </div>`);
+}
+async function doBulkGroupPoints(gid, itemId, count){
+  if(!confirm(`سيتم منح البند لـ ${count} طالب. متأكد؟`)) return;
+  const r = await guard(DS.addPointsToGroupStudents(gid, itemId, currentUser?.ID||''),'توزيع النقاط…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  closeModal();
+  toast(`تم منح ${r.pointsEach>=0?'+':''}${r.pointsEach} لـ ${r.count} طالب (إجمالي ${r.totalAdded})`);
+  await refreshTeacherStudents();
+  renderManageTab($('settingsSubBody'));
+}
+
+
+/* ============================================================
+   بوابة الطالب
+   ============================================================ */
+async function renderStudent(){
+  const d=await guard(DS.getStudentDashboard(currentUser.ID),'تحميل…');if(!d)return;
+  const feed=await guard(DS.getFeed('Student'),'تحميل الإعلانات…')||{news:[],events:[]};
+  $('mainNav').innerHTML=`
+    <div class="px-4 py-3 rounded-xl bg-brand-50 text-brand-900 font-bold flex items-center gap-3">${svg('home')} الرئيسية</div>
+  `;
+  const done=d.todayPlan?.Accomplishment_Status; const pct=done==='Done'?100:done==='Partial'?50:0; const rc=done==='Done'?'#10b981':done==='Partial'?'#d4af37':done==='Missed'?'#ef4444':'#94a3b8';
+  const prog=d.progress||{};
+  const posBox=(p,label,cls,cnt)=>p&&p.surah?`<div class="rounded-2xl p-4 ${cls} border bg-opacity-10"><div class="text-xs font-bold opacity-80 flex items-center gap-1">${svg('location','w-3 h-3')} ${label}</div><div class="text-lg font-extrabold mt-2 text-gray-900">${esc(p.surah)}</div>${p.ayah?`<div class="text-sm font-bold text-gray-600 mt-1">آية ${esc(p.ayah)}</div>`:''}<div class="text-xs font-bold text-gray-500 mt-3 pt-3 border-t border-gray-200/50">${cnt||0} إنجاز مسجل</div></div>`:`<div class="rounded-2xl p-4 bg-gray-50 border border-gray-100 text-gray-400"><div class="text-xs font-bold">${label}</div><div class="text-sm font-bold mt-2">لم يبدأ بعد</div></div>`;
+  const badges=(d.badges||[]).map(b=>`<div class="badge-anim text-center p-4 bg-gold-50 border border-gold-100 rounded-2xl shadow-sm"><div class="text-4xl mb-2">${b.Icon||'🏅'}</div><div class="text-xs font-extrabold text-gold-700">${esc(b.Title)}</div></div>`).join('')||'<div class="col-span-full bg-surface border border-gray-100 p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">شارتك الأولى تنتظرك ✨ استمر في الإنجاز!</p></div>';
+  const logRows=d.logs.map(l=>`<tr class="border-b border-gray-100 hover:bg-gray-50 transition"><td class="p-4 text-xs text-gray-500 font-bold">${esc(l.Date)}</td><td class="p-4 text-sm font-bold text-gray-900">${esc(l.Description)}</td><td class="p-4"><span class="font-extrabold px-3 py-1 rounded-full text-xs ${Number(l.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(l.Point_Value)>=0?'+':''}${esc(l.Point_Value)}</span></td></tr>`).join('')||'<tr><td colspan="3" class="p-8 text-center text-gray-400 font-bold">لا يوجد سجل نقاط</td></tr>';
+  const medals=['🥇','🥈','🥉'];const board=d.leaderboard.map((g,i)=>`<div class="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition"><div class="flex items-center gap-4"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${i<3?'bg-gold-50 text-gold-600': 'bg-gray-100 text-gray-400'}">${medals[i]||i+1}</div><span class="font-extrabold text-gray-900">${esc(g.name)}</span></div><span class="font-extrabold text-brand-900 bg-brand-50 px-3 py-1 rounded-lg">${esc(g.points)} ن</span></div>`).join('');
+  
+  $('portal').innerHTML=`<div class="fade-in space-y-6">
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="rounded-3xl p-6 bg-brand-900 text-white shadow-saas relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-10 text-9xl">⭐️</div><div class="text-sm font-bold text-gold-500 mb-1 relative z-10">نقاطي الكلية</div><div class="text-5xl font-extrabold relative z-10">${d.totalPoints}</div></div>
+      <div class="rounded-3xl p-6 bg-success text-white shadow-saas relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-10 text-9xl">📈</div><div class="text-sm font-bold opacity-90 mb-1 relative z-10">نسبة الإنجاز</div><div class="text-5xl font-extrabold relative z-10">${d.stats.donePct}%</div><div class="text-xs font-bold opacity-80 mt-2 relative z-10">${d.stats.donePlans} من أصل ${d.stats.totalPlans} ورد</div></div>
+      <div class="rounded-3xl p-6 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-20 text-8xl">🔥</div><div class="text-sm font-bold mb-1 relative z-10">سلسلة الإنجاز</div><div class="text-5xl font-extrabold relative z-10">${d.stats.streak}</div><div class="text-xs font-bold opacity-80 mt-2 relative z-10">يوم متتالي من الحفظ</div></div>
+      <div class="rounded-3xl p-6 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-20 text-8xl">🏅</div><div class="text-sm font-bold mb-1 relative z-10">الشارات المكتسبة</div><div class="text-5xl font-extrabold relative z-10">${(d.badges||[]).length}</div></div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
+      <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('location','w-6 h-6 text-gold-500')} أين وصلت في رحلتك؟</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        ${posBox(prog.conserve,'مسار الحفظ','bg-green-50 border-green-200',prog.counts?.conserve)}
+        ${posBox(prog.revision,'مسار المراجعة','bg-blue-50 border-blue-200',prog.counts?.revision)}
+        ${posBox(prog.mastery,'مسار الإتقان','bg-gold-50 border-gold-200',prog.counts?.mastery)}
+      </div>
+    </div>
+    
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 lg:col-span-1 h-fit">
+        <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('book','w-6 h-6 text-gold-500')} خطة اليوم</h3>
+        ${d.todayPlan?`<div class="flex flex-col items-center text-center"><div class="relative mb-6"><svg class="w-32 h-32 -rotate-90" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#f1f5f9" stroke-width="12"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rc}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52-(pct/100)*2*Math.PI*52}"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-extrabold text-gray-900">${pct}%</span></div></div><div><p class="text-sm font-bold text-gray-500 mb-2">المطلوب إنجازه</p><p class="text-lg font-extrabold text-gray-900 mb-4 bg-surface px-4 py-2 rounded-xl border border-gray-100">${esc(d.todayPlan.Daily_Target)}</p><span class="inline-block px-4 py-2 rounded-xl font-bold text-sm ${done==='Done'?'bg-green-100 text-green-700':done==='Partial'?'bg-gold-100 text-gold-700':done==='Missed'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-600'}">${statusAr(done)}</span></div></div>`:'<div class="bg-surface p-8 rounded-2xl border border-gray-100 text-center"><p class="text-gray-400 font-bold">لا توجد خطة مسجلة لك هذا اليوم. خذ قسطاً من الراحة!</p></div>'}
+      </div>
+      
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 lg:col-span-2">
+        <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('history','w-6 h-6 text-gold-500')} سجل النقاط الأخير</h3>
+        <div class="max-h-[300px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100"><tr class="text-gray-500 text-xs font-bold"><th class="p-4">التاريخ</th><th class="p-4">تفاصيل البند</th><th class="p-4">النقاط</th></tr></thead><tbody class="divide-y divide-gray-50">${logRows}</tbody></table></div>
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
+      <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('trophy','w-6 h-6 text-gold-500')} لوحة الشرف والشارات</h3>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">${badges}</div>
+      <h4 class="font-extrabold text-gray-900 text-lg mb-4 border-t border-gray-100 pt-6">ترتيب المجموعات</h4>
+      <div class="grid md:grid-cols-2 gap-4">${board||'<p class="text-gray-400 font-bold text-center col-span-2">لا يوجد بيانات</p>'}</div>
+    </div>
+    
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} حائط الإعلانات</h3><div class="space-y-4 max-h-96 overflow-y-auto pr-2">${(feed.news||[]).map(n=>`<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2"><h4 class="font-extrabold text-brand-900 text-lg">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400">${esc(n.Date)}</span></div><p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p></div>`).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات جديدة</p></div>`}</div></div>
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 h-fit"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('calendar','w-6 h-6 text-gold-500')} التقويم والبرامج</h3><div id="stCal" class="bg-surface p-4 rounded-2xl border border-gray-100"></div></div>
+    </div>
+  </div>`;
+  _calEvents=feed.events||[];_calDate=new Date();renderCalendarInto('stCal',_calEvents,false);
+}
+
+/* ============================================================
+   بوابة ولي الأمر
+   ============================================================ */
+async function renderParent(){
+  const children=await guard(DS.getChildren(currentUser.ID),'تحميل…');if(!children)return;
+  const feed=await guard(DS.getFeed('Parent'),'تحميل…')||{news:[],events:[]};
+  $('mainNav').innerHTML=`<div class="px-4 py-3 rounded-xl bg-brand-50 text-brand-900 font-bold flex items-center gap-3">${svg('home')} لوحة ولي الأمر</div>`;
+  const opts=children.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  
+  $('portal').innerHTML=`<div class="fade-in space-y-6">
+    <div class="mb-2">
+      <h1 class="text-2xl font-extrabold text-gray-900">أهلًا بك، ${esc(currentUser.Name)}</h1>
+      <p class="text-gray-500 mt-1 font-bold">نظام المتابعة الأبوية لحلقة ابن كثير</p>
+    </div>
+    ${children.length?`<div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50 max-w-md"><label class="block text-sm font-bold text-gray-700 mb-3">اختر الابن لمتابعة إنجازه:</label><select id="childSel" onchange="loadChild()" class="input font-extrabold text-brand-900 shadow-sm">${opts}</select></div><div id="childView"></div>`:'<div class="bg-white p-12 rounded-3xl shadow-saas border border-gray-50 text-center"><p class="text-gray-400 font-bold text-lg">لا يوجد أبناء مرتبطون بحسابك حالياً.</p></div>'}
+    
+    <div class="grid lg:grid-cols-2 gap-6 mt-8 border-t border-gray-100 pt-8">
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} إعلانات أولياء الأمور</h3><div class="space-y-4 max-h-96 overflow-y-auto pr-2">${(feed.news||[]).map(n=>`<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2"><h4 class="font-extrabold text-brand-900 text-lg">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400">${esc(n.Date)}</span></div><p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p></div>`).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات</p></div>`}</div></div>
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 h-fit"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('calendar','w-6 h-6 text-gold-500')} التقويم الخاص بالحلقة</h3><div id="pCal" class="bg-surface p-4 rounded-2xl border border-gray-100"></div></div>
+    </div>
+  </div>`;
+  _calEvents=feed.events||[];_calDate=new Date();renderCalendarInto('pCal',_calEvents,false);
+  if(children.length)loadChild();
+}
+async function loadChild(){
+  const sid=$('childSel').value;const d=await guard(DS.getStudentDashboard(sid),'تحميل بيانات الابن…');if(!d)return;
+  const done=d.todayPlan?.Accomplishment_Status; const prog=d.progress||{};
+  const posBox=(p,label,cls)=>p&&p.surah?`<div class="rounded-2xl p-4 ${cls}"><div class="text-xs font-bold opacity-80">${label}</div><div class="font-extrabold text-lg mt-1">${esc(p.surah)}${p.ayah?' <span class="text-sm font-normal">آية '+esc(p.ayah)+'</span>':''}</div></div>`:`<div class="rounded-2xl p-4 bg-gray-50 border border-gray-100 text-gray-400"><div class="text-xs font-bold">${label}</div><div class="text-sm font-bold mt-1">لم يبدأ</div></div>`;
+  
+  $('childView').innerHTML=`<div class="grid md:grid-cols-4 gap-4 fade-in mt-6">
+    <div class="rounded-3xl p-6 bg-brand-900 text-white shadow-saas"><div class="text-xs text-gold-500 font-bold mb-1">النقاط الكلية</div><div class="text-4xl font-extrabold">${d.totalPoints}</div></div>
+    <div class="rounded-3xl p-6 bg-success text-white shadow-saas"><div class="text-xs opacity-90 font-bold mb-1">نسبة الإنجاز للخطط</div><div class="text-4xl font-extrabold">${d.stats.donePct}%</div></div>
+    <div class="rounded-3xl p-6 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm"><div class="text-xs font-bold mb-1">السلسلة 🔥</div><div class="text-4xl font-extrabold">${d.stats.streak} <span class="text-sm font-bold opacity-80">أيام</span></div></div>
+    <div class="rounded-3xl p-6 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm"><div class="text-xs font-bold mb-1">شارات التميز</div><div class="text-4xl font-extrabold">${(d.badges||[]).length}</div></div>
+    
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-4 mt-2">
+      <h3 class="text-xl font-extrabold text-brand-900 mb-5 flex items-center gap-2">${svg('location','w-6 h-6 text-gold-500')} أين وصل الابن في الحفظ؟</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        ${posBox(prog.conserve,'مسار الحفظ','bg-green-50 text-green-900 border border-green-200')}
+        ${posBox(prog.revision,'مسار المراجعة','bg-blue-50 text-blue-900 border border-blue-200')}
+        ${posBox(prog.mastery,'مسار الإتقان','bg-gold-50 text-gold-900 border border-gold-200')}
+      </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h3 class="text-xl font-extrabold text-brand-900 mb-1 flex items-center gap-2">${svg('book','w-6 h-6 text-gold-500')} خطة وحفظ اليوم</h3>
+          <p class="text-gray-500 font-bold text-sm">متابعة الإنجاز اليومي المتزامنة من ناظم</p>
+        </div>
+        ${d.todayPlan?`<div class="flex items-center gap-4 bg-surface p-4 rounded-2xl border border-gray-100"><div class="font-extrabold text-gray-900 text-lg">${esc(d.todayPlan.Daily_Target)}</div><span class="px-4 py-2 rounded-xl font-bold text-sm ${done==='Done'?'bg-green-100 text-green-700':done==='Partial'?'bg-gold-100 text-gold-700':done==='Missed'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-600'}">${statusAr(done)}</span></div>`:'<div class="bg-surface p-4 rounded-xl border border-gray-100"><p class="text-gray-400 font-bold">لا توجد خطة مقررة اليوم</p></div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+window.addEventListener('beforeprint', () => {});
+
+/* Vercel adapter: logout يستدعي API ثم يعيد التحميل */
+window.logout = async function(){
+  try{ await fetch('/api/auth/logout',{method:'POST',credentials:'include'}); }catch(e){}
+  try{ localStorage.removeItem('ibnkathir_v3'); sessionStorage.removeItem('ibnkathir_v3'); }catch(e){}
+  location.reload();
+};
+
+/* dead code below — kept for reference only, DS.c() above handles all calls
+(function(){ const _ = {
+    login(i,p){ return api('POST','/api/auth/login',{ id:i, password:p }); },
+    verifyUser(){ return api('GET','/api/auth/me'); },
+    logout(){ return api('POST','/api/auth/logout'); },
+    getTeacherData(){ return api('GET','/api/teacher-data'); },
+    getStudentDashboard(s){ return api('GET','/api/students/'+encodeURIComponent(s)+'/dashboard'); },
+    getChildren(){ return api('GET','/api/children'); },
+    getFeed(r){ return api('GET','/api/feed?role='+encodeURIComponent(r||'')); },
+    addGroup(name){ return api('POST','/api/groups',{ name }); },
+    deleteGroup(id){ return api('DELETE','/api/groups',{ id }); },
+    updateGroup(id,upd){ return api('PATCH','/api/groups',{ id, upd }); },
+    addGroupPoints(g,p){ return api('POST','/api/groups',{ action:'add-points', groupId:g, points:p }); },
+    addPointsToGroupStudents(g,i){ return api('POST','/api/groups',{ action:'distribute-points', groupId:g, itemId:i }); },
+    setGroupStudents(g,ids){ return api('POST','/api/groups',{ action:'members-set', groupId:g, ids }); },
+    dbHealthCheck(){ return api('GET','/api/db-health'); },
+    dbRepair(){ return api('POST','/api/db-health'); },
+    addStudent(d){ return api('POST','/api/students',d); },
+    updateStudent(id,upd){ return api('PATCH','/api/students',{ id, upd }); },
+    deleteStudent(id){ return api('DELETE','/api/students',{ id }); },
+    addPlan(studentId,plan){ return api('POST','/api/plans',{ studentId, plan }); },
+    updatePlan(id,upd){ return api('PATCH','/api/plans',{ id, upd }); },
+    deletePlan(id){ return api('DELETE','/api/plans',{ id }); },
+    updatePlanStatus(id,status){ return api('PATCH','/api/plans',{ id, upd:{ Accomplishment_Status: status } }); },
+    addPointItem(d,v,t){ return api('POST','/api/point-items',{ description:d, pointValue:v, trigger:t }); },
+    updatePointItem(id,upd){ return api('PATCH','/api/point-items',{ id, upd }); },
+    deletePointItem(id){ return api('DELETE','/api/point-items',{ id }); },
+    logPoints(studentId,itemId){ return api('POST','/api/logs',{ studentId, itemId }); },
+    addNews(title,body,visibility){ return api('POST','/api/news',{ title, body, visibility }); },
+    deleteNews(id){ return api('DELETE','/api/news',{ id }); },
+    addEvent(title,description,date,type){ return api('POST','/api/events',{ title, description, date, type }); },
+    deleteEvent(id){ return api('DELETE','/api/events',{ id }); },
+    saveAttendance(studentId,date,status,note){ return api('POST','/api/attendance',{ studentId, date, status, note }); },
+    nazemStatus(){ return api('GET','/api/nazem/status'); },
+    saveNazemCreds(username,password){ return api('POST','/api/nazem/creds',{ username, password }); },
+    testNazem(){ return api('GET','/api/nazem/test'); },
+    clearNazemCreds(){ return api('DELETE','/api/nazem/creds'); },
+    nazemTerms(){ return api('GET','/api/nazem/terms'); },
+    nazemPlans(term){ return api('GET','/api/nazem/plans?term='+encodeURIComponent(term||'')); },
+    nazemFollowUp(planId,date){ return api('GET','/api/nazem/follow-up?planId='+encodeURIComponent(planId)+'&date='+encodeURIComponent(date)); },
+    nazemSavePartial(itemDayId,payload){ return api('POST','/api/nazem/save-partial',{ itemDayId, payload }); },
+    nazemSyncPlanDay(planId,date,autoCreate){ return api('POST','/api/nazem/sync',{ planId, date, autoCreate }); },
+    linkNazemStudent(studentId,nazemId){ return api('POST','/api/nazem/link',{ studentId, nazemId }); },
+    getSettings(keys){ return api('GET','/api/settings?keys='+encodeURIComponent((keys||[]).join(','))); },
+    setSetting(key,value){ return api('POST','/api/settings',{ key, value }); }
+  };
+  // logout button uses window.location instead of Apps Script
+  window.logout = async function(){
+    try{ await window.DS.logout(); }catch(e){}
+    try{ localStorage.removeItem('ibnkathir_v3'); sessionStorage.removeItem('ibnkathir_v3'); }catch(e){}
+    location.reload();
+  };
+})();
+*/
+</script>
+</body>
+</html>

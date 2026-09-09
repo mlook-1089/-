@@ -1,0 +1,32 @@
+{
+  "name": "ibn-kathir-halaqa",
+  "version": "3.5.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "drizzle-orm": "^0.36.4",
+    "jose": "^5.9.6",
+    "next": "^14.2.34",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.7.5",
+    "@types/react": "^18.3.11",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.28.1",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}
