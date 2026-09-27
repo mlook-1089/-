@@ -5,7 +5,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { requireRole, getSession, AuthError } from '@/lib/auth';
 
 const PUBLIC_KEYS = new Set(['logo_url', 'halaqa_name', 'halaqa_tagline']);
-const ALLOWED_SET = new Set(['logo_url', 'halaqa_name', 'halaqa_tagline', 'nz_term', 'nz_plan', 'push_enabled', 'push_audience', 'push_news_enabled', 'push_absence_enabled']);
+const ALLOWED_SET = new Set(['logo_url', 'halaqa_name', 'halaqa_tagline', 'nz_term', 'nz_plan', 'push_enabled', 'push_audience', 'push_news_enabled', 'push_absence_enabled', 'plan_work_days', 'plan_term_start', 'plan_term_end']);
 
 export async function GET(req: NextRequest) {
   try {

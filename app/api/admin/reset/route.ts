@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { plans, pointLogs, attendance, badges, news, newsComments, events, studentsData, groups, pushSubscriptions } from '@/db/schema';
+import { users, plans, pointLogs, attendance, badges, news, newsComments, events, studentsData, groups, pushSubscriptions } from '@/db/schema';
 import { requireRole, AuthError } from '@/lib/auth';
-import { sql } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
   try {
     const teacher = await requireRole('Teacher');
-    if (!teacher.isAdmin) {
+    const [row] = await db.select({ isAdmin: users.isAdmin }).from(users).where(eq(users.id, teacher.id));
+    if (!row?.isAdmin) {
       return NextResponse.json({ success: false, message: 'غير مصرّح — المشرف فقط' }, { status: 403 });
     }
     const { confirm } = await req.json();
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
     await db.delete(events);
     await db.delete(studentsData);
     await db.delete(groups);
+    await db.delete(users).where(inArray(users.role, ['Student', 'Parent']));
 
     return NextResponse.json({ success: true, message: 'تم مسح جميع البيانات بنجاح' });
   } catch (e: any) {

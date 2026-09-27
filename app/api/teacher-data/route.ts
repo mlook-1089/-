@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges } from '@/db/schema';
+import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges, settings } from '@/db/schema';
+import { inArray } from 'drizzle-orm';
 import { requireRole } from '@/lib/auth';
 import { SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 
 export async function GET() {
   try {
     await requireRole('Teacher');
-    const [u, g, sd, pl, it, nw, ev, at, bd] = await Promise.all([
+    const [u, g, sd, pl, it, nw, ev, at, bd, cfg] = await Promise.all([
       db.select().from(users),
       db.select().from(groups),
       db.select().from(studentsData),
@@ -16,7 +17,8 @@ export async function GET() {
       db.select().from(news),
       db.select().from(events),
       db.select().from(attendance),
-      db.select().from(badges)
+      db.select().from(badges),
+      db.select().from(settings).where(inArray(settings.key, ['plan_work_days', 'plan_term_start', 'plan_term_end']))
     ]);
     const nameMap: Record<string,string> = {}; u.forEach(x => nameMap[x.id] = x.name);
     const studentsEnriched = sd.map(s => ({
@@ -44,7 +46,12 @@ export async function GET() {
       attendance: at.map(x => ({ Att_ID: x.id, Student_ID: x.studentId, Date: String(x.date), Status: x.status, Note: x.note })),
       badges: bd.map(x => ({ Badge_ID: x.id, Student_ID: x.studentId, Code: x.code, Title: x.title, Icon: x.icon, Date: String(x.date) })),
       surahs: SURAHS,
-      surahCounts: SURAH_AYAH_COUNT
+      surahCounts: SURAH_AYAH_COUNT,
+      planConfig: {
+        workDays: (() => { const v = cfg.find(r => r.key === 'plan_work_days')?.value || ''; return v ? v.split(',').map(Number).filter(n => n >= 0 && n <= 6) : [0,1,2,3,4]; })(),
+        termStart: cfg.find(r => r.key === 'plan_term_start')?.value || '',
+        termEnd: cfg.find(r => r.key === 'plan_term_end')?.value || ''
+      }
     });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });

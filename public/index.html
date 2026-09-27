@@ -361,7 +361,7 @@ table.tbl-v4 tr:last-child td { border-bottom:none; }
 
 <!-- Overlays -->
 <div id="loader" class="fixed inset-0 modal-bg z-[60] hidden items-center justify-center"><div class="text-center"><div class="spinner mx-auto"></div><p id="loaderMsg" class="text-white/90 font-bold text-sm mt-3 hidden"></p></div></div>
-<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[80] hidden"><div id="toastBox" class="px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up bg-brand-900 text-white"><span id="toastIcon">✅</span><span id="toastMsg" class="text-sm font-bold"></span></div></div>
+<div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[80] hidden"><div id="toastBox" class="px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up bg-brand-900 text-white"><span id="toastIcon"></span><span id="toastMsg" class="text-sm font-bold"></span></div></div>
 <div id="modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-bg" onclick="if(event.target===this)closeModal()"><div class="bg-white w-full max-w-lg slide-up rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"><div class="px-5 py-4 flex items-center justify-between border-b border-gray-100"><h3 id="modalTitle" class="font-bold text-brand-900 text-lg"></h3><button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">&times;</button></div><div id="modalBody" class="p-5 overflow-y-auto"></div></div></div>
 <div id="searchOverlay" class="fixed inset-0 z-[75] hidden modal-bg pt-24" onclick="if(event.target===this)toggleSearch(false)"><div class="max-w-xl mx-auto px-4 slide-up"><div class="bg-white rounded-2xl shadow-2xl overflow-hidden"><input id="globalSearch" oninput="doGlobalSearch(this.value)" placeholder="ابحث عن طالب…" class="w-full px-5 py-4 border-b border-gray-100 outline-none text-lg bg-transparent font-bold"><div id="searchResults" class="max-h-[50vh] overflow-y-auto p-2"></div></div></div></div>
 
@@ -512,7 +512,17 @@ const IC={
   cloud:'M3 15a4 4 0 004 4h9a5 5 0 10-1-9.9A5 5 0 003 15z',
   calendar:'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
   lock:'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
-  bell:'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
+  bell:'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+  warn:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+  video:'M15 10l4.553-2.278A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+  chat:'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
+  repeat:'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
+  leaf:'M12 3C7 8 4 8 4 14a8 8 0 0016 0c0-6-3-6-8-11z',
+  ban:'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
+  coin:'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  arrowup:'M5 15l7-7 7 7',
+  arrowdown:'M19 9l-7 7-7-7',
+  search:'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
 };
 const svg=(k,cls='w-5 h-5')=>`<svg class="${cls}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="${IC[k]}"/></svg>`;
 
@@ -572,6 +582,7 @@ const DS = {
       apiUpdateUser:            () => ['PATCH','/api/users',{id:a[0],upd:a[1]}],
       apiDeleteUser:            () => ['DELETE','/api/users',{id:a[0]}],
       apiAutoCreateParents:     () => ['POST','/api/students/auto-parents'],
+      apiAutoCreateStudentAccounts: () => ['POST','/api/students/auto-accounts'],
       apiChangePassword:        () => ['POST','/api/auth/password',{oldPassword:a[0],newPassword:a[1]}],
       apiBulkStudents:          () => ['POST','/api/students/bulk',{students:a[0],autoParent:a[1],defaultPassword:a[2]}],
       apiGrantBadge:            () => ['POST','/api/badges',{studentId:a[0],title:a[1],icon:a[2],code:a[3]}],
@@ -643,6 +654,7 @@ const DS = {
   updateUser(i,u){return this.c('apiUpdateUser',i,u)},
   deleteUser(i){return this.c('apiDeleteUser',i)},
   autoCreateParents(){return this.c('apiAutoCreateParents')},
+  autoCreateStudentAccounts(){return this.c('apiAutoCreateStudentAccounts')},
   changePassword(o,n){return this.c('apiChangePassword',o,n)},
   bulkStudents(list,auto,pw){return this.c('apiBulkStudents',list,auto,pw)},
   grantBadge(sid,title,icon,code){return this.c('apiGrantBadge',sid,title,icon,code)},
@@ -667,7 +679,7 @@ let currentUser=null,_tData=null,_teacherTab='overview',_settingsSub='students',
 
 function loader(on,m){$('loader').classList.toggle('hidden',!on);$('loader').classList.toggle('flex',on);const el=$('loaderMsg');if(m){el.textContent=m;el.classList.remove('hidden')}else el.classList.add('hidden')}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function toast(msg,type='success'){const b=$('toastBox');const c={success:'bg-success',error:'bg-danger',warn:'bg-gold-500 text-brand-900',info:'bg-brand-900'};b.className='px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up '+(c[type]||c.info)+' '+(type==='warn'?'':'text-white');$('toastIcon').textContent=type==='error'?'⚠️':type==='warn'?'⏳':type==='info'?'ℹ️':'✅';$('toastMsg').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(window._tt);window._tt=setTimeout(()=>$('toast').classList.add('hidden'),3200)}
+function toast(msg,type='success'){const b=$('toastBox');const c={success:'bg-success',error:'bg-danger',warn:'bg-gold-500 text-brand-900',info:'bg-brand-900'};b.className='px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up '+(c[type]||c.info)+' '+(type==='warn'?'':'text-white');$('toastIcon').innerHTML=type==='error'?svg('warn','w-4 h-4'):type==='warn'?svg('warn','w-4 h-4'):type==='info'?svg('bell','w-4 h-4'):'';$('toastMsg').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(window._tt);window._tt=setTimeout(()=>$('toast').classList.add('hidden'),3200)}
 async function guard(pr,msg){try{loader(true,msg);return await pr}catch(e){toast('خطأ: '+(e&&e.message||e),'error');return null}finally{loader(false)}}
 function normAr(s){if(!s)return'';return String(s).toLowerCase().replace(/[ً-ْٰـ]/g,'').replace(/[إأآا]/g,'ا').replace(/[ىئ]/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/\s+/g,' ').trim()}
 function arMatches(t,q){const x=normAr(t),w=normAr(q).split(' ').filter(Boolean);return w.length?w.every(y=>x.includes(y)):true}
@@ -694,8 +706,8 @@ function confirmModal(opts){
 
 /* تغيير كلمة المرور — متاح لكل الأدوار */
 function openChangePassword(forced){
-  openModal('🔒 تغيير كلمة المرور',`<div class="space-y-4">
-    ${forced?`<div class="bg-gold-50 border border-gold-200 rounded-xl p-3 text-sm font-bold text-brand-900 leading-relaxed">👋 حسابك يستخدم كلمة مرور افتراضية. يُرجى تعيين كلمة مرور خاصة بك الآن لحماية حسابك.</div>`:''}
+  openModal('تغيير كلمة المرور',`<div class="space-y-4">
+    ${forced?`<div class="bg-gold-50 border border-gold-200 rounded-xl p-3 text-sm font-bold text-brand-900 leading-relaxed">حسابك يستخدم كلمة مرور افتراضية. يُرجى تعيين كلمة مرور خاصة بك الآن لحماية حسابك.</div>`:''}
     <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور الحالية</label><input id="cp_old" type="password" class="input" autocomplete="current-password"></div>
     <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور الجديدة</label><input id="cp_new" type="password" class="input" autocomplete="new-password"></div>
     <div><label class="block text-sm font-bold text-gray-700 mb-2">تأكيد الجديدة</label><input id="cp_new2" type="password" class="input" onkeydown="if(event.key==='Enter')doChangePassword()"></div>
@@ -738,8 +750,8 @@ window.addEventListener('DOMContentLoaded',async()=>{loadBrandingOnce();const s=
   else { clearSession(); $('loginScreen').classList.remove('hidden'); }
 });
 function showForgotPassword(){
-  openModal('🔑 نسيت كلمة المرور؟',`<div class="space-y-4 text-center">
-    <div class="text-5xl">🤝</div>
+  openModal('نسيت كلمة المرور؟',`<div class="space-y-4 text-center">
+    <div class="text-gray-300">${svg('lock','w-12 h-12 mx-auto')}</div>
     <p class="text-gray-700 font-bold leading-relaxed">لا تُخزَّن كلمات المرور كنصّ ولا يمكن استرجاعها. لإعادة تعيين كلمتك، تواصل مع <b>معلم الحلقة</b> ليعيّن لك كلمة جديدة من لوحة المعلم.</p>
     <p class="text-sm font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">المعلم: افتح «الطلاب» أو «المعلمون والأولياء» ← اختر الحساب ← تعديل ← كلمة مرور جديدة.</p>
     <button onclick="closeModal()" class="btn bg-brand-900 text-white w-full shadow-md">فهمت</button>
@@ -771,7 +783,7 @@ async function maybeSuggestPush(){
   const bn = document.createElement('div');
   bn.id='pushSuggestBanner';
   bn.className='fixed bottom-4 right-4 left-4 md:left-auto md:w-96 z-40 bg-brand text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 fade-in';
-  bn.innerHTML = `<div class="text-3xl">🔔</div>
+  bn.innerHTML = `<div class="text-brand-100">${svg('bell','w-7 h-7')}</div>
     <div class="flex-1 min-w-0">
       <div class="font-extrabold text-sm">فعّل الإشعارات</div>
       <div class="text-[11px] font-bold text-white/80 mt-0.5">استقبل الإعلانات وتنبيهات الغياب فور صدورها</div>
@@ -812,7 +824,7 @@ async function enablePush(){
   try{
     const sub = await _swReg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: urlB64ToUint8Array(vkey) });
     const r = await DS.pushSubscribe(sub.toJSON());
-    if(r&&r.success){ toast('✅ تم تفعيل الإشعارات على هذا الجهاز'); }
+    if(r&&r.success){ toast('تم تفعيل الإشعارات على هذا الجهاز'); }
     else toast((r&&r.message)||'فشل الاشتراك','error');
   }catch(e){ toast('تعذّر الاشتراك في الإشعارات','error'); }
   refreshPushUI();
@@ -829,9 +841,9 @@ async function togglePush(){ const s=await pushStatus(); if(s==='on') disablePus
 async function refreshPushUI(){
   const btn=$('pushToggleBtn'); if(!btn) return;
   const s=await pushStatus();
-  const map={ on:['🔔 الإشعارات مفعّلة — إيقاف','bg-green-100 text-green-700 border border-green-200'],
-              off:['🔕 تفعيل الإشعارات على هذا الجهاز','bg-brand-900 text-white'],
-              denied:['⛔ الإشعارات محظورة في إعدادات المتصفح','bg-gray-100 text-gray-400'],
+  const map={ on:['الإشعارات مفعّلة — إيقاف','bg-green-100 text-green-700 border border-green-200'],
+              off:['تفعيل الإشعارات على هذا الجهاز','bg-brand-900 text-white'],
+              denied:['الإشعارات محظورة في إعدادات المتصفح','bg-gray-100 text-gray-400'],
               unsupported:['جهازك لا يدعم الإشعارات','bg-gray-100 text-gray-400'] };
   const [label,cls]=map[s]||map.off;
   btn.textContent=label; btn.className='btn w-full text-sm '+cls;
@@ -865,13 +877,13 @@ function openNotifications(){
       <p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p>
     </div>`).join('') : '<div class="text-center py-6 text-gray-400 font-bold text-sm">لا إعلانات</div>';
   const evRows = upEvents.length ? upEvents.map(e=>`<div class="flex items-center gap-3 bg-gold-50 border border-gold-100 rounded-xl p-3 mb-2">
-      <div class="text-2xl shrink-0">📅</div>
+      <div class="text-gold-500">${svg('calendar','w-6 h-6')}</div>
       <div class="flex-1 min-w-0"><div class="font-extrabold text-brand-900 name-full text-sm">${esc(e.Title)}</div><div class="text-[11px] font-bold text-gold-700">${esc(e.Date)} · ${toHijri(e.Date)}</div></div>
     </div>`).join('') : '';
-  openModal('🔔 الإشعارات والإعلانات', `<div class="max-h-[60vh] overflow-y-auto">
-    <button id="pushToggleBtn" onclick="togglePush()" class="btn w-full text-sm bg-brand-900 text-white mb-3">🔕 تفعيل الإشعارات على هذا الجهاز</button>
-    ${evRows?`<h4 class="text-xs font-extrabold text-gray-500 mb-2 mt-1">📌 فعاليات قادمة</h4>${evRows}<div class="h-px bg-gray-100 my-3"></div>`:''}
-    <h4 class="text-xs font-extrabold text-gray-500 mb-2">📢 الإعلانات</h4>${newsRows}
+  openModal('الإشعارات والإعلانات', `<div class="max-h-[60vh] overflow-y-auto">
+    <button id="pushToggleBtn" onclick="togglePush()" class="btn w-full text-sm bg-brand-900 text-white mb-3">تفعيل الإشعارات على هذا الجهاز</button>
+    ${evRows?`<h4 class="text-xs font-extrabold text-gray-500 mb-2 mt-1">فعاليات قادمة</h4>${evRows}<div class="h-px bg-gray-100 my-3"></div>`:''}
+    <h4 class="text-xs font-extrabold text-gray-500 mb-2">الإعلانات</h4>${newsRows}
   </div>`);
   refreshPushUI();
 }
@@ -983,13 +995,13 @@ function renderOverviewTab(body){
   const compHtml = groupsRanked.length ? groupsRanked.map((g,i)=>{
     const pct = maxG>0 ? Math.max(0, Math.round((g.total/maxG)*100)) : 0;
     const rankCls = i===0?'gc-rank-1':i===1?'gc-rank-2':i===2?'gc-rank-3':'bg-white border border-gray-100';
-    const medal = ['🥇','🥈','🥉'][i] || `<span class="w-7 h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-extrabold">${i+1}</span>`;
+    const medal = [`<span class="w-7 h-7 rounded-full bg-gold-500 text-brand-900 flex items-center justify-center text-xs font-extrabold">1</span>`,`<span class="w-7 h-7 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs font-extrabold">2</span>`,`<span class="w-7 h-7 rounded-full bg-amber-700 text-white flex items-center justify-center text-xs font-extrabold">3</span>`][i] || `<span class="w-7 h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-extrabold">${i+1}</span>`;
     return `<div class="p-4 rounded-2xl ${rankCls} mb-3">
       <div class="flex items-center gap-3 mb-2">
         <div class="text-2xl shrink-0 w-8 text-center">${medal}</div>
         <div class="flex-1 min-w-0">
           <div class="font-extrabold text-brand-900 name-full text-base">${esc(g.name)}</div>
-          <div class="text-[11px] font-bold text-gray-600 mt-0.5">👥 ${g.count} طلاب</div>
+          <div class="text-[11px] font-bold text-gray-600 mt-0.5">${g.count} طلاب</div>
         </div>
         <div class="text-left shrink-0">
           <div class="text-2xl font-extrabold text-brand-900 tabular-nums leading-none">${g.total}</div>
@@ -1086,10 +1098,10 @@ async function renderStudentsTab(body){
           <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
         <select id="st_groupF" onchange="onStGroupFilter(this.value)" class="input py-2 text-sm w-40">${groupFilterOpts}</select>
-        <button onclick="doRefreshStudents()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="تحديث">🔄</button>
-        <button onclick="openCredentials()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="بيانات الدخول">🔑</button>
-        <button onclick="exportStudentsCSV()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="تصدير CSV">⬇️</button>
-        <button onclick="openImportStudents()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="استيراد CSV">⬆️</button>
+        <button onclick="doRefreshStudents()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="تحديث">${svg('repeat','w-4 h-4')}</button>
+        <button onclick="openCredentials()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="بيانات الدخول">${svg('lock','w-4 h-4')}</button>
+        <button onclick="exportStudentsCSV()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="تصدير CSV">${svg('cloud','w-4 h-4')}</button>
+        <button onclick="openImportStudents()" class="btn bg-gray-50 text-gray-700 border border-gray-200 text-sm py-2 px-3" title="استيراد CSV">${svg('arrowup','w-4 h-4')}</button>
         <button onclick="openAddStudent()" class="bg-brand-900 hover:bg-brand-800 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition whitespace-nowrap">${svg('plus','w-4 h-4')} إضافة</button>
       </div>
     </div>
@@ -1121,7 +1133,7 @@ function renderStList(){
     const badges=(_tData.badges||[]).filter(b=>String(b.Student_ID)===String(s.Student_ID)).slice(0,3).map(b=>b.Icon||'🏅').join(' ');
     const wa=s.Parent_Phone?waLink(s.Parent_Phone,'السلام عليكم'):'';
     return `<tr class="hover:bg-gray-50 transition">
-      <td class="py-4 px-6"><div class="flex items-center gap-3 cursor-pointer" onclick="openStudentProfile('${esc(s.Student_ID)}')"><div class="w-10 h-10 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold text-lg shrink-0">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div><div class="min-w-0"><span class="text-gray-900 font-bold block name-full">${esc(nameMap[s.Student_ID]||s.Student_ID)}</span><span class="text-[11px] text-gray-400 font-mono" dir="ltr">🆔 ${esc(s.Student_ID)}</span> <span class="text-xs text-gray-500">${badges}</span></div></div></td>
+      <td class="py-4 px-6"><div class="flex items-center gap-3 cursor-pointer" onclick="openStudentProfile('${esc(s.Student_ID)}')"><div class="w-10 h-10 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-bold text-lg shrink-0">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div><div class="min-w-0"><span class="text-gray-900 font-bold block name-full">${esc(nameMap[s.Student_ID]||s.Student_ID)}</span><span class="text-[11px] text-gray-400 font-mono" dir="ltr">${esc(s.Student_ID)}</span> <span class="text-xs text-gray-500">${badges}</span></div></div></td>
       <td class="py-4 px-6 text-gray-600">${esc(groupMap[s.Group_ID]||'—')}</td>
       <td class="py-4 px-6"><span class="px-3 py-1 bg-gold-100 text-gold-700 text-xs font-bold rounded-full">${esc(s.Total_Points)}</span></td>
       <td class="py-4 px-6 text-gray-500 text-xs">${s.Nazem_ID?`<span class="px-2 py-1 bg-blue-50 text-blue-600 rounded font-bold">${esc(s.Nazem_ID)}</span>`:'—'}</td>
@@ -1142,11 +1154,11 @@ function renderStList(){
         <div class="w-11 h-11 rounded-full bg-brand-50 text-brand-900 flex items-center justify-center font-extrabold text-lg shrink-0" onclick="openStudentProfile('${esc(s.Student_ID)}')">${esc((nameMap[s.Student_ID]||'?').charAt(0))}</div>
         <div class="flex-1 min-w-0" onclick="openStudentProfile('${esc(s.Student_ID)}')">
           <div class="font-extrabold text-gray-900 name-full text-base leading-tight">${esc(nameMap[s.Student_ID]||s.Student_ID)}</div>
-          <div class="text-[11px] font-mono text-gray-400 mt-0.5" dir="ltr">🆔 ${esc(s.Student_ID)}</div>
+          <div class="text-[11px] font-mono text-gray-400 mt-0.5" dir="ltr">${esc(s.Student_ID)}</div>
           <div class="text-[11px] font-bold text-gray-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            <span>👥 ${esc(groupMap[s.Group_ID]||'—')}</span>
-            <span class="text-gold-600">⭐ ${esc(s.Total_Points)}</span>
-            ${s.Nazem_ID?`<span class="text-blue-600">☁️ ${esc(s.Nazem_ID)}</span>`:''}
+            <span>${esc(groupMap[s.Group_ID]||'—')}</span>
+            <span class="text-gold-600">${esc(s.Total_Points)} نقطة</span>
+            ${s.Nazem_ID?`<span class="text-blue-600">${esc(s.Nazem_ID)}</span>`:''}
           </div>
         </div>
       </div>
@@ -1160,21 +1172,21 @@ function renderStList(){
   }).join('') || '<div class="bg-white p-8 rounded-2xl text-center text-gray-400 font-bold">لا يوجد نتائج</div>';
   const emptyState = _tData.students.length===0
     ? `<tr><td colspan="5" class="py-12 text-center">
-        <div class="text-5xl mb-3">👥</div>
+        <div class="text-gray-200 mb-3">${svg('users','w-12 h-12 mx-auto')}</div>
         <p class="text-gray-700 font-extrabold text-lg mb-2">لا يوجد أي طلاب في النظام بعد</p>
         <p class="text-gray-400 font-bold text-sm mb-5">أضف أول طالب يدوياً أو استورد من ناظم بلس</p>
         <div class="flex justify-center gap-2">
           <button onclick="openAddStudent()" class="btn bg-brand-900 text-white shadow-md">${svg('plus','w-4 h-4')} أضف طالب</button>
-          <button onclick="switchTeacherTab('nazem', document.querySelector('[data-tab=nazem]'))" class="btn bg-gold-100 text-gold-700">☁ استيراد من ناظم</button>
+          <button onclick="switchTeacherTab('nazem', document.querySelector('[data-tab=nazem]'))" class="btn bg-gold-100 text-gold-700">استيراد من ناظم</button>
         </div>
       </td></tr>`
     : `<tr><td colspan="5" class="py-8 text-center text-gray-500 font-bold">
-        <div class="text-3xl mb-2">🔍</div>
+        <div class="text-gray-300 mb-2">${svg('search','w-8 h-8 mx-auto')}</div>
         <p>لا نتائج مطابقة${_stSearch?` لـ "${esc(_stSearch)}"`:''}</p>
         ${(_stSearch||_stGroupFilter!=='all')?`<button onclick="_stSearch='';_stGroupFilter='all';renderStudentsTab(_teacherTab==='students'?$('portal'):$('settingsSubBody'))" class="mt-3 btn bg-gray-100 text-gray-700 text-xs">إعادة ضبط الفلاتر</button>`:''}
       </td></tr>`;
   $('stListBody').innerHTML=rows||emptyState;
-  const cardBox=$('stCardList'); if(cardBox) cardBox.innerHTML = pageList.length ? cards : (_tData.students.length===0 ? '<div class="bg-white p-8 rounded-2xl text-center"><div class="text-4xl mb-2">👥</div><p class="text-gray-700 font-extrabold mb-3">لا يوجد طلاب بعد</p><button onclick="openAddStudent()" class="btn bg-brand-900 text-white shadow-md">أضف أول طالب</button></div>' : '<div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-bold">لا نتائج مطابقة</div>');
+  const cardBox=$('stCardList'); if(cardBox) cardBox.innerHTML = pageList.length ? cards : (_tData.students.length===0 ? '<div class="bg-white p-8 rounded-2xl text-center"><p class="text-gray-700 font-extrabold mb-3">لا يوجد طلاب بعد</p><button onclick="openAddStudent()" class="btn bg-brand-900 text-white shadow-md">أضف أول طالب</button></div>' : '<div class="bg-white p-6 rounded-2xl text-center text-gray-400 font-bold">لا نتائج مطابقة</div>');
   let pager='';if(pages>1){let b='';for(let p=1;p<=pages;p++)b+=`<button onclick="_stPage=${p};renderStList()" class="w-8 h-8 rounded-lg text-sm font-bold ${p===_stPage?'bg-brand-900 text-white':'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}">${p}</button>`;pager=`<div class="flex gap-1 flex-wrap justify-center">${b}</div>`}
   $('stPager').innerHTML=`<span class="text-xs font-bold text-gray-500">إجمالي ${total} طالب</span>${pager}`;
   const pm=$('stPagerMobile'); if(pm) pm.innerHTML = `<div class="flex flex-col gap-2 items-center"><span class="text-xs font-bold text-gray-500">إجمالي ${total} طالب</span>${pager}</div>`;
@@ -1191,9 +1203,9 @@ async function openStudentProfile(sid){
     <div class="grid grid-cols-2 gap-3 mb-6">
       <div class="rounded-xl bg-brand-900 text-white p-4 shadow-md"><div class="text-xs text-gold-500 font-bold">النقاط</div><div class="text-3xl font-extrabold mt-1">${d.totalPoints}</div></div>
       <div class="rounded-xl bg-success text-white p-4 shadow-md"><div class="text-xs opacity-90 font-bold">نسبة الإنجاز</div><div class="text-3xl font-extrabold mt-1">${d.stats.donePct}%</div></div>
-      <div class="rounded-xl bg-gold-100 text-gold-700 p-4 shadow-sm border border-gold-200"><div class="text-xs font-bold">السلسلة 🔥</div><div class="text-3xl font-extrabold mt-1">${d.stats.streak}</div></div>
-      <div class="rounded-xl bg-purple-50 text-purple-700 p-4 shadow-sm border border-purple-100"><div class="text-xs font-bold">شارات 🏅</div><div class="text-3xl font-extrabold mt-1">${(d.badges||[]).length}</div></div>
-      <div class="rounded-xl bg-blue-50 text-blue-700 p-4 shadow-sm border border-blue-100 col-span-2"><div class="text-xs font-bold">📅 أيام الحضور المسجّلة</div><div class="text-3xl font-extrabold mt-1">${d.stats.presentDays||0}</div></div>
+      <div class="rounded-xl bg-gold-100 text-gold-700 p-4 shadow-sm border border-gold-200"><div class="text-xs font-bold">السلسلة</div><div class="text-3xl font-extrabold mt-1">${d.stats.streak}</div></div>
+      <div class="rounded-xl bg-purple-50 text-purple-700 p-4 shadow-sm border border-purple-100"><div class="text-xs font-bold">شارات</div><div class="text-3xl font-extrabold mt-1">${(d.badges||[]).length}</div></div>
+      <div class="rounded-xl bg-blue-50 text-blue-700 p-4 shadow-sm border border-blue-100 col-span-2"><div class="text-xs font-bold">أيام الحضور المسجّلة</div><div class="text-3xl font-extrabold mt-1">${d.stats.presentDays||0}</div></div>
     </div>
     <h4 class="font-extrabold text-brand-900 mb-3 text-sm">أين وصل؟</h4>
     <div class="grid grid-cols-3 gap-2 mb-6">${posBox(prog.conserve,'حفظ','bg-green-50 text-green-900 border border-green-100')}${posBox(prog.revision,'مراجعة','bg-blue-50 text-blue-900 border border-blue-100')}${posBox(prog.mastery,'إتقان','bg-gold-50 text-gold-900 border border-gold-100')}</div>
@@ -1208,7 +1220,7 @@ function statusAr(s){return s==='Done'?'مكتمل':s==='Partial'?'جزئي':s==
 const BADGE_ICONS=['🏅','⭐','🌟','🔥','💎','📗','🥇','🏆','👑','🌱','✨','🎯','📚','🕌'];
 function openGrantBadge(sid){
   const {nameMap}=tMaps();
-  openModal('🏅 منح شارة — '+esc(nameMap[sid]||sid),`<div class="space-y-4">
+  openModal('منح شارة — '+esc(nameMap[sid]||sid),`<div class="space-y-4">
     <div><label class="block text-sm font-bold text-gray-700 mb-2">عنوان الشارة</label><input id="gb_title" class="input" placeholder="مثال: متميز الأسبوع"></div>
     <div><label class="block text-sm font-bold text-gray-700 mb-2">الأيقونة</label>
       <div class="flex flex-wrap gap-2" id="gb_icons">${BADGE_ICONS.map((ic,i)=>`<button type="button" onclick="gbPickIcon('${ic}',this)" class="w-11 h-11 rounded-xl border-2 ${i===0?'border-gold-500 bg-gold-50':'border-gray-200'} text-2xl flex items-center justify-center transition">${ic}</button>`).join('')}</div>
@@ -1251,7 +1263,7 @@ function openEditStudent(sid){
           <input id="ed_new_id" placeholder="${esc(sid)}" class="input flex-1 text-sm">
           <button onclick="doChangeStudentId('${esc(sid)}')" class="px-4 py-2 bg-gold-500 text-white rounded-xl text-sm font-bold hover:bg-gold-600 transition shrink-0">تغيير</button>
         </div>
-        <p class="text-[11px] font-bold text-gray-400 mt-1">⚠️ يُحدّث كافة السجلات المرتبطة</p>
+        <p class="text-[11px] font-bold text-gray-400 mt-1">يُحدّث كافة السجلات المرتبطة</p>
       </div>
       <div class="flex gap-3 pt-2"><button onclick="saveEditStudent('${esc(sid)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
     </div>`);
@@ -1270,7 +1282,7 @@ function openAddStudent(){openModal('طالب جديد',`<div class="space-y-4">
   <div class="bg-gradient-to-l from-gold-50 to-yellow-50 border border-gold-200 rounded-xl p-4 space-y-3">
     <label class="flex items-center gap-2 font-bold text-brand-900 cursor-pointer">
       <input type="checkbox" id="s_auto_parent" checked class="w-5 h-5 accent-brand-900">
-      <span>🔗 إنشاء حساب ولي أمر تلقائياً</span>
+      <span>إنشاء حساب ولي أمر تلقائياً</span>
     </label>
     <div>
       <label class="block text-xs font-bold text-gray-700 mb-1">كلمة مرور ولي الأمر</label>
@@ -1300,15 +1312,15 @@ async function doAddStudent(){
   closeModal();
   await refreshTeacherStudents();
   if(r.autoParent){
-    openModal('✅ تم إنشاء الحساب',`
+    openModal('تم إنشاء الحساب',`
       <div class="text-center space-y-4">
-        <div class="text-5xl">🎉</div>
+        <div class="flex justify-center mb-1">${svg('check','w-12 h-12 text-success')}</div>
         <p class="font-extrabold text-gray-900 text-lg">تمت إضافة الطالب وحساب ولي الأمر</p>
         <div class="bg-gold-50 border border-gold-200 p-4 rounded-xl text-right space-y-2">
           <div><b>حساب ولي الأمر:</b></div>
-          <div class="text-sm">🆔 المعرّف: <code class="bg-white px-2 py-1 rounded font-bold text-brand-900">${esc(r.autoParent.id)}</code></div>
-          <div class="text-sm">👤 الاسم: <b>${esc(r.autoParent.name)}</b></div>
-          <div class="text-sm">🔑 كلمة المرور: <code class="bg-white px-2 py-1 rounded font-bold text-brand-900">${esc(r.autoParent.password)}</code></div>
+          <div class="text-sm">المعرّف: <code class="bg-white px-2 py-1 rounded font-bold text-brand-900">${esc(r.autoParent.id)}</code></div>
+          <div class="text-sm">الاسم: <b>${esc(r.autoParent.name)}</b></div>
+          <div class="text-sm">كلمة المرور: <code class="bg-white px-2 py-1 rounded font-bold text-brand-900">${esc(r.autoParent.password)}</code></div>
         </div>
         <p class="text-xs font-bold text-gray-500">يُنصح بإبلاغ ولي الأمر وتغيير كلمة المرور من "الإعدادات ← المعلمون والأولياء"</p>
         <button onclick="closeModal()" class="btn bg-brand-900 text-white w-full shadow-md">حسناً</button>
@@ -1355,12 +1367,12 @@ function openCredentials(){
     <td class="p-2.5 text-xs font-mono text-brand-700" dir="ltr">${esc(s.Student_ID)}</td>
     <td class="p-2.5 text-xs text-gray-500">${esc(groupMap[s.Group_ID]||'—')}</td>
   </tr>`).join('')||'<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold">لا يوجد طلاب</td></tr>';
-  openModal('🔑 بيانات دخول الطلاب', `
+  openModal('بيانات دخول الطلاب', `
     <p class="text-sm font-bold text-gray-600 mb-3 bg-gold-50 border border-gold-100 rounded-xl p-3 leading-relaxed">اسم المستخدم للطالب هو <b>المعرّف</b>. كلمات المرور <b>مشفّرة ولا يمكن عرضها</b> — لإعادة تعيين كلمة، افتح الطالب ← تعديل ← كلمة مرور جديدة.</p>
     <div class="max-h-[52vh] overflow-y-auto border border-gray-100 rounded-xl">
       <table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-2.5">الاسم</th><th class="p-2.5">المعرّف (اسم الدخول)</th><th class="p-2.5">المجموعة</th></tr></thead><tbody>${rows}</tbody></table>
     </div>
-    <div class="flex gap-3 mt-4"><button onclick="exportStudentsCSV()" class="btn bg-brand-900 text-white flex-1 shadow-md">⬇️ تصدير CSV كامل</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إغلاق</button></div>`);
+    <div class="flex gap-3 mt-4"><button onclick="exportStudentsCSV()" class="btn bg-brand-900 text-white flex-1 shadow-md flex items-center gap-2 justify-center">${svg('arrowdown','w-4 h-4')} تصدير CSV كامل</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إغلاق</button></div>`);
 }
 
 /* --- استيراد CSV --- */
@@ -1375,12 +1387,12 @@ function parseCSV(text){
   return rows.filter(r=>r.some(x=>String(x).trim()!==''));
 }
 function openImportStudents(){
-  openModal('⬆️ استيراد طلاب من ملف Excel', `<div class="space-y-4">
+  openModal('استيراد طلاب من ملف Excel', `<div class="space-y-4">
     <div class="bg-brand-50 border border-brand-100 rounded-xl p-3 text-[13px] font-bold text-brand-800 leading-relaxed">
       رأس الأعمدة المتوقّع: <b>الاسم</b> · <b>كلمة المرور</b> · <b>المجموعة</b> · <b>جوال الطالب</b> · <b>جوال الولي</b> · <b>معرف ناظم</b>.<br>
       الاسم فقط إلزامي، البقية اختيارية. الحد الأقصى <b>500 صف</b> لكل استيراد. المجموعة تُطابَق بالاسم.
     </div>
-    <button onclick="downloadImportTemplate()" class="btn-v4 btn-v4-ghost text-xs">📥 تنزيل قالب Excel جاهز</button>
+    <button onclick="downloadImportTemplate()" class="btn-v4 btn-v4-ghost text-xs flex items-center gap-1">${svg('arrowdown','w-3 h-3')} تنزيل قالب Excel جاهز</button>
     <label class="flex items-center gap-2 font-bold text-brand-900 cursor-pointer bg-gold-50 border border-gold-200 rounded-xl p-3">
       <input type="checkbox" id="imp_auto" checked class="w-5 h-5 accent-brand-900"> إنشاء حساب ولي أمر تلقائياً لكل طالب
     </label>
@@ -1427,15 +1439,15 @@ function previewImportXlsx(){
         };
       }).filter(x=>x.Name);
       const total = arr.length, valid = _impRowsX.length, skipped = total - valid;
-      if(valid > 500){ $('imp_preview').innerHTML=`<div class="text-fail bg-fail-bg p-3 rounded-xl border border-fail font-bold">⚠️ تجاوز الحد الأقصى (500 صف). قسّم الملف.</div>`; return; }
+      if(valid > 500){ $('imp_preview').innerHTML=`<div class="text-fail bg-fail-bg p-3 rounded-xl border border-fail font-bold">تجاوز الحد الأقصى (500 صف). قسّم الملف.</div>`; return; }
       if(!valid){ $('imp_preview').innerHTML='<span class="text-gray-400">لا صفوف صالحة (الاسم مطلوب)</span>'; return; }
       const unknownG = _impRowsX.filter(x=>x._groupName && !x.Group_ID).length;
-      const head = `✅ جاهز لاستيراد <b class="text-brand">${valid}</b> طالب${skipped?` · <span class="text-orange-600">${skipped} تُخُطّي (بدون اسم)</span>`:''}${unknownG?` · <span class="text-orange-600">${unknownG} بمجموعة غير معروفة</span>`:''}`;
+      const head = `جاهز لاستيراد <b class="text-brand">${valid}</b> طالب${skipped?` · <span class="text-orange-600">${skipped} تُخُطّي (بدون اسم)</span>`:''}${unknownG?` · <span class="text-orange-600">${unknownG} بمجموعة غير معروفة</span>`:''}`;
       const rowsHtml = _impRowsX.slice(0,5).map((x,i)=>`<tr class="border-b border-gray-50">
         <td class="p-2 text-gray-400">${i+1}</td>
         <td class="p-2 font-bold text-gray-900 name-full">${esc(x.Name)}</td>
         <td class="p-2 text-gray-500">${esc(x.Password||'(افتراضية)')}</td>
-        <td class="p-2 text-gray-500">${x._groupName?esc(x._groupName)+(x.Group_ID?' ✓':' ⚠️'):'—'}</td>
+        <td class="p-2 text-gray-500">${x._groupName?esc(x._groupName)+(x.Group_ID?' (محددة)':' (غير معروفة)'):'—'}</td>
         <td class="p-2 text-gray-500" dir="ltr">${esc(x.Student_Phone||'—')}</td>
       </tr>`).join('');
       $('imp_preview').innerHTML = `<div class="mb-2">${head}</div>
@@ -1464,11 +1476,11 @@ async function doImportStudentsXlsx(){
     await refreshTeacherStudents();
     const errs = r.errors || [];
     if(errs.length){
-      openModal('📋 نتيجة الاستيراد', `
+      openModal('نتيجة الاستيراد', `
         <div class="space-y-3">
-          <div class="bg-pass-bg border border-pass rounded-xl p-3 text-pass font-bold">✅ نجح إنشاء <b>${r.created}</b> طالب</div>
+          <div class="bg-pass-bg border border-pass rounded-xl p-3 text-pass font-bold">نجح إنشاء <b>${r.created}</b> طالب</div>
           <div class="bg-fail-bg border border-fail rounded-xl p-3">
-            <div class="text-fail font-bold mb-2">⚠️ فشل ${errs.length} صف:</div>
+            <div class="text-fail font-bold mb-2">فشل ${errs.length} صف:</div>
             <div class="max-h-64 overflow-y-auto space-y-1">
               ${errs.map(e=>`<div class="text-xs bg-white rounded px-2 py-1 name-full"><b>${esc(e.name||'—')}</b>: <span class="text-slate-600">${esc(e.message)}</span></div>`).join('')}
             </div>
@@ -1524,7 +1536,7 @@ function renderAttendanceTab(body){
       <div class="bg-red-50 border border-red-100 rounded-2xl p-4"><div class="text-xs font-bold text-red-700">غائب</div><div class="text-2xl font-extrabold text-red-800 tabular-nums">${counts.Absent}</div></div>
       <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4"><div class="text-xs font-bold text-gray-500">لم يُسجَّل</div><div class="text-2xl font-extrabold text-gray-700 tabular-nums">${counts.none}</div></div>
     </div>
-    <input type="text" id="att_search" value="${esc(_att.search)}" oninput="attSearch(this.value)" placeholder="🔍 بحث عن طالب…" class="input">
+    <input type="text" id="att_search" value="${esc(_att.search)}" oninput="attSearch(this.value)" placeholder="بحث عن طالب…" class="input">
     <div class="space-y-2">${rows}</div>
     <div class="sticky bottom-3"><button onclick="doSaveAttendance()" class="btn ${_attDirty?'bg-gold-500 text-brand-900':'bg-brand-900 text-white'} w-full py-3.5 shadow-lg text-base">${svg('check','w-5 h-5')} حفظ حضور اليوم ${_attDirty?'<span class="mr-1 px-2 py-0.5 bg-brand-900/15 rounded-full text-xs">تغييرات غير محفوظة</span>':''}</button></div>
   </div>`;
@@ -1624,14 +1636,14 @@ function renderMpStudentCard(st, dayPlans){
           <div class="font-extrabold text-slate-800 name-full text-[15px] leading-tight">${esc(name)}</div>
           <div class="flex items-center gap-1 flex-wrap mt-1.5">
             ${attBadge}
-            <span class="pill-v4 gold">⭐ <span class="num">${totalPts}</span></span>
+            <span class="pill-v4 gold"><span class="num">${totalPts}</span> نقطة</span>
             <span class="pill-v4 info">${totalCount} بند</span>
           </div>
           <div class="flex items-center gap-2 mt-2">
             <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-pass rounded-full transition-all" style="width:${pct}%"></div></div>
             <span class="text-[11px] font-extrabold text-slate-700 num shrink-0">${doneCount}/${totalCount}</span>
           </div>
-          ${groupName?`<div class="text-[10px] font-bold text-slate-500 mt-1 truncate">👥 ${esc(groupName)}</div>`:''}
+          ${groupName?`<div class="text-[10px] font-bold text-slate-500 mt-1 truncate">${esc(groupName)}</div>`:''}
         </div>
         <div class="w-11 h-11 rounded-full bg-gradient-to-br from-brand to-brand-deep text-gold-400 flex items-center justify-center font-black text-lg shrink-0">${esc(c)}</div>
       </div>
@@ -1644,7 +1656,7 @@ function _mpToggleStudent(sid, isOpen){
 }
 function renderMpEmpty(sid){
   return `<div class="text-center py-5 px-3 bg-white rounded-xl border border-dashed border-slate-300">
-    <div class="text-3xl mb-1">📖</div>
+    <div class="text-slate-300 mb-1">${svg('book','w-8 h-8 mx-auto')}</div>
     <p class="text-slate-500 font-bold text-xs mb-3">لا توجد خطة لهذا اليوم</p>
     <button onclick="openCreateManualPlan('${esc(sid)}')" class="btn-v4 btn-v4-primary text-xs mx-auto inline-flex">${svg('plus','w-3 h-3')} إنشاء خطة</button>
   </div>`;
@@ -1657,10 +1669,10 @@ function renderMpPlanItem(p){
   const isPartial = status==='Partial';
   const isMissed = status==='Missed';
   const canEdit = !isDone;
-  const typeBadge = p.Type==='revision' ? '<span class="pill-v4 info">🔄 المراجعة</span>' : '<span class="pill-v4 ok">🌱 الحفظ</span>';
+  const typeBadge = p.Type==='revision' ? `<span class="pill-v4 info">${svg('repeat','w-3 h-3')} مراجعة</span>` : `<span class="pill-v4 ok">${svg('leaf','w-3 h-3')} حفظ</span>`;
   const statusBadge = isDone ? '<span class="pill-v4 ok">✓ مكتمل</span>'
                     : isPartial ? '<span class="pill-v4 gold">◐ جزئي</span>'
-                    : isMissed ? '<span class="pill-v4 err">⛔ فائت</span>'
+                    : isMissed ? `<span class="pill-v4 err">${svg('ban','w-3 h-3')} فائت</span>`
                     : '<span class="pill-v4 gold">◐ قيد التنفيذ</span>';
   const surahOpts = surs.map(s=>`<option value="${esc(s)}" ${s===p.To_Surah?'selected':''}>${esc(s)}</option>`).join('');
   const attSt = getAttendanceStatus(p.Student_ID, _mp.date) || 'Present';
@@ -1668,7 +1680,7 @@ function renderMpPlanItem(p){
   const form = canEdit ? `
     <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dashed border-slate-300" data-mp-form="${esc(p.Plan_ID)}">
       <div class="col-span-2">
-        <label class="block text-[11px] font-bold text-slate-500 mb-1 text-center">📖 آخر سورة</label>
+        <label class="block text-[11px] font-bold text-slate-500 mb-1 text-center">آخر سورة</label>
         <select data-k="toSurah" class="nz-mini-input">${surahOpts}</select>
       </div>
       <div class="col-span-2">
@@ -1676,7 +1688,7 @@ function renderMpPlanItem(p){
         <input type="number" data-k="toAyah" value="${esc(p.To_Ayah||'')}" class="nz-mini-input num" style="font-size:1.05rem">
       </div>
       <div class="col-span-2">
-        <label class="block text-[11px] font-bold text-slate-500 mb-1 text-center">👤 الحضور</label>
+        <label class="block text-[11px] font-bold text-slate-500 mb-1 text-center">الحضور</label>
         <select data-k="attendance" class="nz-mini-input">
           <option value="Present" ${attSt==='Present'?'selected':''}>حاضر</option>
           <option value="Late" ${attSt==='Late'?'selected':''}>متأخر</option>
@@ -1711,7 +1723,7 @@ function renderMpPlanItem(p){
       <span class="text-brand mx-1">←</span>
       ${esc(p.To_Surah)} <span class="text-slate-400 num">(${esc(p.To_Ayah)})</span>
     </div>
-    ${p.Daily_Target?`<div class="text-[11px] font-bold text-slate-500 mt-1 bg-white/60 rounded-md px-2 py-1 inline-block">📌 اليوم: ${esc(p.Daily_Target)}</div>`:''}
+    ${p.Daily_Target?`<div class="text-[11px] font-bold text-slate-500 mt-1 bg-white/60 rounded-md px-2 py-1 inline-block">اليوم: ${esc(p.Daily_Target)}</div>`:''}
     ${form}
   </div>`;
 }
@@ -1758,7 +1770,7 @@ async function doMpSaveItem(planId, status){
     }catch(e){}
   }
   await refreshTeacherStudents();
-  toast('✅ تم الحفظ' + (r.awarded?.length ? ` · +${r.awarded.length} بند نقاط` : ''));
+  toast('تم الحفظ' + (r.awarded?.length ? ` · +${r.awarded.length} بند نقاط` : ''));
   renderManualPlanTab($('fuSubBody'));
 }
 async function doMpReopen(planId){
@@ -1789,7 +1801,7 @@ function openBulkPointsModal(){
     const name=nameMap[st.Student_ID]||st.Student_ID;
     return `<label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer select-none"><input type="checkbox" class="bp_stud w-4 h-4 accent-brand-900" value="${esc(st.Student_ID)}" checked><span class="text-sm font-bold text-slate-800 flex-1">${esc(name)}</span></label>`;
   }).join('');
-  openModal('🪙 نقاط جماعية',`
+  openModal('نقاط جماعية',`
     <div class="space-y-3">
       <div>
         <label class="block text-xs font-bold text-slate-500 mb-1">بند النقاط</label>
@@ -1823,7 +1835,7 @@ async function doBulkPoints(){
     const r=await DS.logPoints(sid,itemId,currentUser.ID);
     if(r&&r.success)ok++;else fail++;
   }
-  toast(`✅ ${ok} طالب حصلوا على النقاط${fail?` — فشل ${fail}`:''}`);
+  toast(`${ok} طالب حصلوا على النقاط${fail?` — فشل ${fail}`:''}`);
   await refreshTeacherStudents();
   renderManualPlanTab($('fuSubBody'));
 }
@@ -1845,21 +1857,21 @@ async function renderManualPlanTab(body){
     <div class="card-v4" style="padding:.85rem">
       <div class="grid grid-cols-2 gap-2 mb-2">
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">📅 اليوم</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">اليوم</label>
           <input type="date" id="mp_date" max="${ymd(new Date())}" value="${_mp.date}" onchange="_mp.date=this.value;renderManualPlanTab($('fuSubBody'))" class="input py-2 num text-sm">
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">🔍 بحث عن طالب</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">بحث عن طالب</label>
           <input type="text" id="mp_search" value="${esc(_mp.search)}" oninput="mpSetSearch(this.value)" placeholder="اكتب الاسم…" class="input py-2 text-sm">
         </div>
       </div>
       <div class="grid grid-cols-4 gap-1.5">
-        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">👥 الطلاب</div><div class="val" style="font-size:1rem">${filtered.length}</div></div>
-        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">📋 مع خطة</div><div class="val u" style="font-size:1rem">${withPlan}</div></div>
+        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">الطلاب</div><div class="val" style="font-size:1rem">${filtered.length}</div></div>
+        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">مع خطة</div><div class="val u" style="font-size:1rem">${withPlan}</div></div>
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">✓ مكتمل</div><div class="val u" style="font-size:1rem">${doneItems}/${totalItems}</div></div>
-        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">📊 التقدّم</div><div class="val" style="font-size:1rem;color:#013856">${overallPct}%</div></div>
+        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">التقدّم</div><div class="val" style="font-size:1rem;color:#013856">${overallPct}%</div></div>
       </div>
-      <button onclick="openBulkPointsModal()" class="btn-v4 btn-v4-primary text-xs w-full mt-2">🪙 نقاط جماعية لجميع الطلاب</button>
+      <button onclick="openBulkPointsModal()" class="btn-v4 btn-v4-primary text-xs w-full mt-2">${svg('coin','w-3 h-3')} نقاط جماعية لجميع الطلاب</button>
     </div>
     <div id="mp_list" class="space-y-2">${filtered.map(s=>renderMpStudentCard(s, byStudent[s.Student_ID]||[])).join('') || '<div class="card-v4 text-center py-6 text-slate-400 font-bold">لا طلاب مطابقون</div>'}</div>
   </div>`;
@@ -1927,14 +1939,19 @@ function openCreateManualPlan(sid){
   const surOpts = surs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
   const today = ymd(new Date());
   const unitOpts = Object.entries(MP_UNITS).map(([k,v])=>`<option value="${k}" ${k==='full'?'selected':''}>${v.label}</option>`).join('') + '<option value="custom">مخصّص (بالآيات)</option>';
-  openModal('📖 خطة فصلية — ' + esc(name), `
+  const cfg = _tData?.planConfig || {};
+  const cfgInfo = cfg.termStart && cfg.termEnd
+    ? `<div class="text-[10px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg px-3 py-2 mb-1">الفصل: ${esc(cfg.termStart)} — ${esc(cfg.termEnd)} · الأيام: ${(cfg.workDays||[]).map(d=>['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][d]||d).join('، ')}</div>`
+    : `<div class="text-[10px] font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 mb-1">${svg('warn','w-3 h-3 inline')} لم يتم تعيين بيانات الفصل — اذهب إلى الإعدادات &gt; أيام الحلقة</div>`;
+  openModal('خطة فصلية — ' + esc(name), `
     <div class="space-y-3">
+      ${cfgInfo}
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
           <select id="cp_type" class="input py-2">
-            <option value="conserve">🌱 حفظ</option>
-            <option value="revision">🔄 مراجعة</option>
+            <option value="conserve">حفظ</option>
+            <option value="revision">مراجعة</option>
           </select>
         </div>
         <div>
@@ -1951,35 +1968,26 @@ function openCreateManualPlan(sid){
         <div class="grid grid-cols-2 gap-2">
           <label id="cp_dir_asc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-brand-300 bg-brand-50 cursor-pointer transition">
             <input type="radio" name="cp_dir" value="asc" checked onchange="_mpPlanDirChange()" class="accent-brand-900">
-            <span class="text-xs font-bold text-brand-800">🔽 تنازلي (الفاتحة←الناس)</span>
+            <span class="text-xs font-bold text-brand-800">${svg('arrowdown','w-3 h-3 inline')} تنازلي (الفاتحة←الناس)</span>
           </label>
           <label id="cp_dir_desc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer transition">
             <input type="radio" name="cp_dir" value="desc" onchange="_mpPlanDirChange()" class="accent-brand-900">
-            <span class="text-xs font-bold text-slate-600">🔼 تصاعدي (الناس←الفاتحة)</span>
+            <span class="text-xs font-bold text-slate-600">${svg('arrowup','w-3 h-3 inline')} تصاعدي (الناس←الفاتحة)</span>
           </label>
         </div>
       </div>
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="text-xs font-bold text-slate-600 mb-2">📍 المدى القرآني</div>
+        <div class="text-xs font-bold text-slate-600 mb-2">المدى القرآني</div>
         <div class="grid grid-cols-2 gap-2 mb-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="cp_fromS" class="input py-2 text-sm">${surOpts}</select></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="cp_fromS" onchange="_cpUpdateAyahMax('cp_fromA','cp_fromS')" class="input py-2 text-sm">${surOpts}</select></div>
           <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="cp_fromA" min="1" value="1" class="input py-2 text-sm text-center num"></div>
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="cp_toS" class="input py-2 text-sm">${surOpts}</select></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="cp_toS" onchange="_cpUpdateAyahMax('cp_toA','cp_toS')" class="input py-2 text-sm">${surOpts}</select></div>
           <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="cp_toA" min="1" value="1" class="input py-2 text-sm text-center num"></div>
         </div>
-      </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="text-xs font-bold text-slate-600 mb-2">🗓 المدة وأيام الحلقة</div>
-        <div class="grid grid-cols-2 gap-2 mb-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">بداية الفصل</label><input type="date" id="cp_from" value="${today}" class="input py-2 text-sm num"></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">نهاية الفصل</label><input type="date" id="cp_to" class="input py-2 text-sm num"></div>
-        </div>
-        <label class="block text-[10px] font-bold text-slate-500 mb-1.5">أيام الحلقة</label>
-        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold" id="cp_days">
-          ${['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'].map((d,i)=>`<label class="cursor-pointer"><input type="checkbox" data-day="${i}" ${(i<5)?'checked':''} class="peer sr-only"><div class="py-2 rounded-lg border border-slate-200 bg-white peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand transition">${d}</div></label>`).join('')}
-        </div>
+        <div id="cp_extra_ranges"></div>
+        <button type="button" onclick="_cpAddRange()" class="mt-2 w-full text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg py-1.5 hover:bg-brand-100 transition">+ نطاق تالٍ</button>
       </div>
       <label class="flex items-center gap-2 text-xs font-bold text-slate-600">
         <input type="checkbox" id="cp_replace" class="w-4 h-4"> استبدل أي خطة قائمة من نفس النوع في هذا المدى
@@ -2013,29 +2021,81 @@ function _mpPlanDirChange(){
     if($('cp_toA'))$('cp_toA').value='1';
   }
 }
+function _cpUpdateAyahMax(ayahId, surahId){
+  const surs=_tData?.surahs||[], counts=_tData?.surahCounts||[];
+  const sel=$(surahId), inp=$(ayahId); if(!sel||!inp) return;
+  const idx=surs.indexOf(sel.value); if(idx<0) return;
+  const max=counts[idx]||999;
+  inp.max=max;
+  if(Number(inp.value)>max) inp.value=max;
+}
+function _epUpdateAyahMax(ayahId, surahId){
+  const surs=_tData?.surahs||[], counts=_tData?.surahCounts||[];
+  const sel=document.getElementById(surahId), inp=document.getElementById(ayahId); if(!sel||!inp) return;
+  const idx=surs.indexOf(sel.value); if(idx<0) return;
+  const max=counts[idx]||999;
+  inp.max=max;
+  if(Number(inp.value)>max) inp.value=max;
+}
+let _cpRangeCount=0;
+function _cpAddRange(){
+  const surs=_tData?.surahs||[];
+  const surOpts=surs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  const n=++_cpRangeCount;
+  const div=document.createElement('div');
+  div.className='mt-3 pt-3 border-t border-slate-200';
+  div.id=`cp_range_${n}`;
+  div.innerHTML=`
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-[10px] font-bold text-slate-500">نطاق تالٍ ${n+1}</span>
+      <button type="button" onclick="this.closest('[id^=cp_range_]').remove()" class="text-[10px] text-danger font-bold">حذف</button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 mb-2">
+      <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="cp_fromS_${n}" onchange="_cpUpdateAyahMax('cp_fromA_${n}','cp_fromS_${n}')" class="input py-2 text-sm">${surOpts}</select></div>
+      <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="cp_fromA_${n}" min="1" value="1" class="input py-2 text-sm text-center num"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="cp_toS_${n}" onchange="_cpUpdateAyahMax('cp_toA_${n}','cp_toS_${n}')" class="input py-2 text-sm">${surOpts}</select></div>
+      <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="cp_toA_${n}" min="1" value="1" class="input py-2 text-sm text-center num"></div>
+    </div>`;
+  const container=$('cp_extra_ranges'); if(container) container.appendChild(div);
+}
 async function doCreateManualPlan(){
   const type = $('cp_type').value;
   const unit = $('cp_unit').value;
+  const planCfg = _tData?.planConfig || {};
+  const startDate = planCfg.termStart || '';
+  const endDate = planCfg.termEnd || '';
+  const workDays = planCfg.workDays?.length ? planCfg.workDays : [];
+  if(!startDate || !endDate) return toast('عيّن بداية ونهاية الفصل في الإعدادات → أيام الحلقة','warn');
+  if(!workDays.length) return toast('عيّن أيام الحلقة في الإعدادات → أيام الحلقة','warn');
+  // Collect ranges
+  const ranges = [];
+  const fromSurah0=$('cp_fromS').value, toSurah0=$('cp_toS').value;
+  const fromAyah0=Number($('cp_fromA').value)||1, toAyah0=Number($('cp_toA').value)||1;
+  if(!fromSurah0||!toSurah0) return toast('اختر نطاق القرآن','warn');
+  ranges.push({fromSurah:fromSurah0,fromAyah:fromAyah0,toSurah:toSurah0,toAyah:toAyah0});
+  document.querySelectorAll('[id^="cp_range_"]').forEach(div=>{
+    const n=div.id.replace('cp_range_','');
+    const fS=document.getElementById(`cp_fromS_${n}`)?.value;
+    const fA=Number(document.getElementById(`cp_fromA_${n}`)?.value)||1;
+    const tS=document.getElementById(`cp_toS_${n}`)?.value;
+    const tA=Number(document.getElementById(`cp_toA_${n}`)?.value)||1;
+    if(fS&&tS) ranges.push({fromSurah:fS,fromAyah:fA,toSurah:tS,toAyah:tA});
+  });
   let daily;
   if(unit==='custom'){
     daily = Number($('cp_daily').value) || undefined;
   } else {
-    const fromSurah=$('cp_fromS').value,fromAyah=Number($('cp_fromA').value)||1;
-    daily = qExactAyahs(fromSurah,fromAyah,unit) || MP_UNITS[unit]?.ayat;
+    daily = qExactAyahs(fromSurah0,fromAyah0,unit) || MP_UNITS[unit]?.ayat;
   }
-  const fromSurah = $('cp_fromS').value, fromAyah = Number($('cp_fromA').value)||1;
-  const toSurah = $('cp_toS').value, toAyah = Number($('cp_toA').value)||1;
-  const startDate = $('cp_from').value, endDate = $('cp_to').value;
-  const workDays = Array.from(document.querySelectorAll('#cp_days input:checked')).map(x=>Number(x.dataset.day));
   const replaceExisting = $('cp_replace').checked;
-  if(!fromSurah||!toSurah||!startDate||!endDate) return toast('أكمل الحقول','warn');
-  if(!workDays.length) return toast('اختر يوماً واحداً على الأقل','warn');
   if(startDate>endDate) return toast('البداية يجب أن تسبق النهاية','warn');
-  const payload = { studentId: _mp.studentId, type, startDate, endDate, fromSurah, fromAyah, toSurah, toAyah, workDays, dailyAmount: daily, replaceExisting };
+  const payload = { studentId: _mp.studentId, type, startDate, endDate, ranges, workDays, dailyAmount: daily, replaceExisting };
   const r = await guard(DS.planGenerate(payload),'توليد الخطة…');
   if(!r||!r.success) return toast((r&&r.message)||'فشل التوليد','error');
   closeModal();
-  toast(`✅ تم توليد ${r.created} يوم${r.replaced?` (استُبدل ${r.replaced})`:''}`);
+  toast(`تم توليد ${r.created} يوم${r.replaced?` (استُبدل ${r.replaced})`:''}`);
   await refreshTeacherStudents();
   _mp.openIds.add(String(_mp.studentId));
   renderManualPlanTab($('fuSubBody'));
@@ -2045,21 +2105,23 @@ function openEditManualPlan(planId){
   if(!p) return toast('لم يُعثر على الورد','error');
   const surs = _tData?.surahs || [];
   const surOpts = (sel)=>surs.map(s=>`<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
-  openModal('✏️ تعديل الورد', `
+  const surs2=_tData?.surahs||[],counts2=_tData?.surahCounts||[];
+  const ayahMax=(s)=>{const i=surs2.indexOf(s);return i>=0?counts2[i]:999;};
+  openModal('تعديل الورد', `
     <div class="space-y-3">
       <div class="grid grid-cols-2 gap-2">
         <div><label class="block text-xs font-bold text-slate-500 mb-1">التاريخ</label><input type="date" id="ep_date" value="${esc(p.Date)}" class="input py-2 num"></div>
-        <div><label class="block text-xs font-bold text-slate-500 mb-1">النوع</label><select id="ep_type" class="input py-2"><option value="conserve" ${p.Type==='conserve'?'selected':''}>🌱 حفظ</option><option value="revision" ${p.Type==='revision'?'selected':''}>🔄 مراجعة</option></select></div>
+        <div><label class="block text-xs font-bold text-slate-500 mb-1">النوع</label><select id="ep_type" class="input py-2"><option value="conserve" ${p.Type==='conserve'?'selected':''}>حفظ</option><option value="revision" ${p.Type==='revision'?'selected':''}>مراجعة</option></select></div>
       </div>
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="text-xs font-bold text-slate-600 mb-2">📍 المدى</div>
+        <div class="text-xs font-bold text-slate-600 mb-2">المدى</div>
         <div class="grid grid-cols-2 gap-2 mb-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="ep_fromS" class="input py-2 text-sm">${surOpts(p.From_Surah)}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="ep_fromA" min="1" value="${esc(p.From_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="ep_fromS" onchange="_epUpdateAyahMax('ep_fromA','ep_fromS')" class="input py-2 text-sm">${surOpts(p.From_Surah)}</select></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="ep_fromA" min="1" max="${ayahMax(p.From_Surah)}" value="${esc(p.From_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
         </div>
         <div class="grid grid-cols-2 gap-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="ep_toS" class="input py-2 text-sm">${surOpts(p.To_Surah)}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="ep_toA" min="1" value="${esc(p.To_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="ep_toS" onchange="_epUpdateAyahMax('ep_toA','ep_toS')" class="input py-2 text-sm">${surOpts(p.To_Surah)}</select></div>
+          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="ep_toA" min="1" max="${ayahMax(p.To_Surah)}" value="${esc(p.To_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-2">
@@ -2100,10 +2162,10 @@ function _nzCacheSet(data){ _nzCache.set(_nzCacheKey(),{data,ts:Date.now()}); }
 function _nzCacheClear(){ _nzCache.delete(_nzCacheKey()); }
 
 const NZ_TYPES = {
-  all:      {label:'الكل',     icon:'📚', activeCls:'bg-brand-900 text-white shadow-md',    badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-gray-100 text-gray-600', chipCls:'bg-gray-100 text-gray-700'},
-  conserve: {label:'الحفظ',    icon:'🌱', activeCls:'bg-success text-white shadow-md',      badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-green-100 text-green-700', chipCls:'bg-green-100 text-green-700'},
-  revision: {label:'المراجعة', icon:'🔄', activeCls:'bg-blue-600 text-white shadow-md',     badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-blue-100 text-blue-700',  chipCls:'bg-blue-100 text-blue-700'},
-  mastery:  {label:'الإتقان',  icon:'💎', activeCls:'bg-gold-500 text-brand-900 shadow-md', badgeActiveCls:'bg-brand-900/20 text-brand-900', badgeCls:'bg-gold-100 text-gold-700', chipCls:'bg-gold-100 text-gold-700'}
+  all:      {label:'الكل',     icon:'book', activeCls:'bg-brand-900 text-white shadow-md',    badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-gray-100 text-gray-600', chipCls:'bg-gray-100 text-gray-700'},
+  conserve: {label:'الحفظ',    icon:'leaf', activeCls:'bg-success text-white shadow-md',      badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-green-100 text-green-700', chipCls:'bg-green-100 text-green-700'},
+  revision: {label:'المراجعة', icon:'repeat', activeCls:'bg-blue-600 text-white shadow-md',     badgeActiveCls:'bg-white/20 text-white', badgeCls:'bg-blue-100 text-blue-700',  chipCls:'bg-blue-100 text-blue-700'},
+  mastery:  {label:'الإتقان',  icon:'trophy', activeCls:'bg-gold-500 text-brand-900 shadow-md', badgeActiveCls:'bg-brand-900/20 text-brand-900', badgeCls:'bg-gold-100 text-gold-700', chipCls:'bg-gold-100 text-gold-700'}
 };
 
 async function renderNazemTab(body){
@@ -2160,11 +2222,11 @@ async function renderNazemTab(body){
     <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
       <div class="flex flex-wrap items-end gap-3">
         <div>
-          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">📅 التاريخ</label>
+          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">التاريخ</label>
           <input type="date" id="nz_date" value="${_nz.date}" onchange="loadNzFollow()" class="input font-extrabold text-brand-900 py-2.5">
         </div>
         <div class="flex-1 min-w-[200px]">
-          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">🔍 بحث عن طالب</label>
+          <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">بحث عن طالب</label>
           <input type="text" id="nz_search" placeholder="اكتب اسم الطالب..." oninput="nzSetSearch(this.value)" class="input py-2.5">
         </div>
         <button onclick="doNzSyncDay()" class="btn bg-gradient-to-l from-success to-emerald-600 text-white shadow-md py-2.5 px-5 text-sm hover:shadow-lg">${svg('bolt','w-4 h-4')} استيراد اليوم</button>
@@ -2252,7 +2314,7 @@ async function loadNzFollow(opts){
   const r=await guard(DS.nazemFollowUp(_nz.planId,_nz.date),'تحميل سجل المتابعة من ناظم…');
   if(!r||!r.success){
     if(box) box.innerHTML=`<div class="bg-white p-8 rounded-2xl shadow-saas border border-red-100 text-center">
-      <div class="text-4xl mb-3">⚠️</div>
+      <div class="flex justify-center mb-3">${svg('warn','w-10 h-10 text-danger')}</div>
       <p class="text-danger font-extrabold text-lg mb-2">تعذر جلب البيانات</p>
       <p class="text-gray-500 font-bold text-sm">${esc((r&&r.message)||'حدث خطأ في جلب البيانات')}</p>
     </div>`;
@@ -2290,11 +2352,11 @@ function renderNzBody(){
   // شريط الإحصائيات
   const info=`<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
     <div class="bg-gradient-to-br from-brand-900 to-brand-800 text-white p-4 rounded-2xl shadow-md">
-      <p class="text-[11px] font-bold text-gold-500 mb-1">📖 الحلقة</p>
+      <p class="text-[11px] font-bold text-gold-500 mb-1">الحلقة</p>
       <p class="font-extrabold truncate text-sm">${esc(d.class_name||'—')}</p>
     </div>
     <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
-      <p class="text-[11px] font-bold text-gray-500 mb-1">📊 تقدم اليوم</p>
+      <p class="text-[11px] font-bold text-gray-500 mb-1">تقدم اليوم</p>
       <div class="flex items-center gap-2">
         <p class="font-extrabold text-success text-xl tabular-nums">${progressPct}%</p>
         <div class="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden"><div class="h-full bg-success rounded-full transition-all" style="width:${progressPct}%"></div></div>
@@ -2302,12 +2364,12 @@ function renderNzBody(){
       <p class="text-[10px] font-bold text-gray-400 mt-1">${doneCount} من ${allItems.length} بند</p>
     </div>
     <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
-      <p class="text-[11px] font-bold text-gray-500 mb-1">👥 الطلاب</p>
+      <p class="text-[11px] font-bold text-gray-500 mb-1">الطلاب</p>
       <p class="font-extrabold text-gray-900 text-xl tabular-nums">${(d.students||[]).length}</p>
       <p class="text-[10px] font-bold text-gray-400 mt-1">${filteredStudents.length} معروض</p>
     </div>
     <div class="bg-white p-4 rounded-2xl shadow-saas border border-gray-50">
-      <p class="text-[11px] font-bold text-gray-500 mb-1">📅 التاريخ الهجري</p>
+      <p class="text-[11px] font-bold text-gray-500 mb-1">التاريخ الهجري</p>
       <p class="font-extrabold text-gold-600 text-sm leading-tight mt-1">${toHijri(d.date)}</p>
     </div>
   </div>`;
@@ -2320,7 +2382,7 @@ function renderNzBody(){
     const baseCls = active ? t.activeCls : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200';
     const bCls   = active ? t.badgeActiveCls : t.badgeCls;
     return `<button onclick="nzSetFilter('${k}')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm border transition-all-fast ${baseCls}">
-      <span>${t.icon}</span>
+      <span>${svg(t.icon,'w-4 h-4')}</span>
       <span>${t.label}</span>
       <span class="px-2 py-0.5 rounded-full text-[11px] tabular-nums ${bCls}">${count}</span>
     </button>`;
@@ -2330,8 +2392,8 @@ function renderNzBody(){
     <div class="flex items-center justify-between flex-wrap gap-3">
       <div class="flex flex-wrap gap-2">${tabs}</div>
       <div class="flex gap-2">
-        <button onclick="doNzExpandAll(true)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3" title="فتح الكل">⬇ فتح الكل</button>
-        <button onclick="doNzExpandAll(false)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3" title="طي الكل">⬆ طي الكل</button>
+        <button onclick="doNzExpandAll(true)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3 flex items-center gap-1" title="فتح الكل">${svg('arrowdown','w-3 h-3')} فتح الكل</button>
+        <button onclick="doNzExpandAll(false)" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-2 px-3 flex items-center gap-1" title="طي الكل">${svg('arrowup','w-3 h-3')} طي الكل</button>
         <button onclick="doNzBulkAttendance()" class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-sm py-2 px-3">${svg('check','w-4 h-4')} حضور الكل</button>
         <button onclick="doNzSaveAll()" class="btn bg-gradient-to-l from-brand-900 to-brand-800 text-white text-sm py-2 px-4 shadow-md hover:shadow-lg" title="حفظ كل التقييمات المعبأة">
           ${svg('cloud','w-4 h-4')} حفظ الكل
@@ -2345,7 +2407,7 @@ function renderNzBody(){
   const html = filteredStudents.length
     ? filteredStudents.map((st,i)=>renderNzStudent(st,i<4)).filter(Boolean).join('')
     : `<div class="col-span-full bg-white p-12 text-center rounded-2xl shadow-saas border-2 border-dashed border-gray-200">
-        <div class="text-5xl mb-3">${_nz.search?'🔍':(students.length===0?'📭':'🗂️')}</div>
+        <div class="flex justify-center mb-3">${_nz.search?svg('search','w-10 h-10 text-gray-400'):(students.length===0?svg('warn','w-10 h-10 text-gray-400'):svg('book','w-10 h-10 text-gray-400'))}</div>
         <p class="text-gray-700 font-extrabold text-lg mb-2">${_nz.search?'لا توجد نتائج للبحث':(students.length===0?'لا يوجد طلاب في هذه الحلقة':'لا يوجد طلاب في هذا التصنيف')}</p>
         <p class="text-gray-400 font-bold text-sm">${_nz.search?'جرّب كلمة بحث أخرى':(students.length===0?'تحقق من إعدادات الحلقة أو حاول الاستيراد من ناظم':'جرّب اختيار تصنيف آخر أو "الكل"')}</p>
       </div>`;
@@ -2381,7 +2443,7 @@ function renderNzStudent(st,open){
 
   const quickBtn = localId
     ? `<button onclick="event.preventDefault();event.stopPropagation();fQuickPoint('${esc(localId)}')" title="نقاط إضافية" class="w-10 h-10 rounded-xl bg-gold-100 text-gold-700 hover:bg-gold-200 flex items-center justify-center shrink-0 transition">${svg('plus','w-5 h-5')}</button>`
-    : `<button onclick="event.preventDefault();event.stopPropagation();nzLinkStudentPrompt('${esc(st.student_id||'')}','${esc(st.student_name||'')}')" title="اربطه بحسابه" class="px-3 h-10 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 flex items-center justify-center shrink-0 font-bold text-xs transition whitespace-nowrap">🔗 ربط</button>`;
+    : `<button onclick="event.preventDefault();event.stopPropagation();nzLinkStudentPrompt('${esc(st.student_id||'')}','${esc(st.student_name||'')}')" title="اربطه بحسابه" class="px-3 h-10 rounded-xl bg-orange-100 text-orange-700 hover:bg-orange-200 flex items-center justify-center shrink-0 font-bold text-xs transition whitespace-nowrap">ربط</button>`;
 
   return `<details class="nz-card" ${open?'open':''} data-nz-student="${esc(st.student_id||'')}">
     <summary class="p-3 sm:p-4 cursor-pointer hover:bg-gray-50/50 transition select-none outline-none" style="list-style:none">
@@ -2391,7 +2453,7 @@ function renderNzStudent(st,open){
           <div class="font-extrabold text-gray-900 name-full text-base sm:text-lg leading-tight mb-1">${esc(st.student_name)}</div>
           <div class="flex items-center gap-1.5 flex-wrap mb-2">
             ${attBadge}
-            ${localPts!==null?`<span class="chip bg-gold-100 text-gold-700">⭐ ${localPts}</span>`:''}
+            ${localPts!==null?`<span class="chip bg-gold-100 text-gold-700">${svg('coin','w-3 h-3 inline-block')} ${localPts}</span>`:''}
             <span class="chip bg-brand-50 text-brand-700">${items.length} بند</span>
           </div>
           <div class="flex items-center gap-2">
@@ -2431,13 +2493,13 @@ function renderNzItem(it, st){
   const td=it.today;
   const tKey = String(it.type||'conserve');
   const tInfo = NZ_TYPES[tKey] || NZ_TYPES.conserve;
-  const typeBadge = `<span class="chip ${tInfo.chipCls}">${tInfo.icon} ${tInfo.label}</span>`;
+  const typeBadge = `<span class="chip ${tInfo.chipCls}">${svg(tInfo.icon,'w-3 h-3')} ${tInfo.label}</span>`;
 
   const isDone = td && td.status==='completed';
   const isBlocked = it.is_blocked_by_late;
   const status = isDone
     ? '<span class="chip bg-green-100 text-green-700">✓ مكتمل</span>'
-    : (isBlocked ? '<span class="chip bg-red-100 text-red-700">⛔ متأخر</span>'
+    : (isBlocked ? `<span class="chip bg-red-100 text-red-700 inline-flex items-center gap-1">${svg('ban','w-3 h-3')} متأخر</span>`
     : (td ? '<span class="chip bg-gold-100 text-gold-700">◐ قيد التنفيذ</span>' : ''));
 
   const surs=_tData?.surahs||[];
@@ -2448,7 +2510,7 @@ function renderNzItem(it, st){
   const form = canEdit ? `
     <div class="nz-field-grid" data-nz-form="${td.id}">
       <div class="col-sur">
-        <label class="nz-mini-label">📖 آخر سورة</label>
+        <label class="nz-mini-label">آخر سورة</label>
         <select data-k="actual_end_surah" class="nz-mini-input">${surs.map(s=>`<option value="${esc(s)}" ${s===td.surah_to_name?'selected':''}>${esc(s)}</option>`).join('')}</select>
       </div>
       <div>
@@ -2456,7 +2518,7 @@ function renderNzItem(it, st){
         <input type="number" data-k="actual_end_aya" value="${td.verse_to||''}" class="nz-mini-input">
       </div>
       <div class="col-att">
-        <label class="nz-mini-label">👤 الحضور</label>
+        <label class="nz-mini-label">الحضور</label>
         <select data-k="attendance_status" class="nz-mini-input">
           <option value="2" ${attS==2?'selected':''}>حاضر</option>
           <option value="1" ${attS==1?'selected':''}>متأخر</option>
@@ -2484,7 +2546,7 @@ function renderNzItem(it, st){
       <span class="text-brand-700 mx-1">←</span>
       ${esc(it.surah_to_name)} <span class="text-gray-400">(${it.verse_to})</span>
     </div>
-    ${td ? `<div class="text-[11px] font-bold text-gray-500 mt-1 bg-white/60 rounded-md px-2 py-1 inline-block">📌 اليوم: ${esc(td.surah_from_name)} (${td.verse_from}) ← ${esc(td.surah_to_name)} (${td.verse_to})</div>` : ''}
+    ${td ? `<div class="text-[11px] font-bold text-gray-500 mt-1 bg-white/60 rounded-md px-2 py-1 inline-block">اليوم: ${esc(td.surah_from_name)} (${td.verse_from}) ← ${esc(td.surah_to_name)} (${td.verse_to})</div>` : ''}
     ${form}
   </div>`;
 }
@@ -2527,11 +2589,11 @@ async function doNzSaveAll(){
 
   openModal('تأكيد الحفظ الجماعي', `
     <div class="text-center py-2">
-      <div class="text-4xl mb-3">☁️</div>
+      <div class="flex justify-center mb-3">${svg('cloud','w-10 h-10 text-brand-900')}</div>
       <p class="font-extrabold text-gray-900 text-lg mb-2">سيتم حفظ ${tasks.length} تقييم في ناظم</p>
       <p class="text-sm font-bold text-gray-500 mb-6">قد تستغرق العملية عدة ثوانٍ حسب عدد البنود.</p>
       <div class="flex gap-3">
-        <button onclick="doNzSaveAllRun()" class="btn bg-gradient-to-l from-brand-900 to-brand-800 text-white flex-1 shadow-md">☁ ابدأ الحفظ</button>
+        <button onclick="doNzSaveAllRun()" class="btn bg-gradient-to-l from-brand-900 to-brand-800 text-white flex-1 shadow-md">ابدأ الحفظ</button>
         <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>
       </div>
     </div>`);
@@ -2551,7 +2613,7 @@ async function doNzSaveAllRun(){
   badge.innerHTML = `<div class="flex items-center gap-3">
     <div class="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin shrink-0"></div>
     <div class="flex-1 min-w-0">
-      <div class="font-extrabold text-sm">☁️ حفظ ${tasks.length} تقييم بالخلفية</div>
+      <div class="font-extrabold text-sm">حفظ ${tasks.length} تقييم بالخلفية</div>
       <div class="text-xs text-gold-100 font-bold mt-0.5" id="nz_bulk_status">0/${tasks.length}</div>
     </div>
   </div>
@@ -2616,7 +2678,7 @@ async function doNzBulkAttSet(status){
   const badge = document.createElement('div');
   badge.id='nz_att_badge';
   badge.className='fixed bottom-4 right-4 left-4 sm:left-auto sm:min-w-[300px] z-40 bg-brand-900 text-white px-4 py-3 rounded-2xl shadow-2xl fade-in';
-  badge.innerHTML = `<div class="flex items-center gap-3"><div class="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin shrink-0"></div><div class="flex-1"><div class="font-extrabold text-sm">✅ حفظ الحضور بالخلفية</div><div class="text-xs text-gold-100 font-bold" id="nz_att_status">0/${targets.length}</div></div></div>`;
+  badge.innerHTML = `<div class="flex items-center gap-3"><div class="w-5 h-5 border-2 border-gold-500 border-t-transparent rounded-full animate-spin shrink-0"></div><div class="flex-1"><div class="font-extrabold text-sm">حفظ الحضور بالخلفية</div><div class="text-xs text-gold-100 font-bold" id="nz_att_status">0/${targets.length}</div></div></div>`;
   document.body.appendChild(badge);
 
   let ok=0, done=0;
@@ -2679,9 +2741,10 @@ function renderSettingsTab(body){
       ${tab('groups','المجموعات')}
       ${tab('items','إعدادات النقاط')}
       ${tab('audit','سجل النقاط')}
+      ${tab('plandays','أيام الحلقة')}
       ${currentUser&&currentUser.isAdmin?tab('push','الإشعارات الخارجية'):''}
       ${tab('appearance','المظهر والشعار')}
-      ${currentUser&&currentUser.isAdmin?tab('reset','⚠️ تصفير البيانات'):''}
+      ${currentUser&&currentUser.isAdmin?`<button onclick="_settingsSub='reset';renderSettingsTab($('portal'))" class="whitespace-nowrap px-6 py-2 rounded-xl font-bold transition-all-fast text-danger border border-danger/30 ${_settingsSub==='reset'?'bg-danger text-white shadow-md':'bg-white hover:bg-red-50'}">تصفير البيانات</button>`:''}
     </div>
     <div id="settingsSubBody"></div>
   </div>`;
@@ -2692,35 +2755,77 @@ function renderSettingsTab(body){
   else if(_settingsSub==='audit') renderAuditTab($('settingsSubBody'));
   else if(_settingsSub==='push') renderPushAdminTab($('settingsSubBody'));
   else if(_settingsSub==='reset') renderResetTab($('settingsSubBody'));
+  else if(_settingsSub==='plandays') renderPlanDaysTab($('settingsSubBody'));
   else renderItemsTab($('settingsSubBody'));
+}
+
+/* ---------- أيام الحلقة وتواريخ الفصل ---------- */
+async function renderPlanDaysTab(body){
+  body.innerHTML='<div class="p-8 text-center text-gray-400 font-bold">جارٍ التحميل…</div>';
+  const r = await DS.getSettings(['plan_work_days','plan_term_start','plan_term_end']);
+  const vals = r?.values || {};
+  const savedDays = vals.plan_work_days ? vals.plan_work_days.split(',').map(Number) : [0,1,2,3,4];
+  const savedStart = vals.plan_term_start || '';
+  const savedEnd = vals.plan_term_end || '';
+  const dayLabels=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  const dayBoxes=dayLabels.map((d,i)=>`<label class="cursor-pointer"><input type="checkbox" data-day="${i}" ${savedDays.includes(i)?'checked':''} class="peer sr-only"><div class="py-2 rounded-lg border border-slate-200 bg-white peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand text-[11px] font-bold text-center transition">${d}</div></label>`).join('');
+  body.innerHTML=`<div class="fade-in max-w-lg mx-auto space-y-5">
+    <div class="bg-white rounded-2xl shadow-saas border border-gray-100 p-6 space-y-4">
+      <h3 class="font-extrabold text-brand-900 text-lg">إعدادات الفصل الدراسي</h3>
+      <p class="text-xs text-gray-500 font-bold leading-relaxed">تُطبّق هذه الإعدادات على جميع الخطط التي تنشئها. يمكنك تغييرها في بداية كل فصل.</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-bold text-gray-600 mb-1">بداية الفصل</label><input type="date" id="pd_start" value="${esc(savedStart)}" class="input py-2 num"></div>
+        <div><label class="block text-xs font-bold text-gray-600 mb-1">نهاية الفصل</label><input type="date" id="pd_end" value="${esc(savedEnd)}" class="input py-2 num"></div>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2">أيام الحلقة في الأسبوع</label>
+        <div class="grid grid-cols-7 gap-1" id="pd_days">${dayBoxes}</div>
+      </div>
+      <button onclick="doSavePlanDays()" class="btn bg-brand-900 text-white w-full py-3 font-extrabold">${svg('cloud','w-4 h-4')} حفظ إعدادات الفصل</button>
+    </div>
+  </div>`;
+}
+async function doSavePlanDays(){
+  const start=$('pd_start')?.value.trim()||'';
+  const end=$('pd_end')?.value.trim()||'';
+  const days=Array.from(document.querySelectorAll('#pd_days input:checked')).map(x=>Number(x.dataset.day));
+  if(!start||!end) return toast('أدخل تاريخي البداية والنهاية','warn');
+  if(start>end) return toast('البداية يجب أن تسبق النهاية','warn');
+  if(!days.length) return toast('اختر يوماً واحداً على الأقل','warn');
+  await guard(DS.setSetting('plan_term_start',start),'حفظ…');
+  await guard(DS.setSetting('plan_term_end',end),'حفظ…');
+  await guard(DS.setSetting('plan_work_days',days.join(',')),'حفظ…');
+  if(_tData) _tData.planConfig = { workDays: days, termStart: start, termEnd: end };
+  toast('تم حفظ إعدادات الفصل');
+  renderPlanDaysTab($('settingsSubBody'));
 }
 
 /* ---------- تصفير البيانات (للمشرف فقط) ---------- */
 function renderResetTab(body){
   if(!currentUser||!currentUser.isAdmin){
-    body.innerHTML='<div class="bg-white p-8 rounded-2xl text-center"><div class="text-4xl mb-2">🔒</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>';
+    body.innerHTML=`<div class="bg-white p-8 rounded-2xl text-center"><div class="text-gray-300 mb-2">${svg('lock','w-10 h-10 mx-auto')}</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>`;
     return;
   }
   body.innerHTML=`<div class="fade-in max-w-xl mx-auto space-y-6">
     <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
       <div class="flex items-start gap-4 mb-4">
-        <div class="text-4xl">⚠️</div>
+        <div>${svg('warn','w-10 h-10 text-red-600')}</div>
         <div>
           <h3 class="text-xl font-extrabold text-red-800 mb-1">تصفير جميع البيانات</h3>
           <p class="text-sm font-bold text-red-700 leading-relaxed">هذا الإجراء <b>لا يمكن التراجع عنه</b>. سيتم حذف جميع بيانات الطلاب والخطط والنقاط والحضور والأخبار والأحداث. تبقى حسابات تسجيل الدخول سليمة.</p>
         </div>
       </div>
       <div class="bg-white rounded-xl p-4 border border-red-200 space-y-2 text-sm font-bold text-red-800 mb-5">
-        <div>✅ يُحذف: الطلاب، المجموعات، الخطط، النقاط، الحضور، الأخبار، الأحداث</div>
-        <div>✅ يُحذف: جميع التعليقات والشارات والاشتراكات</div>
-        <div>❌ يبقى: حسابات تسجيل الدخول (المعلم وولي الأمر والطالب)</div>
-        <div>❌ يبقى: إعدادات النقاط والمظهر</div>
+        <div>• يُحذف: الطلاب، المجموعات، الخطط، النقاط، الحضور، الأخبار، الأحداث</div>
+        <div>• يُحذف: جميع التعليقات والشارات والاشتراكات</div>
+        <div>• يبقى: حسابات تسجيل الدخول (المعلم وولي الأمر والطالب)</div>
+        <div>• يبقى: إعدادات النقاط والمظهر</div>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-bold text-red-700 mb-1">اكتب "تأكيد الحذف" للمتابعة:</label>
         <input type="text" id="reset_confirm_txt" placeholder="تأكيد الحذف" class="input py-2 border-red-300">
       </div>
-      <button onclick="doResetAllData()" class="btn-v4 w-full py-3 text-sm font-extrabold" style="background:#dc2626;color:white;border:none">🗑️ تصفير جميع البيانات نهائياً</button>
+      <button onclick="doResetAllData()" class="btn-v4 w-full py-3 text-sm font-extrabold" style="background:#dc2626;color:white;border:none">تصفير جميع البيانات نهائياً</button>
     </div>
   </div>`;
 }
@@ -2731,14 +2836,14 @@ async function doResetAllData(){
   if(!ok)return;
   const r=await guard(DS.resetAllData(),'جارٍ تصفير البيانات…');
   if(!r||!r.success)return toast((r&&r.message)||'فشل التصفير','error');
-  toast('✅ تم تصفير جميع البيانات');
+  toast('تم تصفير جميع البيانات');
   await refreshTeacherStudents();
   renderTeacherTab();
 }
 /* ---------- لوحة تحكّم الإشعارات الخارجية (للمشرف فقط) ---------- */
 async function renderPushAdminTab(body){
   if(!currentUser||!currentUser.isAdmin){
-    body.innerHTML='<div class="bg-white p-8 rounded-2xl text-center"><div class="text-4xl mb-2">🔒</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>';
+    body.innerHTML=`<div class="bg-white p-8 rounded-2xl text-center"><div class="text-gray-300 mb-2">${svg('lock','w-10 h-10 mx-auto')}</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>`;
     return;
   }
   body.innerHTML='<div class="text-center py-12"><div class="spinner mx-auto"></div></div>';
@@ -2759,7 +2864,7 @@ async function renderPushAdminTab(body){
   body.innerHTML=`<div class="fade-in space-y-5">
     <div class="bg-gradient-to-l from-brand-900 to-brand-800 text-white p-5 rounded-2xl shadow-saas">
       <div class="flex items-start gap-4">
-        <div class="text-3xl">🔔</div>
+        <div class="text-gold-500">${svg('bell','w-8 h-8')}</div>
         <div class="flex-1">
           <h3 class="text-lg font-extrabold mb-1">الإشعارات الخارجية للمنصة</h3>
           <p class="text-sm font-bold text-gold-100/80 leading-relaxed">تحكّم عام في تفعيل الإشعارات وتحديد الفئة المستهدفة وأنواع الإشعارات المرسَلة. التغييرات تُطبَّق فوراً على كل الإشعارات القادمة.</p>
@@ -2771,7 +2876,7 @@ async function renderPushAdminTab(body){
     <div class="bg-white p-5 rounded-2xl shadow-saas border border-gray-50">
       <label class="flex items-center justify-between gap-3 cursor-pointer">
         <div>
-          <div class="font-extrabold text-brand-900 text-base">⚡ تفعيل الإشعارات الخارجية</div>
+          <div class="font-extrabold text-brand-900 text-base">تفعيل الإشعارات الخارجية</div>
           <div class="text-xs font-bold text-gray-500 mt-1">مفتاح رئيسي — إن أُوقف لن يُرسَل أي إشعار على الإطلاق.</div>
         </div>
         <input type="checkbox" id="pp_enabled" ${p.enabled?'checked':''} class="w-6 h-6 accent-brand-900">
@@ -2781,7 +2886,7 @@ async function renderPushAdminTab(body){
     <!-- الجمهور -->
     <div class="bg-white p-5 rounded-2xl shadow-saas border border-gray-50">
       <div class="mb-3">
-        <div class="font-extrabold text-brand-900 text-base">🎯 الجمهور المستهدف</div>
+        <div class="font-extrabold text-brand-900 text-base">الجمهور المستهدف</div>
         <div class="text-xs font-bold text-gray-500 mt-1">من الفئات الذين يستقبلون إشعارات المنصة؟</div>
       </div>
       <div class="space-y-2">${audRadios}</div>
@@ -2790,20 +2895,20 @@ async function renderPushAdminTab(body){
     <!-- أنواع الإشعارات -->
     <div class="bg-white p-5 rounded-2xl shadow-saas border border-gray-50">
       <div class="mb-4">
-        <div class="font-extrabold text-brand-900 text-base">📋 أنواع الإشعارات</div>
+        <div class="font-extrabold text-brand-900 text-base">أنواع الإشعارات</div>
         <div class="text-xs font-bold text-gray-500 mt-1">فعّل أو أوقف كل نوع بشكل مستقل.</div>
       </div>
       <div class="space-y-3">
         <label class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer">
           <div>
-            <div class="font-bold text-gray-900 text-sm">📢 خبر / إعلان جديد</div>
+            <div class="font-bold text-gray-900 text-sm">خبر / إعلان جديد</div>
             <div class="text-[11px] font-bold text-gray-500">عند نشر إعلان جديد من الأخبار.</div>
           </div>
           <input type="checkbox" id="pp_news" ${p.news?'checked':''} class="w-5 h-5 accent-brand-900">
         </label>
         <label class="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer">
           <div>
-            <div class="font-bold text-gray-900 text-sm">⚠️ تنبيه غياب</div>
+            <div class="font-bold text-gray-900 text-sm">تنبيه غياب</div>
             <div class="text-[11px] font-bold text-gray-500">إشعار ولي الأمر عند تسجيل غياب ابنه.</div>
           </div>
           <input type="checkbox" id="pp_absence" ${p.absence?'checked':''} class="w-5 h-5 accent-brand-900">
@@ -2812,12 +2917,12 @@ async function renderPushAdminTab(body){
     </div>
 
     <div class="flex gap-3 sticky bottom-3">
-      <button onclick="doSavePushPolicy()" class="btn bg-brand-900 text-white flex-1 shadow-lg py-3">💾 حفظ السياسة</button>
+      <button onclick="doSavePushPolicy()" class="btn bg-brand-900 text-white flex-1 shadow-lg py-3">حفظ السياسة</button>
       <button onclick="renderPushAdminTab($('settingsSubBody'))" class="btn bg-gray-100 text-gray-700 py-3 px-6">إعادة تحميل</button>
     </div>
 
     <div class="text-[11px] font-bold text-gray-500 bg-gold-50 border border-gold-100 rounded-xl p-3 leading-relaxed">
-      💡 <b>ملاحظة:</b> السياسة تُطبَّق على الإشعارات القادمة فقط، ولا تحذف الاشتراكات الحالية. المستخدمون يُفعّلون/يُوقفون الإشعارات على أجهزتهم من نافذة الجرس 🔔.
+      <b>ملاحظة:</b> السياسة تُطبَّق على الإشعارات القادمة فقط، ولا تحذف الاشتراكات الحالية. المستخدمون يُفعّلون/يُوقفون الإشعارات على أجهزتهم من نافذة الجرس.
     </div>
   </div>`;
 }
@@ -2830,7 +2935,7 @@ async function doSavePushPolicy(){
   };
   const r=await guard(DS.pushPolicySet(payload),'حفظ…');
   if(!r||!r.success) return toast((r&&r.message)||'فشل الحفظ','error');
-  toast('✅ تم حفظ سياسة الإشعارات');
+  toast('تم حفظ سياسة الإشعارات');
 }
 let _auditLogs=[], _auditSearch='';
 async function renderAuditTab(body){
@@ -2842,7 +2947,7 @@ async function renderAuditTab(body){
     <div class="p-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
       <h3 class="text-lg font-extrabold text-brand-900 flex items-center gap-2">${svg('history','w-5 h-5 text-gold-500')} سجل النقاط</h3>
       <div class="flex items-center gap-2">
-        <input id="audit_search" oninput="auditSearch(this.value)" placeholder="🔍 بحث باسم الطالب أو البند…" class="input py-2 text-sm w-56">
+        <input id="audit_search" oninput="auditSearch(this.value)" placeholder="بحث باسم الطالب أو البند…" class="input py-2 text-sm w-56">
         <span id="audit_count" class="text-xs font-bold text-gray-500 bg-surface px-3 py-1 rounded-full border border-gray-100 whitespace-nowrap">${_auditLogs.length}</span>
       </div>
     </div>
@@ -2876,6 +2981,8 @@ async function renderAccountsTab(body){
   const teachers = list.filter(u=>u.Role==='Teacher');
   const parents  = list.filter(u=>u.Role==='Parent');
   const orphans = _tData.students.filter(s=>!s.Parent_ID).length;
+  const sdIds = new Set((_tData.students||[]).map(s=>s.Student_ID));
+  const unlinked = list.filter(u=>u.Role==='Student' && !sdIds.has(u.ID)).length;
 
   const subBtn=(k,label,count)=>`<button onclick="_accSub='${k}';renderAccountsTab($('settingsSubBody'))" class="px-5 py-2 rounded-xl font-bold transition-all-fast ${_accSub===k?'bg-brand-900 text-white shadow-md':'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'}">${label} <span class="ml-1 px-2 py-0.5 rounded-full text-[11px] tabular-nums ${_accSub===k?'bg-white/20':'bg-gray-100 text-gray-600'}">${count}</span></button>`;
 
@@ -2899,17 +3006,17 @@ async function renderAccountsTab(body){
       <div class="flex items-start gap-3">
         <div class="w-11 h-11 rounded-full bg-gradient-to-br from-brand-900 to-brand-800 text-gold-500 flex items-center justify-center font-extrabold text-lg shrink-0">${esc((u.Name||'?').charAt(0))}</div>
         <div class="flex-1 min-w-0">
-          <div class="font-extrabold text-gray-900 name-full text-base flex items-center gap-1.5">${esc(u.Name)}${u.IsAdmin?'<span class="text-[10px] bg-gold-100 text-gold-700 px-1.5 py-0.5 rounded-full font-bold">👑 مشرف</span>':''}${isSelf?'<span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-bold">أنت</span>':''}</div>
+          <div class="font-extrabold text-gray-900 name-full text-base flex items-center gap-1.5">${esc(u.Name)}${u.IsAdmin?'<span class="text-[10px] bg-gold-100 text-gold-700 px-1.5 py-0.5 rounded-full font-bold">مشرف</span>':''}${isSelf?'<span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-bold">أنت</span>':''}</div>
           <div class="text-xs font-bold text-gray-500 mt-1 flex flex-wrap gap-x-3 gap-y-1">
-            <span>🆔 ${esc(u.ID)}</span>
-            ${u.Role==='Parent'?`<span>👶 ${u.ChildrenCount} أبناء</span>`:''}
+            <span>${esc(u.ID)}</span>
+            ${u.Role==='Parent'?`<span>${u.ChildrenCount} أبناء</span>`:''}
           </div>
           ${u.Role==='Parent' && u.ChildrenCount ? `<div class="text-[11px] font-bold text-brand-700 mt-1 name-full">الأبناء: ${parentChildrenList(u.ID)}</div>`:''}
         </div>
         <div class="flex flex-col sm:flex-row gap-1.5 shrink-0">
           ${canManage?`<button onclick="openEditUser('${esc(u.ID)}','${esc(u.Name).replace(/'/g,'&#39;')}','${esc(u.Role)}')" class="p-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 transition" title="تعديل">${svg('edit','w-4 h-4')}</button>`:''}
           ${canDelete?`<button onclick="confirmDeleteUser('${esc(u.ID)}','${esc(u.Name).replace(/'/g,'&#39;')}','${esc(u.Role)}')" class="p-2 bg-red-50 text-danger rounded-lg hover:bg-red-100 transition" title="حذف">${svg('trash','w-4 h-4')}</button>`:''}
-          ${u.Role==='Teacher'&&!isAdmin?'<span class="p-2 text-gray-300" title="يُدار بواسطة المشرف">🔒</span>':''}
+          ${u.Role==='Teacher'&&!isAdmin?`<span class="p-2 text-gray-300" title="يُدار بواسطة المشرف">${svg('lock','w-4 h-4')}</span>`:''}
         </div>
       </div>
     </div>`;
@@ -2926,7 +3033,7 @@ async function renderAccountsTab(body){
           <div><label class="block text-xs font-bold text-gray-700 mb-1">الاسم الكامل</label><input id="uacc_name" class="input py-2 text-sm"></div>
           <div><label class="block text-xs font-bold text-gray-700 mb-1">المعرّف (اختياري)</label><input id="uacc_id" placeholder="يُولَّد تلقائياً" class="input py-2 text-sm"></div>
           <div><label class="block text-xs font-bold text-gray-700 mb-1">كلمة المرور</label><input id="uacc_pass" class="input py-2 text-sm"></div>
-          ${isAdmin?`<label id="uacc_admin_wrap" class="flex items-center gap-2 text-xs font-bold text-gray-700 ${_accSub==='Teacher'?'':'hidden'}"><input type="checkbox" id="uacc_admin" class="w-4 h-4 accent-brand-900"> منح صلاحية مشرف 👑</label>`:''}
+          ${isAdmin?`<label id="uacc_admin_wrap" class="flex items-center gap-2 text-xs font-bold text-gray-700 ${_accSub==='Teacher'?'':'hidden'}"><input type="checkbox" id="uacc_admin" class="w-4 h-4 accent-brand-900"> منح صلاحية مشرف</label>`:''}
           ${!isAdmin?'<p class="text-[11px] font-bold text-gray-400 bg-gray-50 p-2 rounded-lg">إضافة حسابات المعلمين مقصورة على المشرف.</p>':''}
           <button onclick="doAddUser()" class="w-full bg-brand-900 text-white font-bold py-2.5 rounded-xl shadow-md text-sm">إضافة الحساب</button>
         </div>
@@ -2934,7 +3041,7 @@ async function renderAccountsTab(body){
 
       ${orphans>0 ? `<div class="bg-gradient-to-l from-gold-500 to-gold-600 text-brand-900 p-5 rounded-2xl shadow-md">
         <div class="flex items-start gap-3">
-          <div class="text-3xl">🔗</div>
+          <div class="text-brand-900">${svg('users','w-8 h-8')}</div>
           <div class="flex-1">
             <h4 class="font-extrabold text-base mb-1">${orphans} طالب بدون ولي أمر</h4>
             <p class="text-xs font-bold opacity-90 mb-3">أنشئ حساب ولي أمر تلقائياً لكل طالب. كلمة المرور الافتراضية: <b>1234</b></p>
@@ -2943,6 +3050,19 @@ async function renderAccountsTab(body){
         </div>
       </div>` : `<div class="bg-green-50 border border-green-200 p-4 rounded-2xl">
         <div class="flex items-center gap-2 text-green-800 font-extrabold text-sm">✓ كل الطلاب مربوطون بولي أمر</div>
+      </div>`}
+
+      ${unlinked>0 ? `<div class="bg-gradient-to-l from-brand-800 to-brand-900 text-white p-5 rounded-2xl shadow-md">
+        <div class="flex items-start gap-3">
+          <div class="text-gold-400">${svg('users','w-8 h-8')}</div>
+          <div class="flex-1">
+            <h4 class="font-extrabold text-base mb-1">${unlinked} طالب غير مرتبط</h4>
+            <p class="text-xs font-bold opacity-80 mb-3">حسابات طلاب موجودة لكن بدون سجل بيانات. اضغط لربطها تلقائياً.</p>
+            <button onclick="doAutoCreateStudentAccounts()" class="btn bg-gold-500 text-brand-900 w-full text-sm shadow-md">ربط الآن</button>
+          </div>
+        </div>
+      </div>` : `<div class="bg-green-50 border border-green-200 p-4 rounded-2xl">
+        <div class="flex items-center gap-2 text-green-800 font-extrabold text-sm">✓ كل حسابات الطلاب مرتبطة</div>
       </div>`}
     </div>
 
@@ -2971,7 +3091,7 @@ function openEditUser(id,name,role){
     <div class="space-y-4">
       <div><label class="block text-sm font-bold text-gray-700 mb-2">الاسم</label><input id="eu_name" value="${esc(name)}" class="input"></div>
       <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة مرور جديدة (اتركها فارغة لعدم التغيير)</label><input id="eu_pass" placeholder="••••" class="input"></div>
-      <p class="text-xs font-bold text-gray-500 bg-gray-50 p-2 rounded-lg">🆔 المعرّف: ${esc(id)} — النوع: ${role==='Teacher'?'معلم':'ولي أمر'}</p>
+      <p class="text-xs font-bold text-gray-500 bg-gray-50 p-2 rounded-lg">المعرّف: ${esc(id)} — النوع: ${role==='Teacher'?'معلم':'ولي أمر'}</p>
       <div class="flex gap-3"><button onclick="doSaveUser('${esc(id)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
     </div>`);
 }
@@ -2999,6 +3119,13 @@ async function doAutoCreateParents(){
   await refreshTeacherStudents();
   renderAccountsTab($('settingsSubBody'));
 }
+async function doAutoCreateStudentAccounts(){
+  const r = await guard(DS.autoCreateStudentAccounts(),'ربط الحسابات…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  toast(r.message||'تم');
+  await refreshTeacherStudents();
+  renderAccountsTab($('settingsSubBody'));
+}
 
 /* ---------- المظهر والشعار ---------- */
 async function renderAppearanceTab(body){
@@ -3015,27 +3142,27 @@ async function renderAppearanceTab(body){
     <div class="md:col-span-2 bg-gradient-to-l from-brand-900 to-brand-800 text-white p-6 rounded-2xl shadow-saas">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center text-gold-500 text-2xl">🩺</div>
+          <div class="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center text-gold-500">${svg('warn','w-6 h-6')}</div>
           <div>
             <h3 class="text-lg font-extrabold">صحة قاعدة البيانات</h3>
             <p class="text-sm font-bold text-gold-100/80">فحص وإصلاح الربط بين المستخدمين وسجلات الطلاب والمجموعات</p>
           </div>
         </div>
         <div class="flex gap-2">
-          <button onclick="doDbHealthCheck()" class="btn bg-white/10 backdrop-blur text-white hover:bg-white/20 border border-white/20 text-sm">🔍 فحص</button>
-          <button onclick="doDbRepair(true)" class="btn bg-gold-500 text-brand-900 hover:bg-gold-400 shadow-md text-sm">🔧 إصلاح تلقائي</button>
+          <button onclick="doDbHealthCheck()" class="btn bg-white/10 backdrop-blur text-white hover:bg-white/20 border border-white/20 text-sm">فحص</button>
+          <button onclick="doDbRepair(true)" class="btn bg-gold-500 text-brand-900 hover:bg-gold-400 shadow-md text-sm">إصلاح تلقائي</button>
         </div>
       </div>
       <div id="db_health_result" class="mt-4"></div>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
-      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">🎨 شعار الحلقة والهوية</h3>
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">شعار الحلقة والهوية</h3>
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-bold text-gray-700 mb-2">رابط الشعار (URL)</label>
           <input id="ap_logo" value="${esc(currentLogo)}" placeholder="https://example.com/logo.png" class="input" oninput="apPreviewLogo(this.value)">
-          <p class="text-[11px] font-bold text-gray-500 mt-2 leading-relaxed">💡 ارفع الشعار على Google Drive أو أي خدمة استضافة، وانسخ الرابط المباشر هنا. الأفضل PNG بخلفية شفافة، أبعاد مربّعة (256×256).</p>
+          <p class="text-[11px] font-bold text-gray-500 mt-2 leading-relaxed">ارفع الشعار على Google Drive أو أي خدمة استضافة، وانسخ الرابط المباشر هنا. الأفضل PNG بخلفية شفافة، أبعاد مربّعة (256×256).</p>
         </div>
         <div>
           <label class="block text-sm font-bold text-gray-700 mb-2">اسم الحلقة (يظهر في الشريط الجانبي)</label>
@@ -3045,18 +3172,18 @@ async function renderAppearanceTab(body){
           <label class="block text-sm font-bold text-gray-700 mb-2">الشعار الفرعي (Tagline)</label>
           <input id="ap_tag" value="${esc(currentTag)}" placeholder="مجمع حلق الراجحي" class="input">
         </div>
-        <button onclick="doSaveAppearance()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-2">💾 حفظ وتطبيق</button>
+        <button onclick="doSaveAppearance()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-2">حفظ وتطبيق</button>
         ${currentLogo?`<button onclick="doClearLogo()" class="w-full bg-red-50 text-danger font-bold py-2 rounded-xl border border-red-100 hover:bg-red-100 transition text-sm">إزالة الشعار الحالي</button>`:''}
       </div>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
-      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">👁 معاينة الشعار</h3>
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">معاينة الشعار</h3>
       <div class="bg-gradient-to-br from-brand-900 to-brand-800 p-8 rounded-2xl text-center min-h-[240px] flex flex-col items-center justify-center">
         <div id="ap_preview_wrap" class="w-32 h-32 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mb-4 overflow-hidden">
           ${currentLogo
             ? `<img id="ap_preview" src="${esc(currentLogo)}" alt="Logo" class="w-full h-full object-contain">`
-            : `<span class="text-gold-500 text-5xl">📖</span>`}
+            : `<span class="text-gold-500">${svg('book','w-12 h-12')}</span>`}
         </div>
         <div class="text-white font-extrabold text-lg">${esc(currentName||'حلقة ابن كثير')}</div>
         <div class="text-gold-500 font-bold text-xs mt-1">${esc(currentTag||'مجمع حلق الراجحي')}</div>
@@ -3067,8 +3194,8 @@ async function renderAppearanceTab(body){
 }
 function apPreviewLogo(url){
   const wrap = $('ap_preview_wrap'); if(!wrap) return;
-  if(!url){ wrap.innerHTML = '<span class="text-gold-500 text-5xl">📖</span>'; return; }
-  wrap.innerHTML = `<img src="${esc(url)}" alt="Logo" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 text-3xl\\'>⚠️</span>'">`;
+  if(!url){ wrap.innerHTML = `<span class="text-gold-500">${svg('book','w-12 h-12')}</span>`; return; }
+  wrap.innerHTML = `<img src="${esc(url)}" alt="Logo" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 font-bold text-sm\\'>خطأ</span>'">`;
 }
 async function doSaveAppearance(){
   const logo=$('ap_logo').value.trim(), name=$('ap_name').value.trim(), tag=$('ap_tag').value.trim();
@@ -3139,7 +3266,7 @@ function renderDbHealthResult(r){
 
   const issList = (title, arr, formatter)=>arr && arr.length ? `
     <details class="bg-white/10 backdrop-blur rounded-xl p-3 mt-2">
-      <summary class="cursor-pointer font-bold text-white text-sm">⚠️ ${title} (${arr.length})</summary>
+      <summary class="cursor-pointer font-bold text-white text-sm">${title} (${arr.length})</summary>
       <div class="mt-2 text-xs text-white/80 font-bold space-y-1 max-h-40 overflow-y-auto">
         ${arr.slice(0,50).map(formatter).join('')}
       </div>
@@ -3147,14 +3274,14 @@ function renderDbHealthResult(r){
 
   box.innerHTML = `
     <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-      ${stat('👤 المستخدمون', r.counts.users)}
-      ${stat('🎓 طلاب في Users', r.counts.studentUsers)}
-      ${stat('📋 Students_Data', r.counts.studentsData)}
-      ${stat('👥 المجموعات', r.counts.groups)}
+      ${stat('المستخدمون', r.counts.users)}
+      ${stat('طلاب في Users', r.counts.studentUsers)}
+      ${stat('Students_Data', r.counts.studentsData)}
+      ${stat('المجموعات', r.counts.groups)}
     </div>
     ${totalIssues===0
-      ? `<div class="bg-success/20 border border-success/40 rounded-xl p-3 text-white font-extrabold text-center">✅ قاعدة البيانات سليمة تماماً — لا توجد مشاكل</div>`
-      : `<div class="bg-gold-500/20 border border-gold-500/40 rounded-xl p-3 text-gold-100 font-extrabold mb-2">⚠️ عثرنا على ${totalIssues} مشكلة — انقر "إصلاح تلقائي" لإصلاحها</div>
+      ? `<div class="bg-success/20 border border-success/40 rounded-xl p-3 text-white font-extrabold text-center">قاعدة البيانات سليمة تماماً — لا توجد مشاكل</div>`
+      : `<div class="bg-gold-500/20 border border-gold-500/40 rounded-xl p-3 text-gold-100 font-extrabold mb-2">عثرنا على ${totalIssues} مشكلة — انقر "إصلاح تلقائي" لإصلاحها</div>
         ${issList('طلاب في Users بدون Students_Data', iss.usersWithoutSd, x=>`<div>• ${esc(x.name||'—')} (${esc(x.id)})</div>`)}
         ${issList('يتامى في Students_Data بلا Users', iss.sdWithoutUser, x=>`<div>• ${esc(x.id)}</div>`)}
         ${issList('طلاب في مجموعات محذوفة', iss.sdInvalidGroup, x=>`<div>• طالب ${esc(x.id)} — مجموعة ${esc(x.group)}</div>`)}
@@ -3198,11 +3325,11 @@ async function doAddNewsComment(newsId){const inp=$('nci_'+newsId);const body=in
 function _nwToggleType(){const t=$('nw_type')?.value;const bw=$('nw_body_wrap'),vw=$('nw_video_wrap');if(!bw||!vw)return;bw.classList.toggle('hidden',t==='video');vw.classList.toggle('hidden',t!=='video');}
 function renderNewsTab(body){
   const va={Students:'الطلاب',Parents:'الأولياء',All:'الجميع'};
-  const rows=(_tData.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-white border border-gray-100 rounded-xl p-5 mb-3 shadow-sm hover:shadow-saas transition"><div class="flex items-start justify-between gap-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap mb-2">${isVid?'<span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold">🎥 فيديو</span>':''}<h4 class="font-extrabold text-brand-900 text-lg">${esc(n.Title)}</h4><span class="px-2 py-1 rounded bg-gold-100 text-gold-700 text-xs font-bold">${esc(va[n.Visibility]||n.Visibility)}</span><span class="text-xs font-bold text-gray-400">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 whitespace-pre-line leading-relaxed">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">💬 التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div><button onclick="confirmDeleteNews('${esc(n.News_ID)}')" class="w-10 h-10 rounded-xl bg-red-50 text-danger hover:bg-red-100 flex items-center justify-center transition shrink-0 mt-1">${svg('trash','w-5 h-5')}</button></div></div>`;}).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات منشورة</p></div>';
+  const rows=(_tData.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-white border border-gray-100 rounded-xl p-5 mb-3 shadow-sm hover:shadow-saas transition"><div class="flex items-start justify-between gap-4"><div class="flex-1 min-w-0"><div class="flex items-center gap-3 flex-wrap mb-2">${isVid?'<span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold">فيديو</span>':''}<h4 class="font-extrabold text-brand-900 text-lg">${esc(n.Title)}</h4><span class="px-2 py-1 rounded bg-gold-100 text-gold-700 text-xs font-bold">${esc(va[n.Visibility]||n.Visibility)}</span><span class="text-xs font-bold text-gray-400">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 whitespace-pre-line leading-relaxed">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div><button onclick="confirmDeleteNews('${esc(n.News_ID)}')" class="w-10 h-10 rounded-xl bg-red-50 text-danger hover:bg-red-100 flex items-center justify-center transition shrink-0 mt-1">${svg('trash','w-5 h-5')}</button></div></div>`;}).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات منشورة</p></div>';
   body.innerHTML=`<div class="grid lg:grid-cols-5 gap-6 fade-in">
     <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-5 h-5 text-gold-500')} نشر إعلان جديد</h3>
       <div class="space-y-4">
-        <div><label class="block text-sm font-bold text-gray-700 mb-2">نوع المنشور</label><select id="nw_type" onchange="_nwToggleType()" class="input"><option value="post">📰 نص (مقال)</option><option value="video">🎥 مقطع مرئي</option></select></div>
+        <div><label class="block text-sm font-bold text-gray-700 mb-2">نوع المنشور</label><select id="nw_type" onchange="_nwToggleType()" class="input"><option value="post">نص (مقال)</option><option value="video">مقطع مرئي</option></select></div>
         <div><label class="block text-sm font-bold text-gray-700 mb-2">العنوان</label><input id="nw_title" class="input"></div>
         <div id="nw_body_wrap"><label class="block text-sm font-bold text-gray-700 mb-2">النص</label><textarea id="nw_body" rows="4" class="input"></textarea></div>
         <div id="nw_video_wrap" class="hidden"><label class="block text-sm font-bold text-gray-700 mb-2">رابط يوتيوب</label><input id="nw_video_url" class="input" placeholder="https://youtu.be/..."></div>
@@ -3234,7 +3361,7 @@ function confirmDeleteEvent(id){openModal('حذف فعالية',`<p class="text-
 async function doDeleteEvent(id){const r=await guard(DS.deleteEvent(id),'حذف…');if(!r)return;closeModal();_tData.events=_tData.events.filter(e=>String(e.Event_ID)!==String(id));toast('تم الحذف');renderCalendarTab($('newsSubBody'))}
 
 /* Items */
-const TRIGGER_OPTS=[['none','بدون ربط'],['on_done','عند إتمام الحفظ ✅'],['on_partial','عند حفظ جزئي ⚠️'],['on_review_done','عند إتمام المراجعة 📗'],['on_attend_present','عند تسجيل حاضر 🟢'],['on_attend_late','عند تسجيل متأخر 🟡']];
+const TRIGGER_OPTS=[['none','بدون ربط'],['on_done','عند إتمام الحفظ'],['on_partial','عند حفظ جزئي'],['on_review_done','عند إتمام المراجعة'],['on_attend_present','عند تسجيل حاضر'],['on_attend_late','عند تسجيل متأخر']];
 function triggerLabel(t){const f=TRIGGER_OPTS.find(x=>x[0]===t);return f?f[1]:t}
 function renderItemsTab(body){
   const rows=_tData.items.map(i=>`<div class="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-4 hover:shadow-sm transition mb-3">
@@ -3248,7 +3375,7 @@ function renderItemsTab(body){
         <div><label class="block text-sm font-bold text-gray-700 mb-2">وصف البند</label><input id="it_desc" class="input"></div>
         <div><label class="block text-sm font-bold text-gray-700 mb-2">قيمة النقاط (+ أو -)</label><input id="it_val" type="number" class="input" placeholder="مثال: 5 أو -3"></div>
         <div><label class="block text-sm font-bold text-gray-700 mb-2">الربط التلقائي بنظام المتابعة</label><select id="it_trig" class="input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('')}</select></div>
-        <p class="text-xs font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed mt-2">💡 عند اختيار "ربط تلقائي"، سيتم منح (أو خصم) هذه النقاط للطالب آلياً عند تسجيل الحدث المرتبط في شاشة المتابعة (مرة واحدة يومياً).</p>
+        <p class="text-xs font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed mt-2">عند اختيار "ربط تلقائي"، سيتم منح (أو خصم) هذه النقاط للطالب آلياً عند تسجيل الحدث المرتبط في شاشة المتابعة (مرة واحدة يومياً).</p>
         <button onclick="doAddItem()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-4">حفظ البند</button>
       </div>
     </div>
@@ -3280,8 +3407,8 @@ function renderManageTab(body){
         <div class="flex-1 min-w-0">
           <div class="font-extrabold text-gray-900 text-lg name-full">${esc(g.Group_Name)}</div>
           <div class="text-xs font-bold text-gray-500 mt-1 flex items-center gap-3 flex-wrap">
-            <span>👥 ${c} طلاب</span>
-            <span class="text-gold-600">⭐ ${esc(g.Group_Total_Points)} نقطة</span>
+            <span>${c} طلاب</span>
+            <span class="text-gold-600">${esc(g.Group_Total_Points)} نقطة</span>
           </div>
         </div>
         <button onclick="openRenameGroup('${esc(g.Group_ID)}','${esc(g.Group_Name).replace(/'/g,'&#39;')}')" class="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-brand-50 hover:text-brand-700 transition shrink-0" title="تعديل الاسم">${svg('edit','w-4 h-4')}</button>
@@ -3304,7 +3431,7 @@ function renderManageTab(body){
         <button onclick="doAddGroup()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition">إضافة</button>
       </div>
       <div class="mt-6 pt-6 border-t border-gray-100">
-        <p class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed">💡 من زر <b>"الأعضاء"</b> يمكنك تحديد الطلاب المنضمين للمجموعة بنقرة واحدة، ومن زر <b>"+نقاط للأفراد"</b> يمكنك منح نقاط لكل طلاب المجموعة دفعة واحدة.</p>
+        <p class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed">من زر <b>"الأعضاء"</b> يمكنك تحديد الطلاب المنضمين للمجموعة بنقرة واحدة، ومن زر <b>"+نقاط للأفراد"</b> يمكنك منح نقاط لكل طلاب المجموعة دفعة واحدة.</p>
       </div>
     </div>
     <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
@@ -3316,7 +3443,7 @@ function renderManageTab(body){
 
 async function doAddGroup(){const n=$('g_name').value.trim();if(!n)return toast('أدخل الاسم','warn');const r=await guard(DS.addGroup(n),'إضافة…');if(!r||!r.success)return toast((r&&r.message)||'فشل','error');_tData.groups.push(r.group);toast('تمت الإضافة');renderManageTab($('settingsSubBody'))}
 function openRenameGroup(id,name){
-  openModal('✏️ تعديل اسم المجموعة',`<div class="space-y-4">
+  openModal('تعديل اسم المجموعة',`<div class="space-y-4">
     <div><label class="block text-sm font-bold text-gray-700 mb-2">الاسم الجديد</label><input id="rg_name" value="${esc(name)}" class="input" onkeydown="if(event.key==='Enter')doRenameGroup('${esc(id)}')"></div>
     <div class="flex gap-3"><button onclick="doRenameGroup('${esc(id)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
   </div>`);
@@ -3351,7 +3478,7 @@ let _grpEditSearch = '';
 let _grpSelected = new Set(); // مصدر الحقيقة الوحيد للتحديد — لا يُفقد بين إعادات الرسم
 async function openGroupMembers(gid, gname){
   _grpEditSearch = '';
-  openModal('👥 أعضاء — '+esc(gname), `<div class="text-center py-8"><div class="spinner mx-auto"></div></div>`);
+  openModal('أعضاء — '+esc(gname), `<div class="text-center py-8"><div class="spinner mx-auto"></div></div>`);
   await refreshTeacherStudents();
   // ابدأ التحديد من الحالة الفعلية في القاعدة
   _grpSelected = new Set(_tData.students.filter(s => String(s.Group_ID)===String(gid)).map(s => String(s.Student_ID)));
@@ -3361,7 +3488,7 @@ function renderGroupMembersModal(gid, gname){
   // إطار ثابت — لا يُعاد بناؤه، فيبقى حقل البحث محتفظاً بالتركيز
   const body = `<div class="space-y-3">
     <div class="flex items-center gap-2">
-      <input type="text" id="grp_search" placeholder="🔍 ابحث عن طالب..." class="input flex-1 py-2 text-sm">
+      <input type="text" id="grp_search" placeholder="ابحث عن طالب..." class="input flex-1 py-2 text-sm">
       <div class="text-xs font-bold text-gray-500 whitespace-nowrap px-3 py-2 bg-brand-50 rounded-lg" id="grp_selCount">${_grpSelected.size} محدد</div>
     </div>
     <div class="flex gap-2">
@@ -3369,9 +3496,9 @@ function renderGroupMembersModal(gid, gname){
       <button onclick="grpSelectAll(false,'${esc(gid)}')" class="btn bg-gray-50 text-gray-600 hover:bg-gray-100 text-xs py-1.5 flex-1">إلغاء تحديد الظاهرين</button>
     </div>
     <div id="grp_list" class="max-h-[420px] overflow-y-auto space-y-2 border border-gray-100 rounded-xl p-2 bg-surface"></div>
-    <div class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100">💡 عند نقل طالب من مجموعة إلى أخرى، ستُنقل نقاطه الكلية معه.</div>
+    <div class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100">عند نقل طالب من مجموعة إلى أخرى، ستُنقل نقاطه الكلية معه.</div>
     <div class="flex gap-3 pt-2">
-      <button onclick="saveGroupMembers('${esc(gid)}','${esc(gname)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">💾 حفظ التغييرات</button>
+      <button onclick="saveGroupMembers('${esc(gid)}','${esc(gname)}')" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ التغييرات</button>
       <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>
     </div>
   </div>`;
@@ -3434,7 +3561,7 @@ async function saveGroupMembers(gid){
 
 /* --- إضافة نقاط للمجموعة ككل --- */
 function openAddGroupPoints(gid, gname){
-  openModal('⭐ إضافة نقاط للمجموعة — '+esc(gname), `<div class="space-y-4">
+  openModal('إضافة نقاط للمجموعة — '+esc(gname), `<div class="space-y-4">
     <p class="text-sm font-bold text-gray-600 leading-relaxed bg-gold-50 border border-gold-100 rounded-xl p-3">هذه النقاط تُضاف إلى <b>رصيد المجموعة</b> فقط ولا تُوزّع على الأفراد. تظهر في لوحة ترتيب المجموعات.</p>
     <div><label class="block text-sm font-bold text-gray-700 mb-2">القيمة (يمكن سالبة)</label><input type="number" id="gpt_val" class="input text-center font-extrabold text-lg" placeholder="10"></div>
     <div class="grid grid-cols-4 gap-2">
@@ -3467,7 +3594,7 @@ function openBulkGroupPoints(gid, gname){
     <span>${esc(i.Description)}</span>
     <span class="px-2 py-1 rounded-md text-xs ${Number(i.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(i.Point_Value)>=0?'+':''}${esc(i.Point_Value)}</span>
   </button>`).join('') || '<p class="text-gray-400 text-center py-6 font-bold">لا يوجد بنود نقاط</p>';
-  openModal(`⭐ +نقاط لأفراد "${esc(gname)}" (${inGroup.length})`, `<div class="space-y-3">
+  openModal(`+نقاط لأفراد "${esc(gname)}" (${inGroup.length})`, `<div class="space-y-3">
     <p class="text-[11px] font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100">سيتم منح البند المختار لكل طالب في المجموعة (${inGroup.length} طالب).</p>
     <div class="space-y-2 max-h-[400px] overflow-y-auto">${opts}</div>
     <button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 w-full mt-2">إلغاء</button>
@@ -3498,20 +3625,20 @@ async function renderStudent(){
   const done=d.todayPlan?.Accomplishment_Status; const pct=done==='Done'?100:done==='Partial'?50:0; const rc=done==='Done'?'#10b981':done==='Partial'?'#d4af37':done==='Missed'?'#ef4444':'#94a3b8';
   const prog=d.progress||{};
   const posBox=(p,label,cls,cnt)=>p&&p.surah?`<div class="rounded-2xl p-4 ${cls} border bg-opacity-10"><div class="text-xs font-bold opacity-80 flex items-center gap-1">${svg('location','w-3 h-3')} ${label}</div><div class="text-lg font-extrabold mt-2 text-gray-900">${esc(p.surah)}</div>${p.ayah?`<div class="text-sm font-bold text-gray-600 mt-1">آية ${esc(p.ayah)}</div>`:''}<div class="text-xs font-bold text-gray-500 mt-3 pt-3 border-t border-gray-200/50">${cnt||0} إنجاز مسجل</div></div>`:`<div class="rounded-2xl p-4 bg-gray-50 border border-gray-100 text-gray-400"><div class="text-xs font-bold">${label}</div><div class="text-sm font-bold mt-2">لم يبدأ بعد</div></div>`;
-  const badges=(d.badges||[]).map(b=>`<div class="badge-anim text-center p-4 bg-gold-50 border border-gold-100 rounded-2xl shadow-sm"><div class="text-4xl mb-2">${b.Icon||'🏅'}</div><div class="text-xs font-extrabold text-gold-700">${esc(b.Title)}</div></div>`).join('')||'<div class="col-span-full bg-surface border border-gray-100 p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">شارتك الأولى تنتظرك ✨ استمر في الإنجاز!</p></div>';
+  const badges=(d.badges||[]).map(b=>`<div class="badge-anim text-center p-4 bg-gold-50 border border-gold-100 rounded-2xl shadow-sm"><div class="text-4xl mb-2">${b.Icon||'🏅'}</div><div class="text-xs font-extrabold text-gold-700">${esc(b.Title)}</div></div>`).join('')||'<div class="col-span-full bg-surface border border-gray-100 p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">شارتك الأولى تنتظرك — استمر في الإنجاز!</p></div>';
   const logRows=d.logs.map(l=>`<tr class="border-b border-gray-100 hover:bg-gray-50 transition"><td class="p-4 text-xs text-gray-500 font-bold">${esc(l.Date)}</td><td class="p-4 text-sm font-bold text-gray-900">${esc(l.Description)}</td><td class="p-4"><span class="font-extrabold px-3 py-1 rounded-full text-xs ${Number(l.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(l.Point_Value)>=0?'+':''}${esc(l.Point_Value)}</span></td></tr>`).join('')||'<tr><td colspan="3" class="p-8 text-center text-gray-400 font-bold">لا يوجد سجل نقاط</td></tr>';
-  const medals=['🥇','🥈','🥉'];const myGid=d.myGroupId||'';const board=d.leaderboard.map((g,i)=>{
+  const myGid=d.myGroupId||'';const board=d.leaderboard.map((g,i)=>{
     const isMine = myGid && String(g.id)===String(myGid);
-    return `<div class="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition ${isMine?'bg-gold-50 ring-2 ring-gold-400 rounded-xl':''}"><div class="flex items-center gap-4"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${i<3?'bg-gold-50 text-gold-600': 'bg-gray-100 text-gray-400'}">${medals[i]||i+1}</div><span class="font-extrabold text-gray-900">${esc(g.name)}${isMine?' <span class="text-[10px] font-bold text-gold-700 mr-1">(مجموعتي)</span>':''}</span></div><span class="font-extrabold text-brand-900 bg-brand-50 px-3 py-1 rounded-lg">${esc(g.points)} ن</span></div>`;
+    return `<div class="flex items-center justify-between p-4 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition ${isMine?'bg-gold-50 ring-2 ring-gold-400 rounded-xl':''}"><div class="flex items-center gap-4"><div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg ${i<3?'bg-gold-50 text-gold-600': 'bg-gray-100 text-gray-400'}">${i+1}</div><span class="font-extrabold text-gray-900">${esc(g.name)}${isMine?' <span class="text-[10px] font-bold text-gold-700 mr-1">(مجموعتي)</span>':''}</span></div><span class="font-extrabold text-brand-900 bg-brand-50 px-3 py-1 rounded-lg">${esc(g.points)} ن</span></div>`;
   }).join('');
   
   $('portal').innerHTML=`<div class="fade-in space-y-6">
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-      <div class="rounded-3xl p-5 sm:p-6 bg-brand-900 text-white shadow-saas relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-10 text-8xl">⭐️</div><div class="text-xs sm:text-sm font-bold text-gold-500 mb-1 relative z-10">نقاطي الكلية</div><div class="text-4xl font-extrabold relative z-10 tabular-nums">${d.totalPoints}</div></div>
-      <div class="rounded-3xl p-5 sm:p-6 bg-success text-white shadow-saas relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-10 text-8xl">📈</div><div class="text-xs sm:text-sm font-bold opacity-90 mb-1 relative z-10">نسبة الإنجاز</div><div class="text-4xl font-extrabold relative z-10 tabular-nums">${d.stats.donePct}%</div><div class="text-[11px] font-bold opacity-80 mt-1 relative z-10">${d.stats.donePlans}/${d.stats.totalPlans} ورد</div></div>
-      <div class="rounded-3xl p-5 sm:p-6 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-20 text-7xl">🔥</div><div class="text-xs sm:text-sm font-bold mb-1 relative z-10">السلسلة الحالية</div><div class="text-4xl font-extrabold relative z-10 tabular-nums">${d.stats.streak}</div><div class="text-[11px] font-bold opacity-80 mt-1 relative z-10">يوم متتالٍ</div></div>
-      <div class="rounded-3xl p-5 sm:p-6 bg-blue-50 border border-blue-100 text-blue-800 shadow-sm relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-20 text-7xl">📅</div><div class="text-xs sm:text-sm font-bold mb-1 relative z-10">أيام الحضور</div><div class="text-4xl font-extrabold relative z-10 tabular-nums">${d.stats.presentDays||0}</div></div>
-      <div class="rounded-3xl p-5 sm:p-6 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm relative overflow-hidden"><div class="absolute -right-4 -top-4 opacity-20 text-7xl">🏅</div><div class="text-xs sm:text-sm font-bold mb-1 relative z-10">الشارات</div><div class="text-4xl font-extrabold relative z-10 tabular-nums">${(d.badges||[]).length}</div></div>
+      <div class="rounded-3xl p-5 sm:p-6 bg-brand-900 text-white shadow-saas relative overflow-hidden"><div class="text-xs sm:text-sm font-bold text-gold-500 mb-1">نقاطي الكلية</div><div class="text-4xl font-extrabold tabular-nums">${d.totalPoints}</div></div>
+      <div class="rounded-3xl p-5 sm:p-6 bg-success text-white shadow-saas relative overflow-hidden"><div class="text-xs sm:text-sm font-bold opacity-90 mb-1">نسبة الإنجاز</div><div class="text-4xl font-extrabold tabular-nums">${d.stats.donePct}%</div><div class="text-[11px] font-bold opacity-80 mt-1">${d.stats.donePlans}/${d.stats.totalPlans} ورد</div></div>
+      <div class="rounded-3xl p-5 sm:p-6 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm"><div class="text-xs sm:text-sm font-bold mb-1">السلسلة الحالية</div><div class="text-4xl font-extrabold tabular-nums">${d.stats.streak}</div><div class="text-[11px] font-bold opacity-80 mt-1">يوم متتالٍ</div></div>
+      <div class="rounded-3xl p-5 sm:p-6 bg-blue-50 border border-blue-100 text-blue-800 shadow-sm"><div class="text-xs sm:text-sm font-bold mb-1">أيام الحضور</div><div class="text-4xl font-extrabold tabular-nums">${d.stats.presentDays||0}</div></div>
+      <div class="rounded-3xl p-5 sm:p-6 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm"><div class="text-xs sm:text-sm font-bold mb-1">الشارات</div><div class="text-4xl font-extrabold tabular-nums">${(d.badges||[]).length}</div></div>
     </div>
     
     <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
@@ -3548,7 +3675,7 @@ async function renderStudent(){
     </div>
     
     <div class="grid lg:grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} حائط الإعلانات</h3><div class="space-y-4 max-h-[480px] overflow-y-auto pr-2">${(feed.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2">${isVid?'<span class="text-xs font-bold text-blue-600 ml-1">🎥</span>':''}<h4 class="font-extrabold text-brand-900 text-lg flex-1">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400 shrink-0">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">💬 التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div>`;}).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات جديدة</p></div>`}</div></div>
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} حائط الإعلانات</h3><div class="space-y-4 max-h-[480px] overflow-y-auto pr-2">${(feed.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2">${isVid?`<span class="text-blue-600 ml-1 inline-flex">${svg('video','w-4 h-4')}</span>`:''}<h4 class="font-extrabold text-brand-900 text-lg flex-1">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400 shrink-0">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div>`;}).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات جديدة</p></div>`}</div></div>
       <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 h-fit"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('calendar','w-6 h-6 text-gold-500')} التقويم والبرامج</h3><div id="stCal" class="bg-surface p-4 rounded-2xl border border-gray-100"></div></div>
     </div>
   </div>`;
@@ -3573,7 +3700,7 @@ async function renderParent(){
     ${children.length?`<div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50 max-w-md"><label class="block text-sm font-bold text-gray-700 mb-3">اختر الابن لمتابعة إنجازه:</label><select id="childSel" onchange="loadChild()" class="input font-extrabold text-brand-900 shadow-sm">${opts}</select></div><div id="childView"></div>`:'<div class="bg-white p-12 rounded-3xl shadow-saas border border-gray-50 text-center"><p class="text-gray-400 font-bold text-lg">لا يوجد أبناء مرتبطون بحسابك حالياً.</p></div>'}
     
     <div class="grid lg:grid-cols-2 gap-6 mt-8 border-t border-gray-100 pt-8">
-      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} إعلانات الحلقة</h3><div class="space-y-4 max-h-[480px] overflow-y-auto pr-2">${(feed.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2">${isVid?'<span class="text-xs font-bold text-blue-600 ml-1">🎥</span>':''}<h4 class="font-extrabold text-brand-900 text-lg flex-1">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400 shrink-0">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">💬 التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div>`;}).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات</p></div>`}</div></div>
+      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('news','w-6 h-6 text-gold-500')} إعلانات الحلقة</h3><div class="space-y-4 max-h-[480px] overflow-y-auto pr-2">${(feed.news||[]).map(n=>{const isVid=n.Type==='video';return `<div class="bg-surface border border-gray-100 p-5 rounded-2xl"><div class="flex justify-between items-center mb-2">${isVid?`<span class="text-blue-600 ml-1 inline-flex">${svg('video','w-4 h-4')}</span>`:''}<h4 class="font-extrabold text-brand-900 text-lg flex-1">${esc(n.Title)}</h4><span class="text-xs font-bold text-gray-400 shrink-0">${esc(n.Date)}</span></div>${n.Body?`<p class="text-sm font-bold text-gray-600 leading-relaxed whitespace-pre-line">${esc(n.Body)}</p>`:''} ${isVid?ytEmbedHtml(n.Video_URL):''}${isVid?`<button onclick="loadNewsComments('${esc(n.News_ID)}')" class="mt-2 text-xs font-bold text-brand-700 hover:underline">التعليقات</button><div id="nc_${esc(n.News_ID)}" class="hidden"></div>`:''}</div>`;}).join('')||`<div class="bg-surface p-8 rounded-2xl text-center"><p class="text-gray-400 font-bold">لا توجد إعلانات</p></div>`}</div></div>
       <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 h-fit"><h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('calendar','w-6 h-6 text-gold-500')} التقويم الخاص بالحلقة</h3><div id="pCal" class="bg-surface p-4 rounded-2xl border border-gray-100"></div></div>
     </div>
   </div>`;
@@ -3591,9 +3718,9 @@ async function loadChild(){
   $('childView').innerHTML=`<div class="grid md:grid-cols-5 gap-4 fade-in mt-6">
     <div class="rounded-3xl p-5 bg-brand-900 text-white shadow-saas"><div class="text-xs text-gold-500 font-bold mb-1">النقاط الكلية</div><div class="text-3xl font-extrabold tabular-nums">${d.totalPoints}</div></div>
     <div class="rounded-3xl p-5 bg-success text-white shadow-saas"><div class="text-xs opacity-90 font-bold mb-1">نسبة الإنجاز</div><div class="text-3xl font-extrabold tabular-nums">${d.stats.donePct}%</div></div>
-    <div class="rounded-3xl p-5 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm"><div class="text-xs font-bold mb-1">السلسلة 🔥</div><div class="text-3xl font-extrabold tabular-nums">${d.stats.streak}</div></div>
+    <div class="rounded-3xl p-5 bg-gold-100 border border-gold-200 text-gold-800 shadow-sm"><div class="text-xs font-bold mb-1">السلسلة</div><div class="text-3xl font-extrabold tabular-nums">${d.stats.streak}</div></div>
     <div class="rounded-3xl p-5 bg-blue-50 border border-blue-100 text-blue-800 shadow-sm"><div class="text-xs font-bold mb-1">أيام الحضور</div><div class="text-3xl font-extrabold tabular-nums">${d.stats.presentDays||0}</div></div>
-    <div class="rounded-3xl p-5 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm"><div class="text-xs font-bold mb-1">الشارات 🏅</div><div class="text-3xl font-extrabold tabular-nums">${(d.badges||[]).length}</div></div>
+    <div class="rounded-3xl p-5 bg-purple-50 border border-purple-100 text-purple-800 shadow-sm"><div class="text-xs font-bold mb-1">الشارات</div><div class="text-3xl font-extrabold tabular-nums">${(d.badges||[]).length}</div></div>
 
     <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-5 mt-2">
       <h3 class="text-xl font-extrabold text-brand-900 mb-5 flex items-center gap-2">${svg('location','w-6 h-6 text-gold-500')} أين وصل الابن في الحفظ؟</h3>
