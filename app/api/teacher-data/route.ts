@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges } from '@/db/schema';
 import { requireRole } from '@/lib/auth';
-import { SURAHS } from '@/lib/utils';
+import { SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 
 export async function GET() {
   try {
@@ -39,11 +39,12 @@ export async function GET() {
         Nazem_Item_Day_ID: p.nazemItemDayId, Mistakes: p.mistakes, Hearing: p.hearing,
         Repetition: p.repetition, Link: p.link
       })),
-      news: nw.map(x => ({ News_ID: x.id, Title: x.title, Body: x.body, Visibility: x.visibility, Date: String(x.date) })),
+      news: nw.map(x => ({ News_ID: x.id, Title: x.title, Body: x.body, Visibility: x.visibility, Type: x.type || 'post', Video_URL: x.videoUrl || '', Date: String(x.date) })),
       events: ev.map(x => ({ Event_ID: x.id, Title: x.title, Description: x.description, Date: String(x.date), Type: x.type })),
       attendance: at.map(x => ({ Att_ID: x.id, Student_ID: x.studentId, Date: String(x.date), Status: x.status, Note: x.note })),
       badges: bd.map(x => ({ Badge_ID: x.id, Student_ID: x.studentId, Code: x.code, Title: x.title, Icon: x.icon, Date: String(x.date) })),
-      surahs: SURAHS
+      surahs: SURAHS,
+      surahCounts: SURAH_AYAH_COUNT
     });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });

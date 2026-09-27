@@ -91,8 +91,22 @@ export const news = pgTable('news', {
   title: text('title').notNull(),
   body: text('body').notNull(),
   visibility: text('visibility').default('All'), // All | Students | Parents
+  type: text('type').default('post'), // post | video
+  videoUrl: text('video_url').default(''),
   date: date('date').notNull()
 });
+
+export const newsComments = pgTable('news_comments', {
+  id: text('id').primaryKey(),
+  newsId: text('news_id').notNull().references(() => news.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull(),
+  userName: text('user_name').notNull(),
+  body: text('body').notNull(),
+  date: timestamp('date', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  newsIdx: index('nc_news_idx').on(t.newsId),
+  userIdx: index('nc_user_idx').on(t.userId)
+}));
 
 export const events = pgTable('events', {
   id: text('id').primaryKey(),
