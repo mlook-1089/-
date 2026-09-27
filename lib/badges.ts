@@ -1,5 +1,5 @@
 import { db } from './db';
-import { badges, plans, studentsData } from '@/db/schema';
+import { badges, plans, studentsData, settings } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { genId, today } from './utils';
 
@@ -13,54 +13,62 @@ export const BADGE_DEFS: { code: string; icon: string; title: string; check: (ct
   { code: 'DONE_20',    icon: '📗', title: '٢٠ ورد مكتمل', check: ({ donePlans }) => donePlans.length >= 20 }
 ];
 
+const DEFAULT_WORK_DAYS = [0, 1, 2, 3, 4]; // الأحد–الخميس
+
+/** أيام الحلقة من الإعدادات (plan_work_days) — الافتراضي الأحد–الخميس. */
+export async function getWorkDays(): Promise<number[]> {
+  try {
+    const v = (await db.select().from(settings).where(eq(settings.key, 'plan_work_days')))[0]?.value || '';
+    const days = v.split(',').map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6);
+    return days.length ? days : DEFAULT_WORK_DAYS;
+  } catch { return DEFAULT_WORK_DAYS; }
+}
+
 // تُرجع true إذا كانت كل الأيام الواقعة حصراً بين dateA وdateB (بدون الطرفين)
-// جُمَعاً/سبوتاً فقط (الجمعة=5 والسبت=6 في التقويم السعودي). أي وجود يوم عمل
-// غائب بينهما يجعلها false. dateA أقدم من dateB.
-function onlyWeekendBetween(dateA: string, dateB: string): boolean {
+// أيامَ عطلة (ليست من أيام الحلقة). أي يوم حلقة غائب بينهما يجعلها false. dateA أقدم من dateB.
+function onlyOffDaysBetween(dateA: string, dateB: string, work: Set<number>): boolean {
   const a = new Date(dateA + 'T12:00:00');
   const b = new Date(dateB + 'T12:00:00');
   for (let d = new Date(+a + 864e5); +d < +b; d = new Date(+d + 864e5)) {
-    const wd = d.getDay();
-    if (wd !== 5 && wd !== 6) return false; // يوم عمل غائب → فجوة حقيقية
+    if (work.has(d.getDay())) return false; // يوم حلقة غائب → فجوة حقيقية
   }
   return true;
 }
 
-// السلسلة الحالية: عدد الأيام المتتالية المنتهية باليوم أو أمس (توقيت الرياض).
-// إن كان آخر إنجاز قبل أمس فالسلسلة الحالية = 0.
-// ملاحظة: فجوة مكوّنة فقط من أيام العطلة (الجمعة/السبت) لا تكسر التتابع،
-// حتى تعمل الحلقات الأحد–الخميس بلا تصفير كل نهاية أسبوع.
-export function computeStreak(dates: string[]) {
-  const uniq = Array.from(new Set(dates.filter(Boolean))).sort();
-  if (!uniq.length) return 0;
+function dayDiff(a: string, b: string) {
+  return Math.round((+new Date(b + 'T12:00:00') - +new Date(a + 'T12:00:00')) / 864e5);
+}
+
+// السلسلة الحالية: عدد أيام الإنجاز المتتالية المنتهية باليوم أو آخر يوم حلقة.
+// الفجوات المكوّنة من أيام العطلة فقط لا تكسر التتابع.
+export function computeStreak(dates: string[], workDays: number[] = DEFAULT_WORK_DAYS) {
+  const work = new Set(workDays);
   const t = today();
+  const uniq = Array.from(new Set(dates.filter(d => d && d <= t))).sort(); // تجاهل الأيام المستقبلية
+  if (!uniq.length) return 0;
   const last = uniq[uniq.length - 1];
-  const gap = Math.round((+new Date(t + 'T12:00:00') - +new Date(last + 'T12:00:00')) / 864e5);
-  // آخر إنجاز خلال اليوم/أمس، أو أن كل الأيام الغائبة حتى اليوم عطلة فقط → لا تزال السلسلة حيّة.
-  if (gap > 1 && !onlyWeekendBetween(last, t)) return 0;
+  // اليوم نفسه لم ينتهِ بعد، فغيابه لا يكسر السلسلة؛ نفحص الأيام بين آخر إنجاز واليوم فقط.
+  if (dayDiff(last, t) > 1 && !onlyOffDaysBetween(last, t, work)) return 0;
   let streak = 1;
   for (let i = uniq.length - 1; i > 0; i--) {
-    const cur = uniq[i];
-    const prev = uniq[i - 1];
-    const diff = Math.round((+new Date(cur + 'T12:00:00') - +new Date(prev + 'T12:00:00')) / 864e5);
-    // متتاليان فعلاً، أو الفجوة بينهما كلها عطلة (جمعة/سبت) → نعدّهما متتاليين.
-    if (diff === 1 || (diff > 1 && onlyWeekendBetween(prev, cur))) streak++;
+    const diff = dayDiff(uniq[i - 1], uniq[i]);
+    if (diff === 1 || (diff > 1 && onlyOffDaysBetween(uniq[i - 1], uniq[i], work))) streak++;
     else break;
   }
   return streak;
 }
 
-// أطول سلسلة تاريخية (المنطق القديم) — تُستخدم لمنح الشارات حتى لا تُفقد عند الانقطاع.
-export function computeMaxStreak(dates: string[]) {
+// أطول سلسلة تاريخية — تُستخدم لمنح الشارات حتى لا تُفقد عند الانقطاع.
+// بنفس قاعدة العطلات، وإلا استحال «أسبوع كامل» على حلقة تعمل ٥ أيام.
+export function computeMaxStreak(dates: string[], workDays: number[] = DEFAULT_WORK_DAYS) {
+  const work = new Set(workDays);
   const sorted = Array.from(new Set(dates.filter(Boolean))).sort();
   if (!sorted.length) return 0;
   let best = 1, cur = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1] + 'T12:00:00');
-    const now = new Date(sorted[i] + 'T12:00:00');
-    const diff = Math.round((+now - +prev) / 864e5);
-    if (diff === 1) cur++;
-    else if (diff > 1) cur = 1;
+    const diff = dayDiff(sorted[i - 1], sorted[i]);
+    if (diff === 1 || (diff > 1 && onlyOffDaysBetween(sorted[i - 1], sorted[i], work))) cur++;
+    else cur = 1;
     if (cur > best) best = cur;
   }
   return best;
@@ -72,7 +80,7 @@ export async function tryAwardBadges(studentId: string) {
   const stPlans = await db.select().from(plans).where(eq(plans.studentId, studentId));
   const donePlans = stPlans.filter(p => p.status === 'Done');
   // نستخدم أطول سلسلة تاريخية لفحص شارات السلسلة حتى لا تُفقد عند انقطاع السلسلة الحالية.
-  const streak = computeMaxStreak(donePlans.map(p => String(p.date)));
+  const streak = computeMaxStreak(donePlans.map(p => String(p.date)), await getWorkDays());
   const existing = await db.select().from(badges).where(eq(badges.studentId, studentId));
   const have = new Set(existing.map(b => b.code));
   const ctx = { donePlans, streak, points: student.totalPoints || 0 };
@@ -82,7 +90,7 @@ export async function tryAwardBadges(studentId: string) {
       if (def.check(ctx)) {
         await db.insert(badges).values({
           id: genId('B'), studentId, code: def.code, title: def.title, icon: def.icon, date: today()
-        });
+        }).onConflictDoNothing();
       }
     } catch { /* skip */ }
   }

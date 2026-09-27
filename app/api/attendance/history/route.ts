@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { attendance, studentsData } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { requireSession, AuthError } from '@/lib/auth';
+import { requireSession, AuthError, errorResponse } from '@/lib/auth';
 import type { SessionUser } from '@/lib/auth';
 
 /** تحقق أن المستخدم مصرّح له بعرض سجل حضور الطالب sid — نمط مطابق لبقية مسارات الطالب */
@@ -44,8 +44,5 @@ export async function GET(req: NextRequest) {
     };
 
     return NextResponse.json({ success: true, history, stats });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

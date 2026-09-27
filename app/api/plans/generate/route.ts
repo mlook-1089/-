@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -93,12 +93,13 @@ export async function POST(req: NextRequest) {
         gte(plans.date, startDate),
         lte(plans.date, endDate)
       )).returning({ id: plans.id });
-      replacedCount = del.length;
+      replacedCount = del.length; // نقاط الأيام المُنجزة تبقى
     }
 
     // Generate plan entries across ranges
     const daysOut: { date: string; target: string; fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; amount: number }[] = [];
     let dateIdx = 0;
+    const rows: any[] = []; // إدخال جماعي في النهاية بدل استعلام لكل يوم
 
     for (const rng of rangesArr) {
       if (dateIdx >= dates.length) break;
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
         if (!s || !e) continue;
         const amount = String(dayHigh - dayLow + 1);
         const dailyTarget = buildPlanTarget({ fromSurah: s.surah, fromAyah: String(s.ayah), toSurah: e.surah, toAyah: String(e.ayah), amount });
-        await db.insert(plans).values({
+        rows.push({
           id: genId('P'), studentId, date: dates[dateIdx], dailyTarget,
           fromSurah: s.surah, fromAyah: String(s.ayah), toSurah: e.surah, toAyah: String(e.ayah),
           amount, type, status: 'Pending', source: 'Manual', locked: false
@@ -134,10 +135,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    for (let i = 0; i < rows.length; i += 200) await db.insert(plans).values(rows.slice(i, i + 200));
+
     return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, days: daysOut });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

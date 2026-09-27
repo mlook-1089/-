@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { badges } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireRole } from '@/lib/auth';
+import { requireRole, errorResponse } from '@/lib/auth';
 import { genId, today } from '@/lib/utils';
 
 /* منح شارة يدوياً لطالب */
@@ -15,11 +15,10 @@ export async function POST(req: NextRequest) {
     const c = code || ('MANUAL_' + Date.now());
     const ic = icon || '🏅';
     const d = today();
-    await db.insert(badges).values({ id, studentId, code: c, title, icon: ic, date: d });
+    const ins = await db.insert(badges).values({ id, studentId, code: c, title, icon: ic, date: d }).onConflictDoNothing().returning({ id: badges.id });
+    if (!ins.length) return NextResponse.json({ success: false, message: 'الطالب يملك هذه الشارة مسبقاً' }, { status: 409 });
     return NextResponse.json({ success: true, badge: { Badge_ID: id, Student_ID: studentId, Code: c, Title: title, Icon: ic, Date: d } });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 /* سحب (حذف) شارة */
@@ -30,7 +29,5 @@ export async function DELETE(req: NextRequest) {
     if (!id) return NextResponse.json({ success: false, message: 'المعرّف مطلوب' }, { status: 400 });
     await db.delete(badges).where(eq(badges.id, id));
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

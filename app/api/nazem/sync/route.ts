@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, plans, studentsData, attendance } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { requireRole, hashPassword } from '@/lib/auth';
+import { requireRole, errorResponse } from '@/lib/auth';
 import { nzFollowUp } from '@/lib/nazem';
-import { genId, buildPlanTarget, normAr, today } from '@/lib/utils';
+import { genId, buildPlanTarget, normAr } from '@/lib/utils';
+import { applyPlanStatus, applyAttendanceStatus } from '@/lib/triggers';
+import { createStudents, CreatedStudent } from '@/lib/accounts';
 
 function statusFromAtt(a: any): string | null {
   const n = Number(a); if (!isFinite(n)) return null;
@@ -23,6 +25,9 @@ function mapNazemType(it: any): 'conserve' | 'revision' {
   return 'conserve';
 }
 
+// المزامنة الأولى قد تمنح نقاطاً لعشرات الأوراد — نرفع المهلة إلى الحد الأقصى المتاح
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const teacher = await requireRole('Teacher');
@@ -37,22 +42,26 @@ export async function POST(req: NextRequest) {
     const nazemToId: Record<string,string> = {};
     allSd.forEach(s => { if (s.nazemId) nazemToId[String(s.nazemId)] = s.studentId; });
 
-    let synced = 0, locked = 0, created = 0;
+    let synced = 0, locked = 0;
     const unmatched: any[] = [];
+    let newAccounts: CreatedStudent[] = [];
+
+    // إنشاء حسابات الطلاب غير المرتبطين دفعة واحدة (بكلمات مؤقتة عشوائية تُعاد للمعلم)
+    if (autoCreate) {
+      const missing = students.filter((st: any) => {
+        const nsid = st.student_id || st.id;
+        return st.student_name && !((nsid && nazemToId[String(nsid)]) || nameToId[normAr(st.student_name)]);
+      });
+      if (missing.length) {
+        const r = await createStudents(missing.map((st: any) => ({ name: st.student_name, nazemId: String(st.student_id || st.id || '') })), { autoParent: true });
+        newAccounts = r.created;
+        for (const c of r.created) { if (c.nazemId) nazemToId[c.nazemId] = c.id; nameToId[normAr(c.name)] = c.id; }
+      }
+    }
 
     for (const st of students) {
       const nsid = st.student_id || st.id;
-      let localId = (nsid && nazemToId[String(nsid)]) || nameToId[normAr(st.student_name || '')];
-      if (!localId && autoCreate && st.student_name) {
-        const nid = genId('U');
-        const pw = String(nsid || Math.floor(Math.random() * 9000 + 1000));
-        await db.insert(users).values({ id: nid, name: st.student_name, role: 'Student', passwordHash: await hashPassword(pw) });
-        await db.insert(studentsData).values({ studentId: nid, nazemId: String(nsid || '') });
-        localId = nid;
-        created++;
-        nazemToId[String(nsid || '')] = nid;
-        nameToId[normAr(st.student_name)] = nid;
-      }
+      const localId = (nsid && nazemToId[String(nsid)]) || nameToId[normAr(st.student_name || '')];
       if (!localId) { unmatched.push({ nazem_id: nsid, name: st.student_name }); continue; }
 
       for (const it of (st.items || [])) {
@@ -85,26 +94,36 @@ export async function POST(req: NextRequest) {
             : and(eq(plans.studentId, localId), eq(plans.date, date), eq(plans.type, rec.type))
         ))[0];
 
+        let planId: string;
         if (existing) {
           if (existing.locked) { locked++; continue; }
-          await db.update(plans).set({ ...rec, status, source: 'Nazem' }).where(eq(plans.id, existing.id));
+          planId = existing.id;
+          await db.update(plans).set({ ...rec, status, source: 'Nazem' }).where(eq(plans.id, planId));
         } else {
-          await db.insert(plans).values({ id: genId('P'), studentId: localId, date, ...rec, status, source: 'Nazem', locked: false });
+          planId = genId('P');
+          await db.insert(plans).values({ id: planId, studentId: localId, date, ...rec, status, source: 'Nazem', locked: false });
         }
+        // نفس نقاط الرصد اليدوي عند الإكمال/الإنجاز الجزئي (وتُسحب إن تراجعت الحالة في ناظم)
+        await applyPlanStatus({ id: planId, studentId: localId, type: rec.type }, existing?.status, status, teacher.id);
         synced++;
       }
 
       const aSt = statusFromAtt(st.attendance_status);
       if (aSt) {
         const ex = (await db.select().from(attendance).where(and(eq(attendance.studentId, localId), eq(attendance.date, date))))[0];
+        let attId = ex?.id;
         if (ex) await db.update(attendance).set({ status: aSt, note: 'ناظم' }).where(eq(attendance.id, ex.id));
-        else await db.insert(attendance).values({ id: genId('A'), studentId: localId, date, status: aSt, note: 'ناظم' });
+        else {
+          const ins = await db.insert(attendance).values({ id: genId('A'), studentId: localId, date, status: aSt, note: 'ناظم' }).onConflictDoNothing().returning({ id: attendance.id });
+          attId = ins[0]?.id; // لم يُدرج (سبقه طلب آخر) → لا نمنح نقاطاً لصف غير موجود
+        }
+        if (attId) await applyAttendanceStatus(attId, localId, ex?.status, aSt, teacher.id);
       }
     }
 
     return NextResponse.json({
-      success: true, synced, locked, created, unmatched,
-      message: `تمت مزامنة ${synced} خطة${locked?` · ${locked} محمية`:''}${created?` · ${created} طالب جديد`:''}${unmatched.length?` · ${unmatched.length} بدون تطابق`:''}`
+      success: true, synced, locked, created: newAccounts.length, newAccounts, unmatched,
+      message: `تمت مزامنة ${synced} خطة${locked?` · ${locked} محمية`:''}${newAccounts.length?` · ${newAccounts.length} طالب جديد`:''}${unmatched.length?` · ${unmatched.length} بدون تطابق`:''}`
     });
-  } catch (e: any) { return NextResponse.json({ success: false, message: e?.message }); }
+  } catch (e: any) { return errorResponse(e); }
 }

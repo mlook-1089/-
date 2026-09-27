@@ -1,22 +1,27 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges, settings } from '@/db/schema';
-import { inArray } from 'drizzle-orm';
-import { requireRole } from '@/lib/auth';
-import { SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
+import { gte, inArray } from 'drizzle-orm';
+import { requireRole, errorResponse } from '@/lib/auth';
+import { SURAHS, SURAH_AYAH_COUNT, today } from '@/lib/utils';
+
+/** نافذة البيانات التاريخية: كل الخطط المستقبلية + آخر WINDOW_DAYS يوماً فقط (بدل كل التاريخ، الذي يثقل الجوال مع الوقت).
+ * الأيام الأقدم تُجلب عند الطلب من /api/day-data. */
+const WINDOW_DAYS = 45;
 
 export async function GET() {
   try {
     await requireRole('Teacher');
+    const since = new Date(new Date(today() + 'T12:00:00Z').getTime() - WINDOW_DAYS * 864e5).toISOString().slice(0, 10);
     const [u, g, sd, pl, it, nw, ev, at, bd, cfg] = await Promise.all([
       db.select().from(users),
       db.select().from(groups),
       db.select().from(studentsData),
-      db.select().from(plans),
+      db.select().from(plans).where(gte(plans.date, since)),
       db.select().from(pointItems),
       db.select().from(news),
       db.select().from(events),
-      db.select().from(attendance),
+      db.select().from(attendance).where(gte(attendance.date, since)),
       db.select().from(badges),
       db.select().from(settings).where(inArray(settings.key, ['plan_work_days', 'plan_term_start', 'plan_term_end']))
     ]);
@@ -29,6 +34,7 @@ export async function GET() {
     const mapDate = (r: any) => ({ ...r, Date: String(r.date) });
     return NextResponse.json({
       success: true,
+      windowStart: since,
       students: studentsEnriched,
       users: u.map(x => ({ ID: x.id, Name: x.name, Role: x.role })),
       groups: g.map(x => ({ Group_ID: x.id, Group_Name: x.name, Group_Total_Points: x.totalPoints })),
@@ -53,7 +59,5 @@ export async function GET() {
         termEnd: cfg.find(r => r.key === 'plan_term_end')?.value || ''
       }
     });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

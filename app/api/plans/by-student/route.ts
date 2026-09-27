@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans } from '@/db/schema';
 import { and, eq, gte, lte, asc } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -57,11 +57,5 @@ export async function GET(req: NextRequest) {
         Repetition: p.repetition
       }))
     });
-  } catch (e: any) {
-    if (e instanceof AuthError) {
-      return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    }
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

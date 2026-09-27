@@ -2,19 +2,34 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import { eq } from 'drizzle-orm';
+import { db } from './db';
+import { users } from '@/db/schema';
 
-const SECRET_KEY = new TextEncoder().encode(process.env.SESSION_SECRET || 'change-this-in-production-please-min-32-chars');
 const COOKIE_NAME = 'ibk_session';
 const TTL_DAYS = 30;
 
-export type SessionUser = { id: string; name: string; role: 'Teacher'|'Student'|'Parent' };
+// المفتاح يُقرأ عند أول استخدام (لا عند تحميل الوحدة) حتى لا يفشل البناء.
+// لا قيمة احتياطية: غياب SESSION_SECRET يعني أن أي أحد يستطيع تزوير الجلسات.
+let _key: Uint8Array | null = null;
+function secretKey(): Uint8Array {
+  if (_key) return _key;
+  const s = process.env.SESSION_SECRET || '';
+  if (s.replace(/^﻿/, '').trim().length < 32) throw new Error('SESSION_SECRET غير مضبوط أو أقصر من 32 حرفاً');
+  _key = new TextEncoder().encode(s); // القيمة كما هي (دون تنظيف) حتى تبقى الجلسات الحالية صالحة
+  return _key;
+}
 
-export async function createSession(user: SessionUser) {
-  const token = await new SignJWT({ ...user })
+export type Role = 'Teacher' | 'Student' | 'Parent';
+export type SessionUser = { id: string; name: string; role: Role; isAdmin: boolean; mustChangePw: boolean };
+
+/** sv = نسخة الجلسة؛ تزيد عند تغيير كلمة المرور فتُبطل كل الجلسات السابقة. */
+export async function createSession(user: { id: string; name: string; role: string; sessionVersion?: number | null }) {
+  const token = await new SignJWT({ id: user.id, name: user.name, role: user.role, sv: Number(user.sessionVersion) || 0 })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(`${TTL_DAYS}d`)
-    .sign(SECRET_KEY);
+    .sign(secretKey());
   cookies().set(COOKIE_NAME, token, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax', maxAge: TTL_DAYS * 24 * 60 * 60, path: '/'
@@ -25,13 +40,22 @@ export function clearSession() {
   cookies().delete(COOKIE_NAME);
 }
 
+/**
+ * يتحقق من التوقيع ثم من قاعدة البيانات: المستخدم موجود، ونسخة الجلسة مطابقة.
+ * الدور والاسم وصلاحية المشرف تُقرأ من القاعدة لا من التوكن، فأي تعديل عليها يسري فوراً.
+ */
 export async function getSession(): Promise<SessionUser | null> {
   const t = cookies().get(COOKIE_NAME)?.value;
   if (!t) return null;
-  try {
-    const { payload } = await jwtVerify(t, SECRET_KEY);
-    return { id: String(payload.id), name: String(payload.name), role: payload.role as any };
-  } catch { return null; }
+  let payload: any;
+  try { ({ payload } = await jwtVerify(t, secretKey())); } catch { return null; }
+  const row = (await db.select({
+    id: users.id, name: users.name, role: users.role, isAdmin: users.isAdmin,
+    mustChangePw: users.mustChangePw, sessionVersion: users.sessionVersion
+  }).from(users).where(eq(users.id, String(payload.id))))[0];
+  if (!row) return null;
+  if ((Number(payload.sv) || 0) !== (Number(row.sessionVersion) || 0)) return null;
+  return { id: row.id, name: row.name, role: row.role as Role, isAdmin: !!row.isAdmin, mustChangePw: !!row.mustChangePw };
 }
 
 export async function requireSession(): Promise<SessionUser> {
@@ -40,16 +64,32 @@ export async function requireSession(): Promise<SessionUser> {
   return s;
 }
 
-export async function requireRole(...roles: SessionUser['role'][]): Promise<SessionUser> {
+export async function requireRole(...roles: Role[]): Promise<SessionUser> {
   const s = await requireSession();
-  if (!roles.includes(s.role)) throw new AuthError('غير مصرح');
+  if (!roles.includes(s.role)) throw new ForbiddenError('غير مصرح');
+  return s;
+}
+
+/** معلم بصلاحية مشرف */
+export async function requireAdmin(): Promise<SessionUser> {
+  const s = await requireRole('Teacher');
+  if (!s.isAdmin) throw new ForbiddenError('هذه العملية مقصورة على المشرف');
   return s;
 }
 
 export class AuthError extends Error { constructor(message?: string){ super(message); this.name = 'AuthError'; } }
+export class ForbiddenError extends Error { constructor(message?: string){ super(message); this.name = 'ForbiddenError'; } }
 
 export async function hashPassword(pw: string) { return bcrypt.hash(pw, 10); }
 export async function verifyPassword(pw: string, hash: string) { return bcrypt.compare(pw, hash); }
+
+/** ردّ خطأ موحّد: 401 لانتهاء الجلسة (تعيد الواجهة لشاشة الدخول)، 403 للرفض، 500 لغيرها. */
+export function errorResponse(e: any) {
+  if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
+  if (e instanceof ForbiddenError) return NextResponse.json({ success: false, message: e.message }, { status: 403 });
+  console.error(e);
+  return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
+}
 
 /** غلاف مسارات API لإرجاع أخطاء المصادقة كـ 401/403 */
 export function apiHandler(fn: () => Promise<any>) {
@@ -58,9 +98,13 @@ export function apiHandler(fn: () => Promise<any>) {
       const data = await fn();
       return NextResponse.json({ success: true, ...data });
     } catch (e: any) {
-      if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-      console.error(e);
-      return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
+      return errorResponse(e);
     }
   };
 }
+
+/**
+ * تجزئة كلمة مرور مؤقتة (يُجبَر صاحبها على تغييرها عند أول دخول، فتُعاد تجزئتها بالكلفة الكاملة).
+ * كلفة أقل تجعل إنشاء عشرات الحسابات دفعة واحدة ممكناً ضمن مهلة الخادم.
+ */
+export async function hashTempPassword(pw: string) { return bcrypt.hash(pw, 8); }

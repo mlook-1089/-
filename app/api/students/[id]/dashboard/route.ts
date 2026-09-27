@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans, pointLogs, pointItems, groups, badges, attendance, studentsData, users } from '@/db/schema';
-import { and, eq } from 'drizzle-orm';
-import { requireSession, AuthError } from '@/lib/auth';
+import { and, desc, eq } from 'drizzle-orm';
+import { requireSession, AuthError, errorResponse } from '@/lib/auth';
 import { today, buildPlanTarget } from '@/lib/utils';
-import { computeStreak } from '@/lib/badges';
+import { computeStreak, getWorkDays } from '@/lib/badges';
 import type { SessionUser } from '@/lib/auth';
 
 /** تحقق أن المستخدم مصرّح له بعرض ملف الطالب sid */
@@ -37,11 +37,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const itemMap: Record<string, any> = {}; items.forEach(x => itemMap[x.id] = x);
   // نعرض القيمة التاريخية (لحظة المنح) من عمود pointValue بدل القيمة الحالية للبند
   // — حتى لا يتغيّر السجل بأثر رجعي إذا عُدّل البند أو حُذف.
-  const logs = (await db.select().from(pointLogs).where(eq(pointLogs.studentId, sid))).map(l => ({
+  const logs = (await db.select().from(pointLogs).where(eq(pointLogs.studentId, sid)).orderBy(desc(pointLogs.createdAt))).map(l => ({
     Date: String(l.date),
     Description: itemMap[l.itemId]?.description || '— (بند محذوف)',
     Point_Value: (l.pointValue ?? itemMap[l.itemId]?.pointValue ?? 0)
-  })).reverse();
+  }));
 
   const groupsRows = await db.select().from(groups);
   // نمرّر id ليتيح للواجهة تظليل مجموعة الطالب في لوحة الترتيب
@@ -51,14 +51,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const presentDays = attRows.filter(a => a.status === 'Present').length;
   const lateDays = attRows.filter(a => a.status === 'Late').length;
   const absentDays = attRows.filter(a => a.status === 'Absent').length;
-  // آخر ٣٠ يوم غياب/تأخير — يُعرض في بوابتي الطالب وولي الأمر
+  // آخر ٦٠ سجل حضور — يُعرض في بوابتي الطالب وولي الأمر
   const attendanceHistory = attRows
     .map(a => ({ Date: String(a.date), Status: a.status, Note: a.note || '' }))
     .sort((a, b) => b.Date.localeCompare(a.Date))
     .slice(0, 60);
 
   const doneAll = enriched.filter(p => p.Accomplishment_Status === 'Done');
-  const streak = computeStreak(doneAll.map(p => p.Date));
+  const streak = computeStreak(doneAll.map(p => p.Date), await getWorkDays());
 
   // progress — مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة.
   // أي صفوف قديمة type='mastery' في القاعدة تُطوى إلى conserve حتى لا تُهمَل عدّاً.
@@ -76,15 +76,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   return NextResponse.json({
     success: true,
     totalPoints: me?.totalPoints || 0,
+    // قد يكون للطالب أكثر من ورد اليوم (حفظ + مراجعة): todayPlans للكل، وtodayPlan للتوافق مع الواجهات القديمة.
     todayPlan: enriched.find(p => p.Date === t) || null,
+    todayPlans: enriched.filter(p => p.Date === t),
     plans: enriched, logs, leaderboard, badges: stBadges,
     myGroupId: me?.groupId || null,
     stats: { donePlans: doneAll.length, totalPlans: enriched.length, donePct: enriched.length ? Math.round(doneAll.length / enriched.length * 100) : 0, streak, presentDays, lateDays, absentDays },
     attendanceHistory,
     progress: { conserve: byType.conserve, revision: byType.revision, counts }
   });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

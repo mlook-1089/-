@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pointLogs, users, pointItems } from '@/db/schema';
 import { desc } from 'drizzle-orm';
-import { requireRole } from '@/lib/auth';
+import { requireRole, errorResponse } from '@/lib/auth';
 
 /* سجل العمليات: آخر ~200 عملية نقاط، الأحدث أولاً، مع ربط الأسماء والبنود */
 export async function GET(_req: NextRequest) {
@@ -28,7 +28,5 @@ export async function GET(_req: NextRequest) {
       };
     });
     return NextResponse.json({ success: true, logs });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: e.name === 'AuthError' ? 401 : 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

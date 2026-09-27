@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 
 /* يعيد رابطاً لمستند تقرير الطالب (HTML قابل للطباعة/الحفظ كـ PDF) */
 export async function GET(req: NextRequest) {
@@ -11,8 +11,5 @@ export async function GET(req: NextRequest) {
       url: `/api/reports/student/download?id=${encodeURIComponent(id)}`,
       message: 'تم إنشاء التقرير'
     });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pushSubscriptions } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { requireSession, AuthError } from '@/lib/auth';
+import { requireSession, AuthError, errorResponse } from '@/lib/auth';
 import { genId } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
@@ -29,11 +29,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -45,9 +41,5 @@ export async function DELETE(req: NextRequest) {
         .where(and(eq(pushSubscriptions.userId, s.id), eq(pushSubscriptions.endpoint, endpoint)));
     }
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

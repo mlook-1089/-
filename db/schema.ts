@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, boolean, date, jsonb, serial, primaryKey, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, timestamp, boolean, date, jsonb, serial, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -7,13 +7,15 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   mustChangePw: boolean('must_change_pw').default(false),
   isAdmin: boolean('is_admin').default(false),
+  sessionVersion: integer('session_version').default(0).notNull(), // تزيد عند تغيير كلمة المرور → تُبطل الجلسات القديمة
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 });
 
 export const groups = pgTable('groups', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
-  totalPoints: integer('total_points').default(0).notNull()
+  totalPoints: integer('total_points').default(0).notNull(), // = bonusPoints + مجموع نقاط الأعضاء (يُعاد حسابه)
+  bonusPoints: integer('bonus_points').default(0).notNull()  // نقاط تُمنح للمجموعة مباشرة (لا تتبع طالباً)
 });
 
 export const studentsData = pgTable('students_data', {
@@ -69,11 +71,20 @@ export const pointLogs = pgTable('point_logs', {
   itemId: text('item_id').notNull(),
   teacherId: text('teacher_id').default(''),
   pointValue: integer('point_value'), // القيمة لحظة المنح (تاريخية) — nullable للسجلات القديمة
+  ref: text('ref').default(''), // مصدر المنح التلقائي: plan:<id> | att:<id> — يُستخدم لسحب النقاط عند التراجع
   date: date('date').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 }, (t) => ({
-  studentDateIdx: index('logs_student_date_idx').on(t.studentId, t.date)
+  studentDateIdx: index('logs_student_date_idx').on(t.studentId, t.date),
+  refIdx: index('logs_ref_idx').on(t.ref)
 }));
+
+export const loginAttempts = pgTable('login_attempts', {
+  key: text('key').primaryKey(), // id:<userId> | ip:<address>
+  fails: integer('fails').default(0).notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).defaultNow().notNull(),
+  lockedUntil: timestamp('locked_until', { withTimezone: true })
+});
 
 export const pushSubscriptions = pgTable('push_subscriptions', {
   id: text('id').primaryKey(),
@@ -123,7 +134,7 @@ export const attendance = pgTable('attendance', {
   status: text('status').notNull(), // Present | Late | Absent
   note: text('note').default('')
 }, (t) => ({
-  studentDateIdx: index('att_student_date_idx').on(t.studentId, t.date),
+  studentDateIdx: uniqueIndex('att_student_date_uniq').on(t.studentId, t.date),
   dateIdx: index('att_date_idx').on(t.date)
 }));
 
@@ -135,7 +146,7 @@ export const badges = pgTable('badges', {
   icon: text('icon').default(''),
   date: date('date').notNull()
 }, (t) => ({
-  studentCodeIdx: index('badges_student_code_idx').on(t.studentId, t.code)
+  studentCodeIdx: uniqueIndex('badges_student_code_uniq').on(t.studentId, t.code)
 }));
 
 export const settings = pgTable('settings', {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, studentsData, groups } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { normAr } from '@/lib/utils';
 
 export async function GET() {
@@ -51,10 +51,7 @@ export async function GET() {
     counts: { users: u.length, studentUsers: studentUsers.length, studentsData: sd.length, groups: gr.length },
     issues: { usersWithoutSd, sdWithoutUser, sdInvalidGroup, duplicates, parentsWithoutChildren }
   });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 export async function POST() {
@@ -99,8 +96,5 @@ export async function POST() {
     orphansFixed: deleted.length, dupRemoved: 0, orphanParentsRemoved,
     message: `تم الإصلاح: أضيف ${created} سجل، حُذف ${deleted.length} سجل يتيم لا يملك حساب مستخدم، نُظّفت ${groupsFixed} مجموعة معطوبة، حُذف ${orphanParentsRemoved} ولي أمر تلقائي بلا أبناء (لم تُحذف أي تكرارات تلقائياً)`
   });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

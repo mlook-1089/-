@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { pointItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
@@ -12,10 +12,7 @@ export async function POST(req: NextRequest) {
     const id = genId('I');
     await db.insert(pointItems).values({ id, description, pointValue: Number(pointValue)||0, trigger: trigger||'none' });
     return NextResponse.json({ success: true, item: { Item_ID: id, Description: description, Point_Value: pointValue, Trigger: trigger||'none' } });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 export async function PATCH(req: NextRequest) {
   try {
@@ -27,10 +24,7 @@ export async function PATCH(req: NextRequest) {
     if (upd.Trigger !== undefined) patch.trigger = upd.Trigger;
     await db.update(pointItems).set(patch).where(eq(pointItems.id, id));
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 export async function DELETE(req: NextRequest) {
   try {
@@ -38,8 +32,5 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
     await db.delete(pointItems).where(eq(pointItems.id, id));
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { news, users } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, today } from '@/lib/utils';
 import { notifyUsers } from '@/lib/push';
 
@@ -31,11 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, news: { News_ID: id, Title: title, Body: body, Visibility: rec.visibility, Type: nType, Video_URL: nVideoUrl, Date: rec.date } });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -44,9 +40,5 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
     await db.delete(news).where(eq(news.id, id));
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

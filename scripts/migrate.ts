@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
 );
 ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_pw boolean DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
-UPDATE users SET is_admin = true WHERE role = 'Teacher' AND is_admin IS NOT TRUE;
+-- إن لم يوجد أي مشرف (قاعدة قديمة) نرقّي أقدم معلم فقط — لا كل المعلمين في كل تشغيل.
+UPDATE users SET is_admin = true WHERE id = (SELECT id FROM users WHERE role = 'Teacher' ORDER BY created_at LIMIT 1) AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'Teacher' AND is_admin = true);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
@@ -112,7 +114,6 @@ CREATE TABLE IF NOT EXISTS attendance (
   status TEXT NOT NULL,
   note TEXT DEFAULT ''
 );
-CREATE INDEX IF NOT EXISTS att_student_date_idx ON attendance (student_id, date);
 CREATE INDEX IF NOT EXISTS att_date_idx ON attendance (date);
 
 CREATE TABLE IF NOT EXISTS badges (
@@ -123,7 +124,6 @@ CREATE TABLE IF NOT EXISTS badges (
   icon TEXT DEFAULT '',
   date DATE NOT NULL
 );
-CREATE INDEX IF NOT EXISTS badges_student_code_idx ON badges (student_id, code);
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -138,6 +138,46 @@ CREATE TABLE IF NOT EXISTS nazem_session (
   xsrf TEXT DEFAULT '',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE news ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'post';
+ALTER TABLE news ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT '';
+CREATE TABLE IF NOT EXISTS news_comments (
+  id TEXT PRIMARY KEY,
+  news_id TEXT NOT NULL REFERENCES news(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  user_name TEXT NOT NULL,
+  body TEXT NOT NULL,
+  date TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS nc_news_idx ON news_comments (news_id);
+CREATE INDEX IF NOT EXISTS nc_user_idx ON news_comments (user_id);
+
+-- مصدر النقاط التلقائية (plan:<id> / att:<id>) لسحبها عند التراجع عن الحالة
+ALTER TABLE point_logs ADD COLUMN IF NOT EXISTS ref TEXT DEFAULT '';
+CREATE INDEX IF NOT EXISTS logs_ref_idx ON point_logs (ref);
+CREATE UNIQUE INDEX IF NOT EXISTS logs_ref_item_uniq ON point_logs (ref, item_id) WHERE ref <> '';
+
+-- محاولات الدخول الفاشلة (حدّ التخمين)
+CREATE TABLE IF NOT EXISTS login_attempts (
+  key TEXT PRIMARY KEY,
+  fails INTEGER NOT NULL DEFAULT 0,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  locked_until TIMESTAMPTZ
+);
+
+-- نقاط المجموعة = نقاط مباشرة (bonus) + مجموع نقاط الأعضاء
+ALTER TABLE groups ADD COLUMN IF NOT EXISTS bonus_points INTEGER NOT NULL DEFAULT 0;
+UPDATE groups g SET bonus_points = GREATEST(g.total_points - COALESCE((SELECT SUM(s.total_points) FROM students_data s WHERE s.group_id = g.id), 0), 0) WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key = 'mig_group_bonus_v1');
+INSERT INTO settings (key, value) VALUES ('mig_group_bonus_v1', 'done') ON CONFLICT (key) DO NOTHING;
+UPDATE groups g SET total_points = g.bonus_points + COALESCE((SELECT SUM(s.total_points) FROM students_data s WHERE s.group_id = g.id), 0);
+
+-- منع التكرار: حضور واحد لكل طالب في اليوم، وشارة واحدة من كل رمز (نحذف المكرر أولاً ونُبقي الأحدث)
+DELETE FROM attendance a USING attendance b WHERE a.student_id = b.student_id AND a.date = b.date AND a.id < b.id;
+CREATE UNIQUE INDEX IF NOT EXISTS att_student_date_uniq ON attendance (student_id, date);
+DROP INDEX IF EXISTS att_student_date_idx;
+DELETE FROM badges a USING badges b WHERE a.student_id = b.student_id AND a.code = b.code AND a.id < b.id;
+CREATE UNIQUE INDEX IF NOT EXISTS badges_student_code_uniq ON badges (student_id, code);
+DROP INDEX IF EXISTS badges_student_code_idx;
 `;
 
 async function main() {

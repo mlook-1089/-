@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans, pointLogs, pointItems, groups, badges, attendance, studentsData, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireRole } from '@/lib/auth';
+import { requireRole, errorResponse } from '@/lib/auth';
 import { today, buildPlanTarget } from '@/lib/utils';
-import { computeStreak } from '@/lib/badges';
+import { computeStreak, computeMaxStreak, getWorkDays } from '@/lib/badges';
 
 const HALAQA = 'حلقة ابن كثير – مجمع حلق الراجحي';
 
@@ -85,7 +85,11 @@ function notFoundPage(): NextResponse {
 }
 
 export async function GET(req: NextRequest) {
-  await requireRole('Teacher');
+  try {
+    await requireRole('Teacher');
+  } catch (e: any) {
+    return errorResponse(e);
+  }
   const id = new URL(req.url).searchParams.get('id') || '';
   if (!id) return notFoundPage();
 
@@ -117,11 +121,12 @@ export async function GET(req: NextRequest) {
   // سجل النقاط
   const items = await db.select().from(pointItems);
   const itemMap: Record<string, { description: string; pointValue: number }> = {};
+  // القيمة التاريخية لحظة المنح (مثل لوحة الطالب) لا القيمة الحالية للبند
   items.forEach((x) => { itemMap[x.id] = { description: x.description, pointValue: x.pointValue }; });
   const logs = (await db.select().from(pointLogs).where(eq(pointLogs.studentId, id))).map((l) => ({
     Date: String(l.date),
-    Description: itemMap[l.itemId]?.description || '-',
-    Value: itemMap[l.itemId]?.pointValue ?? 0
+    Description: itemMap[l.itemId]?.description || '— (بند محذوف)',
+    Value: l.pointValue ?? itemMap[l.itemId]?.pointValue ?? 0
   })).sort((a, b) => b.Date.localeCompare(a.Date));
 
   // الشارات
@@ -136,7 +141,9 @@ export async function GET(req: NextRequest) {
   const doneAll = enriched.filter((p) => p.Status === 'Done');
   const totalPoints = sd?.totalPoints || 0;
   const donePct = enriched.length ? Math.round((doneAll.length / enriched.length) * 100) : 0;
-  const streak = computeStreak(doneAll.map((p) => p.Date));
+  const workDays = await getWorkDays();
+  const streak = computeStreak(doneAll.map((p) => p.Date), workDays);
+  const maxStreak = computeMaxStreak(doneAll.map((p) => p.Date), workDays);
 
   // آخر السجلات
   const lastPlans = enriched.slice(0, 15);
@@ -250,23 +257,24 @@ export async function GET(req: NextRequest) {
       </header>
       <div class="body">
         <section>
-          <h2>📊 الملخص</h2>
+          <h2>الملخص</h2>
           <div class="cards">
             <div class="card"><div class="v">${esc(totalPoints)}</div><div class="l">النقاط الكلية</div></div>
             <div class="card"><div class="v">${esc(donePct)}%</div><div class="l">نسبة الإنجاز</div></div>
-            <div class="card"><div class="v">${esc(streak)}</div><div class="l">أطول سلسلة (أيام)</div></div>
+            <div class="card"><div class="v">${esc(streak)}</div><div class="l">السلسلة الحالية (أيام)</div></div>
+            <div class="card"><div class="v">${esc(maxStreak)}</div><div class="l">أطول سلسلة (أيام)</div></div>
             <div class="card"><div class="v">${esc(presentDays)}</div><div class="l">أيام الحضور</div></div>
             <div class="card"><div class="v">${esc(stBadges.length)}</div><div class="l">عدد الشارات</div></div>
           </div>
         </section>
 
         <section>
-          <h2>🏅 الشارات</h2>
+          <h2>الشارات</h2>
           ${badgesHtml}
         </section>
 
         <section>
-          <h2>📖 آخر الأوراد</h2>
+          <h2>آخر الأوراد</h2>
           <div class="table-wrap">
             <table>
               <thead>
@@ -278,7 +286,7 @@ export async function GET(req: NextRequest) {
         </section>
 
         <section>
-          <h2>⭐ آخر سجلات النقاط</h2>
+          <h2>آخر سجلات النقاط</h2>
           <div class="table-wrap">
             <table>
               <thead>

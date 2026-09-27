@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans, studentsData } from '@/db/schema';
-import { and, eq } from 'drizzle-orm';
-import { requireSession, AuthError } from '@/lib/auth';
+import { and, desc, eq } from 'drizzle-orm';
+import { requireSession, AuthError, errorResponse } from '@/lib/auth';
 import type { SessionUser } from '@/lib/auth';
 
 /** تحقق أن المستخدم مصرّح له بعرض ملف الطالب sid */
@@ -22,7 +22,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     const sid = params.id;
     if (!(await canViewStudent(s, sid))) return NextResponse.json({ success: false }, { status: 403 });
 
-    const rows = await db.select().from(plans).where(and(eq(plans.studentId, sid), eq(plans.status, 'Done')));
+    const rows = await db.select().from(plans).where(and(eq(plans.studentId, sid), eq(plans.status, 'Done')))
+      .orderBy(desc(plans.date), desc(plans.createdAt)); // الأحدث أولاً: أول صف لكل نوع = آخر موضع وصل إليه
     // مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة، وأي صفوف قديمة
     // بقيمة mastery في القاعدة تُطوى إلى conserve حتى لا تُهمَل عدّاً.
     const byType: Record<string, any> = { conserve: null, revision: null };
@@ -35,8 +36,5 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       if (!byType[t]) byType[t] = { surah: p.toSurah, ayah: p.toAyah };
     });
     return NextResponse.json({ success: true, ...byType, counts });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, plans, pointLogs, attendance, badges, news, newsComments, events, studentsData, groups, pushSubscriptions } from '@/db/schema';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { eq, inArray } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
@@ -29,10 +29,5 @@ export async function POST(req: NextRequest) {
     await db.delete(users).where(inArray(users.role, ['Student', 'Parent']));
 
     return NextResponse.json({ success: true, message: 'تم مسح جميع البيانات بنجاح' });
-  } catch (e: any) {
-    if (e instanceof AuthError) {
-      return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    }
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

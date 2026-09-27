@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, studentsData } from '@/db/schema';
-import { requireRole } from '@/lib/auth';
+import { requireRole, errorResponse } from '@/lib/auth';
 
 /**
  * إنشاء سجل بيانات طالب (students_data) لكل حساب طالب لا يوجد له سجل مرتبط.
@@ -36,7 +36,5 @@ export async function POST() {
         ? `تم ربط ${created} حساب طالب بسجل البيانات`
         : 'كل حسابات الطلاب مرتبطة بسجلاتهم'
     });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

@@ -6,11 +6,19 @@ import crypto from 'node:crypto';
 export const NAZEM_API = 'https://api.nazem-plus.com';
 export const NAZEM_ORIGIN = 'https://nazem-plus.com';
 
-const KEY = crypto.scryptSync(process.env.SESSION_SECRET || 'change-me-min-32-chars', 'nazem-salt', 32);
+// المفتاح يُشتق عند أول استخدام، ولا قيمة احتياطية (وإلا شُفّرت كلمة ناظم بمفتاح معروف).
+let _key: Buffer | null = null;
+function key(): Buffer {
+  if (_key) return _key;
+  const s = process.env.SESSION_SECRET || '';
+  if (s.trim().length < 32) throw new Error('SESSION_SECRET غير مضبوط');
+  _key = crypto.scryptSync(s, 'nazem-salt', 32);
+  return _key;
+}
 
 function enc(text: string) {
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', KEY, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key(), iv);
   const ct = Buffer.concat([cipher.update(text, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
   return Buffer.concat([iv, tag, ct]).toString('base64');
@@ -18,7 +26,7 @@ function enc(text: string) {
 function dec(payload: string) {
   const buf = Buffer.from(payload, 'base64');
   const iv = buf.subarray(0, 12); const tag = buf.subarray(12, 28); const ct = buf.subarray(28);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key(), iv);
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(ct), decipher.final()]).toString('utf8');
 }

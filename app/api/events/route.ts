@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { events } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, today } from '@/lib/utils';
 
 export async function POST(req: NextRequest) {
@@ -13,10 +13,7 @@ export async function POST(req: NextRequest) {
     const rec = { id, title, description: description||'', date: date || today(), type: type||'عام' };
     await db.insert(events).values(rec);
     return NextResponse.json({ success: true, event: { Event_ID: id, Title: title, Description: rec.description, Date: rec.date, Type: rec.type } });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 export async function DELETE(req: NextRequest) {
   try {
@@ -24,8 +21,5 @@ export async function DELETE(req: NextRequest) {
     const { id } = await req.json();
     await db.delete(events).where(eq(events.id, id));
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

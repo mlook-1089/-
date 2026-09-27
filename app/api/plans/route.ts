@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { requireRole } from '@/lib/auth';
+import { and, eq } from 'drizzle-orm';
+import { requireRole, errorResponse } from '@/lib/auth';
 import { genId, today, buildPlanTarget } from '@/lib/utils';
-import { fireTriggers } from '@/lib/triggers';
-import { tryAwardBadges } from '@/lib/badges';
+import { applyPlanStatus, revokeRefs } from '@/lib/triggers';
 
 // مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة، وأي قيمة قادمة
 // mastery تُطوى إلى conserve حتى لا يُكتب النوع الملغى من جديد.
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
       status: 'Pending', source: 'Manual'
     });
     return NextResponse.json({ success: true, id });
-  } catch (e: any) { return NextResponse.json({ success: false, message: e?.message }, { status: 500 }); }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -47,7 +46,10 @@ export async function PATCH(req: NextRequest) {
     if (upd.Amount !== undefined) patch.amount = upd.Amount;
     if (upd.Type !== undefined) patch.type = normType(upd.Type);
     if (upd.Date !== undefined) patch.date = upd.Date;
-    if (upd.Accomplishment_Status !== undefined) patch.status = upd.Accomplishment_Status;
+    if (upd.Accomplishment_Status !== undefined) {
+      if (!['Pending', 'Done', 'Partial', 'Missed'].includes(upd.Accomplishment_Status)) return NextResponse.json({ success: false, message: 'حالة غير صالحة' }, { status: 400 });
+      patch.status = upd.Accomplishment_Status;
+    }
     patch.dailyTarget = buildPlanTarget({
       fromSurah: patch.fromSurah ?? p.fromSurah, fromAyah: patch.fromAyah ?? p.fromAyah,
       toSurah: patch.toSurah ?? p.toSurah, toAyah: patch.toAyah ?? p.toAyah,
@@ -56,22 +58,34 @@ export async function PATCH(req: NextRequest) {
     if (p.source === 'Nazem') patch.locked = true;
     await db.update(plans).set(patch).where(eq(plans.id, id));
 
+    // تغيّر الحالة → نسحب نقاط الحالة السابقة ونمنح نقاط الجديدة (مرة واحدة لكل ورد).
     let awarded: any[] = [];
-    if (upd.Accomplishment_Status === 'Done') {
-      await tryAwardBadges(p.studentId);
-      awarded = await fireTriggers((patch.type ?? p.type) === 'revision' ? 'on_review_done' : 'on_done', p.studentId, teacher.id);
-    } else if (upd.Accomplishment_Status === 'Partial') {
-      awarded = await fireTriggers('on_partial', p.studentId, teacher.id);
+    if (upd.Accomplishment_Status !== undefined) {
+      awarded = await applyPlanStatus({ id: p.id, studentId: p.studentId, type: patch.type ?? p.type }, p.status, upd.Accomplishment_Status, teacher.id);
     }
     return NextResponse.json({ success: true, awarded });
-  } catch (e: any) { return NextResponse.json({ success: false, message: e?.message }, { status: 500 }); }
+  } catch (e: any) { return errorResponse(e); }
 }
 
+/**
+ * حذف ورد واحد { id }، أو كل الأوراد اليدوية لطالب { studentId, source: 'Manual' }
+ * (بطلب واحد بدل طلب لكل ورد — كان مسح خطة فصل كامل يستغرق دقائق على الجوال).
+ */
 export async function DELETE(req: NextRequest) {
   try {
     await requireRole('Teacher');
-    const { id } = await req.json();
-    await db.delete(plans).where(eq(plans.id, id));
-    return NextResponse.json({ success: true });
-  } catch (e: any) { return NextResponse.json({ success: false, message: e?.message }, { status: 500 }); }
+    const { id, studentId, source } = await req.json();
+    if (id) {
+      // حذف ورد بعينه (غالباً أُضيف خطأً) → تُسحب نقاطه أيضاً
+      const ids = (await db.delete(plans).where(eq(plans.id, id)).returning({ id: plans.id })).map(r => r.id);
+      await revokeRefs(ids.map(pid => 'plan:' + pid));
+      return NextResponse.json({ success: true, deleted: ids.length });
+    }
+    if (studentId && source === 'Manual') {
+      // مسح الخطة كاملة لإعادة بنائها: لا نسحب نقاط أيام سُمّعت فعلاً
+      const ids = (await db.delete(plans).where(and(eq(plans.studentId, studentId), eq(plans.source, 'Manual'))).returning({ id: plans.id }));
+      return NextResponse.json({ success: true, deleted: ids.length });
+    }
+    return NextResponse.json({ success: false, message: 'بيانات الحذف ناقصة' }, { status: 400 });
+  } catch (e: any) { return errorResponse(e); }
 }

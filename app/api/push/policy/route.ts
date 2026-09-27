@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { settings, users } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 
 type Audience = 'all' | 'students' | 'parents' | 'students_parents';
 const AUD_VALUES: Audience[] = ['all', 'students', 'parents', 'students_parents'];
@@ -32,10 +32,7 @@ export async function GET(_req: NextRequest) {
     await requireRole('Teacher');
     const policy = await readPolicy();
     return NextResponse.json({ success: true, policy });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 
 export async function POST(req: NextRequest) {
@@ -65,8 +62,5 @@ export async function POST(req: NextRequest) {
 
     const policy = await readPolicy();
     return NextResponse.json({ success: true, policy });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

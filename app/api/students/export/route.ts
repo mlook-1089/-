@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { db } from '@/lib/db';
 import { users, studentsData, groups } from '@/db/schema';
-import { requireRole, AuthError } from '@/lib/auth';
+import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,11 +61,5 @@ export async function GET() {
         'Cache-Control': 'no-store',
       },
     });
-  } catch (e: any) {
-    if (e instanceof AuthError) {
-      return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    }
-    console.error(e);
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }

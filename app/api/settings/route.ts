@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { settings } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { requireRole, getSession, AuthError } from '@/lib/auth';
+import { requireRole, getSession, AuthError, errorResponse } from '@/lib/auth';
 
 const PUBLIC_KEYS = new Set(['logo_url', 'halaqa_name', 'halaqa_tagline']);
 const ALLOWED_SET = new Set(['logo_url', 'halaqa_name', 'halaqa_tagline', 'nz_term', 'nz_plan', 'push_enabled', 'push_audience', 'push_news_enabled', 'push_absence_enabled', 'plan_work_days', 'plan_term_start', 'plan_term_end']);
@@ -27,9 +27,7 @@ export async function GET(req: NextRequest) {
     keys.forEach(k => { values[k] = ''; });
     rows.forEach(r => { values[r.key] = r.value || ''; });
     return NextResponse.json({ success: true, values });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
 export async function POST(req: NextRequest) {
   try {
@@ -40,8 +38,5 @@ export async function POST(req: NextRequest) {
     if (existing) await db.update(settings).set({ value }).where(eq(settings.key, key));
     else await db.insert(settings).values({ key, value });
     return NextResponse.json({ success: true });
-  } catch (e: any) {
-    if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
-    return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
-  }
+  } catch (e: any) { return errorResponse(e); }
 }
