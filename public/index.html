@@ -584,7 +584,8 @@ const DS = {
       apiPlanGenerate:          () => ['POST','/api/plans/generate',a[0]],
       apiPlansByStudent:        () => ['GET','/api/plans/by-student?studentId='+encodeURIComponent(a[0])+'&from='+encodeURIComponent(a[1]||'')+'&to='+encodeURIComponent(a[2]||'')+'&type='+encodeURIComponent(a[3]||'all')],
       apiAttendanceHistory:     () => ['GET','/api/attendance/history?studentId='+encodeURIComponent(a[0])+(a[1]?'&from='+encodeURIComponent(a[1]):'')+(a[2]?'&to='+encodeURIComponent(a[2]):'')],
-      apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}]
+      apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}],
+      apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}]
     };
     const spec = M[fn] ? M[fn]() : null;
     if(!spec) throw new Error('Unknown API: '+fn);
@@ -629,7 +630,7 @@ const DS = {
   addPlan(s,p){return this.c('apiAddPlan',s,p)},updatePlan(i,u){return this.c('apiUpdatePlan',i,u)},deletePlan(i){return this.c('apiDeletePlan',i)},
   getStudentPlans(s){return this.c('apiGetStudentPlans',s)},updatePlanStatus(p,s,t){return this.c('apiUpdatePlanStatus',p,s,t)},
   addPointItem(d,v,t){return this.c('apiAddPointItem',d,v,t)},updatePointItem(i,u){return this.c('apiUpdatePointItem',i,u)},deletePointItem(i){return this.c('apiDeletePointItem',i)},logPoints(s,i,t){return this.c('apiLogPoints',s,i,t)},
-  addNews(t,b,v,ty,vu){return this.c('apiAddNews',t,b,v,ty,vu)},deleteNews(i){return this.c('apiDeleteNews',i)},getNewsComments(id){return this.c('apiGetNewsComments',id)},addNewsComment(id,b){return this.c('apiAddNewsComment',id,b)},changeUserId(oid,nid){return this.c('apiChangeUserId',oid,nid)}, /* MARK_DS_START */
+  addNews(t,b,v,ty,vu){return this.c('apiAddNews',t,b,v,ty,vu)},deleteNews(i){return this.c('apiDeleteNews',i)},getNewsComments(id){return this.c('apiGetNewsComments',id)},addNewsComment(id,b){return this.c('apiAddNewsComment',id,b)},changeUserId(oid,nid){return this.c('apiChangeUserId',oid,nid)},resetAllData(){return this.c('apiResetAllData')}, /* MARK_DS_START */
   addEvent(t,d,dt,ty){return this.c('apiAddEvent',t,d,dt,ty)},deleteEvent(i){return this.c('apiDeleteEvent',i)},
   saveAttendance(s,d,st,n,t){return this.c('apiSaveAttendance',s,d,st,n,t)},bulkAttendance(d,l,allIds,clearMissing){return this.c('apiBulkAttendance',d,l,allIds,clearMissing)},
   nazemStatus(){return this.c('apiNazemStatus')},saveNazemCreds(u,p){return this.c('apiSaveNazemCredentials',u,p)},testNazem(){return this.c('apiTestNazem')},clearNazemCreds(){return this.c('apiClearNazemCredentials')},
@@ -1689,8 +1690,7 @@ function renderMpPlanItem(p){
       <div class="col-span-2 mt-1">
         <button onclick="doMpSaveItem('${esc(p.Plan_ID)}','Done')" class="btn-v4 btn-v4-up w-full py-2.5 text-sm">${svg('cloud','w-4 h-4')} حفظ التقييم</button>
       </div>
-      <button onclick="doMpSaveItem('${esc(p.Plan_ID)}','Partial')" class="btn-v4 py-2 text-xs" style="background:#FEF3C7;color:#92400E;border:1px solid #FBBF24">◐ حفظ جزئي</button>
-      <button onclick="doMpSaveItem('${esc(p.Plan_ID)}','Missed')" class="btn-v4 btn-v4-down py-2 text-xs">✗ لم يحفظ</button>
+      <button onclick="doMpSaveItem('${esc(p.Plan_ID)}','Missed')" class="btn-v4 btn-v4-down py-2 text-xs col-span-2">✗ لم يحفظ</button>
     </div>` : `
     <div class="mt-3 pt-3 border-t border-dashed border-slate-300 grid grid-cols-3 gap-2">
       <div class="text-center text-[11px] bg-white/60 rounded-lg p-1.5"><div class="text-slate-500 font-bold">أخطاء</div><div class="text-slate-800 font-black num">${p.Mistakes!=null?p.Mistakes:'—'}</div></div>
@@ -1717,6 +1717,21 @@ function renderMpPlanItem(p){
 }
 async function doMpSaveItem(planId, status){
   const form = document.querySelector(`[data-mp-form="${planId}"]`);
+  // Auto-partial: if recorded range < required daily amount → mark Partial automatically
+  if(status==='Done' && form){
+    const p=(_tData.plans||[]).find(x=>String(x.Plan_ID)===String(planId));
+    const req=Number(p?.Amount)||0;
+    if(p && req>0){
+      const toSurahEl=form.querySelector('[data-k="toSurah"]');
+      const toAyahEl=form.querySelector('[data-k="toAyah"]');
+      if(toSurahEl&&toAyahEl){
+        const fromOrd=qAyahOrdinal(String(p.From_Surah),Number(p.From_Ayah)||1);
+        const toOrd=qAyahOrdinal(toSurahEl.value,Number(toAyahEl.value)||1);
+        const actual=Math.abs(toOrd-fromOrd)+1;
+        if(actual>0&&actual<req) status='Partial';
+      }
+    }
+  }
   const upd = { Accomplishment_Status: status };
   let attStatus = null;
   if(form){
@@ -1763,6 +1778,55 @@ async function doMpDeleteItem(planId){
   toast('حُذف الورد');
   renderManualPlanTab($('fuSubBody'));
 }
+/* نقاط جماعية */
+function openBulkPointsModal(){
+  const students=_tData.students||[];
+  const {nameMap}=tMaps();
+  const items=(_tData.items||[]).filter(it=>it.Trigger==='none'||!it.Trigger);
+  if(!items.length)return toast('لا توجد بنود نقاط يدوية','warn');
+  const itemOpts=items.map(it=>`<option value="${esc(it.Item_ID)}">${esc(it.Description)} (${it.Point_Value>=0?'+':''}${it.Point_Value})</option>`).join('');
+  const studentRows=students.map(st=>{
+    const name=nameMap[st.Student_ID]||st.Student_ID;
+    return `<label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 cursor-pointer select-none"><input type="checkbox" class="bp_stud w-4 h-4 accent-brand-900" value="${esc(st.Student_ID)}" checked><span class="text-sm font-bold text-slate-800 flex-1">${esc(name)}</span></label>`;
+  }).join('');
+  openModal('🪙 نقاط جماعية',`
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">بند النقاط</label>
+        <select id="bp_item" class="input py-2">${itemOpts}</select>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-xs font-bold text-slate-500">الطلاب (${students.length})</label>
+          <div class="flex gap-3 text-xs font-bold text-brand">
+            <button onclick="document.querySelectorAll('.bp_stud').forEach(x=>x.checked=true)" class="hover:underline">تحديد الكل</button>
+            <button onclick="document.querySelectorAll('.bp_stud').forEach(x=>x.checked=false)" class="hover:underline">إلغاء الكل</button>
+          </div>
+        </div>
+        <div class="max-h-[260px] overflow-y-auto border border-slate-200 rounded-xl p-2 space-y-0.5">${studentRows||'<p class="text-slate-400 text-xs p-2">لا طلاب</p>'}</div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
+        <button onclick="doBulkPoints()" class="btn-v4 btn-v4-primary">تطبيق على المحددين</button>
+      </div>
+    </div>
+  `);
+}
+async function doBulkPoints(){
+  const itemId=$('bp_item')?.value;
+  if(!itemId)return toast('اختر بنداً','warn');
+  const checked=Array.from(document.querySelectorAll('.bp_stud:checked')).map(el=>el.value);
+  if(!checked.length)return toast('اختر طالباً واحداً على الأقل','warn');
+  closeModal();
+  let ok=0,fail=0;
+  for(const sid of checked){
+    const r=await DS.logPoints(sid,itemId,currentUser.ID);
+    if(r&&r.success)ok++;else fail++;
+  }
+  toast(`✅ ${ok} طالب حصلوا على النقاط${fail?` — فشل ${fail}`:''}`);
+  await refreshTeacherStudents();
+  renderManualPlanTab($('fuSubBody'));
+}
 /* الشاشة الرئيسية — كل الطلاب في قائمة */
 async function renderManualPlanTab(body){
   _mp.date = _mp.date || ymd(new Date());
@@ -1795,6 +1859,7 @@ async function renderManualPlanTab(body){
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">✓ مكتمل</div><div class="val u" style="font-size:1rem">${doneItems}/${totalItems}</div></div>
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">📊 التقدّم</div><div class="val" style="font-size:1rem;color:#013856">${overallPct}%</div></div>
       </div>
+      <button onclick="openBulkPointsModal()" class="btn-v4 btn-v4-primary text-xs w-full mt-2">🪙 نقاط جماعية لجميع الطلاب</button>
     </div>
     <div id="mp_list" class="space-y-2">${filtered.map(s=>renderMpStudentCard(s, byStudent[s.Student_ID]||[])).join('') || '<div class="card-v4 text-center py-6 text-slate-400 font-bold">لا طلاب مطابقون</div>'}</div>
   </div>`;
@@ -1830,6 +1895,12 @@ const QP_FIRST=[1,8,13,24,32,37,45,56,65,69,77,84,91,96,101,109,113,120,127,134,
 const QP_LAST=[7,12,23,31,36,44,55,64,68,76,83,90,95,100,108,112,119,126,133,141,148,152,160,170,176,183,188,193,197,203,209,217,222,226,231,237,240,244,252,255,259,263,266,271,276,281,288,289,293,302,308,315,322,330,338,345,354,363,370,376,384,393,401,408,414,425,433,441,446,450,458,466,473,479,487,493,499,504,507,512,516,519,526,530,537,544,552,558,567,572,579,584,587,594,598,606,614,620,627,633,640,647,655,663,668,671,674,678,682,686,692,700,705,710,714,719,726,733,739,746,752,759,764,772,777,782,789,797,807,816,824,833,841,848,857,862,870,879,883,890,899,907,913,919,926,931,935,940,946,954,965,976,984,991,997,1005,1011,1021,1027,1035,1041,1049,1058,1074,1084,1091,1097,1103,1109,1113,1117,1124,1132,1141,1149,1160,1168,1176,1185,1193,1200,1205,1212,1221,1229,1235,1241,1248,1255,1261,1266,1271,1275,1282,1289,1296,1303,1307,1314,1321,1328,1334,1341,1346,1352,1357,1364,1370,1378,1384,1389,1397,1406,1417,1425,1434,1442,1452,1461,1470,1478,1485,1492,1501,1510,1518,1526,1535,1544,1554,1561,1570,1581,1590,1600,1610,1618,1626,1633,1639,1648,1659,1665,1674,1682,1691,1699,1707,1712,1720,1725,1735,1741,1749,1755,1760,1768,1774,1783,1792,1802,1817,1833,1853,1872,1892,1907,1915,1927,1935,1943,1955,1965,1973,1980,1988,1994,2003,2011,2019,2029,2036,2046,2056,2067,2078,2087,2095,2104,2115,2125,2133,2144,2155,2160,2167,2174,2185,2193,2201,2214,2223,2237,2250,2261,2275,2288,2301,2314,2326,2345,2360,2385,2399,2412,2424,2435,2446,2461,2473,2483,2493,2507,2518,2527,2540,2555,2564,2573,2584,2595,2600,2610,2618,2625,2633,2641,2650,2659,2667,2673,2690,2700,2715,2732,2747,2762,2777,2791,2801,2811,2818,2822,2827,2834,2844,2849,2852,2857,2866,2875,2887,2898,2910,2922,2932,2951,2971,2992,3015,3043,3068,3091,3115,3138,3159,3172,3181,3194,3203,3214,3222,3235,3247,3257,3265,3273,3280,3287,3295,3302,3311,3322,3329,3336,3346,3354,3363,3370,3378,3385,3392,3403,3414,3424,3433,3441,3450,3459,3469,3480,3488,3497,3503,3514,3523,3533,3539,3548,3555,3563,3568,3576,3583,3587,3595,3606,3613,3620,3628,3637,3645,3654,3663,3671,3678,3690,3698,3704,3717,3732,3745,3759,3775,3788,3812,3839,3864,3890,3914,3941,3970,3986,3996,4012,4031,4053,4063,4068,4079,4089,4098,4105,4114,4125,4132,4140,4149,4158,4166,4173,4182,4191,4199,4210,4218,4229,4238,4247,4256,4264,4272,4282,4287,4294,4303,4316,4323,4335,4347,4358,4372,4385,4398,4414,4432,4453,4473,4486,4495,4505,4515,4524,4530,4538,4545,4556,4564,4574,4583,4592,4598,4606,4611,4616,4623,4630,4645,4665,4681,4705,4726,4749,4766,4784,4810,4828,4852,4873,4895,4919,4942,4970,4995,5029,5055,5078,5086,5093,5099,5104,5110,5115,5125,5129,5135,5142,5150,5155,5161,5168,5177,5185,5192,5199,5208,5217,5222,5229,5236,5241,5253,5267,5287,5313,5331,5358,5385,5415,5429,5447,5460,5475,5494,5513,5542,5570,5596,5616,5641,5672,5702,5728,5758,5798,5829,5852,5881,5908,5931,5958,5989,6015,6041,6067,6092,6118,6135,6151,6176,6193,6207,6221,6236];
 function qPageOf(ord){let lo=0,hi=603;while(lo<hi){const m=(lo+hi)>>1;if(QP_LAST[m]<ord)lo=m+1;else hi=m;}return lo+1;}
 function qAyahsOnPage(p){const i=p-1;return i<0||i>603?10:QP_LAST[i]-QP_FIRST[i]+1;}
+function qAyahOrdinal(surah,ayah){
+  const surs=_tData?.surahs||[];const counts=_tData?.surahCounts||[];
+  const si=surs.indexOf(surah);if(si<0)return 0;
+  let ord=0;for(let i=0;i<si;i++)ord+=counts[i]||0;
+  return ord+Math.max(1,Number(ayah)||1);
+}
 function qExactAyahs(fromSurah,fromAyah,unit){
   const surs=_tData?.surahs||[];const counts=_tData?.surahCounts||[];
   const si=surs.indexOf(fromSurah);if(si<0)return null;
@@ -1875,6 +1946,19 @@ function openCreateManualPlan(sid){
         <label class="block text-xs font-bold text-slate-500 mb-1">عدد الآيات باليوم</label>
         <input type="number" id="cp_daily" min="1" placeholder="10" class="input py-2 num text-center">
       </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">اتجاه الخطة</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label id="cp_dir_asc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-brand-300 bg-brand-50 cursor-pointer transition">
+            <input type="radio" name="cp_dir" value="asc" checked onchange="_mpPlanDirChange()" class="accent-brand-900">
+            <span class="text-xs font-bold text-brand-800">🔽 تنازلي (الفاتحة←الناس)</span>
+          </label>
+          <label id="cp_dir_desc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer transition">
+            <input type="radio" name="cp_dir" value="desc" onchange="_mpPlanDirChange()" class="accent-brand-900">
+            <span class="text-xs font-bold text-slate-600">🔼 تصاعدي (الناس←الفاتحة)</span>
+          </label>
+        </div>
+      </div>
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
         <div class="text-xs font-bold text-slate-600 mb-2">📍 المدى القرآني</div>
         <div class="grid grid-cols-2 gap-2 mb-2">
@@ -1908,6 +1992,27 @@ function openCreateManualPlan(sid){
   `);
 }
 function _mpToggleUnit(){ const u = $('cp_unit')?.value; const w = $('cp_custom_wrap'); if(!w) return; w.classList.toggle('hidden', u!=='custom'); }
+function _mpPlanDirChange(){
+  const dir=document.querySelector('[name="cp_dir"]:checked')?.value||'asc';
+  const on='flex items-center gap-2 p-2 rounded-lg border border-brand-300 bg-brand-50 cursor-pointer transition';
+  const off='flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer transition';
+  const lA=$('cp_dir_asc_lbl'),lD=$('cp_dir_desc_lbl');
+  if(lA)lA.className=dir==='asc'?on:off;
+  if(lD)lD.className=dir==='desc'?on:off;
+  const surs=_tData?.surahs||[];
+  if(!surs.length)return;
+  if(dir==='desc'){
+    if($('cp_fromS'))$('cp_fromS').value=surs[surs.length-1]||'';
+    if($('cp_toS'))$('cp_toS').value=surs[0]||'';
+    if($('cp_fromA'))$('cp_fromA').value='1';
+    if($('cp_toA'))$('cp_toA').value='1';
+  } else {
+    if($('cp_fromS'))$('cp_fromS').value=surs[0]||'';
+    if($('cp_toS'))$('cp_toS').value=surs[surs.length-1]||'';
+    if($('cp_fromA'))$('cp_fromA').value='1';
+    if($('cp_toA'))$('cp_toA').value='1';
+  }
+}
 async function doCreateManualPlan(){
   const type = $('cp_type').value;
   const unit = $('cp_unit').value;
@@ -2576,6 +2681,7 @@ function renderSettingsTab(body){
       ${tab('audit','سجل النقاط')}
       ${currentUser&&currentUser.isAdmin?tab('push','الإشعارات الخارجية'):''}
       ${tab('appearance','المظهر والشعار')}
+      ${currentUser&&currentUser.isAdmin?tab('reset','⚠️ تصفير البيانات'):''}
     </div>
     <div id="settingsSubBody"></div>
   </div>`;
@@ -2585,9 +2691,50 @@ function renderSettingsTab(body){
   else if(_settingsSub==='appearance') renderAppearanceTab($('settingsSubBody'));
   else if(_settingsSub==='audit') renderAuditTab($('settingsSubBody'));
   else if(_settingsSub==='push') renderPushAdminTab($('settingsSubBody'));
+  else if(_settingsSub==='reset') renderResetTab($('settingsSubBody'));
   else renderItemsTab($('settingsSubBody'));
 }
 
+/* ---------- تصفير البيانات (للمشرف فقط) ---------- */
+function renderResetTab(body){
+  if(!currentUser||!currentUser.isAdmin){
+    body.innerHTML='<div class="bg-white p-8 rounded-2xl text-center"><div class="text-4xl mb-2">🔒</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>';
+    return;
+  }
+  body.innerHTML=`<div class="fade-in max-w-xl mx-auto space-y-6">
+    <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
+      <div class="flex items-start gap-4 mb-4">
+        <div class="text-4xl">⚠️</div>
+        <div>
+          <h3 class="text-xl font-extrabold text-red-800 mb-1">تصفير جميع البيانات</h3>
+          <p class="text-sm font-bold text-red-700 leading-relaxed">هذا الإجراء <b>لا يمكن التراجع عنه</b>. سيتم حذف جميع بيانات الطلاب والخطط والنقاط والحضور والأخبار والأحداث. تبقى حسابات تسجيل الدخول سليمة.</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 border border-red-200 space-y-2 text-sm font-bold text-red-800 mb-5">
+        <div>✅ يُحذف: الطلاب، المجموعات، الخطط، النقاط، الحضور، الأخبار، الأحداث</div>
+        <div>✅ يُحذف: جميع التعليقات والشارات والاشتراكات</div>
+        <div>❌ يبقى: حسابات تسجيل الدخول (المعلم وولي الأمر والطالب)</div>
+        <div>❌ يبقى: إعدادات النقاط والمظهر</div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-bold text-red-700 mb-1">اكتب "تأكيد الحذف" للمتابعة:</label>
+        <input type="text" id="reset_confirm_txt" placeholder="تأكيد الحذف" class="input py-2 border-red-300">
+      </div>
+      <button onclick="doResetAllData()" class="btn-v4 w-full py-3 text-sm font-extrabold" style="background:#dc2626;color:white;border:none">🗑️ تصفير جميع البيانات نهائياً</button>
+    </div>
+  </div>`;
+}
+async function doResetAllData(){
+  const txt=$('reset_confirm_txt')?.value.trim();
+  if(txt!=='تأكيد الحذف')return toast('اكتب "تأكيد الحذف" في الحقل أولاً','warn');
+  const ok=await confirmModal({title:'تأكيد نهائي',message:'<b>هل أنت متأكد تماماً؟</b><br>سيتم حذف جميع البيانات ولا يمكن التراجع.',confirmText:'نعم، احذف كل شيء',danger:true});
+  if(!ok)return;
+  const r=await guard(DS.resetAllData(),'جارٍ تصفير البيانات…');
+  if(!r||!r.success)return toast((r&&r.message)||'فشل التصفير','error');
+  toast('✅ تم تصفير جميع البيانات');
+  await refreshTeacherStudents();
+  renderTeacherTab();
+}
 /* ---------- لوحة تحكّم الإشعارات الخارجية (للمشرف فقط) ---------- */
 async function renderPushAdminTab(body){
   if(!currentUser||!currentUser.isAdmin){
@@ -3388,17 +3535,10 @@ async function renderStudent(){
       </div>
     </div>
     
-    <div class="grid md:grid-cols-2 gap-6">
-      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
-        <h3 class="text-xl font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('book','w-6 h-6 text-gold-500')} أرشيف أوردي</h3>
-        <div class="max-h-[340px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الورد</th><th class="p-3">الحالة</th></tr></thead><tbody class="divide-y divide-gray-50">${(d.plans||[]).slice(0,40).map(p=>`<tr><td class="p-3 text-xs text-gray-500 font-bold whitespace-nowrap">${esc(p.Date)}</td><td class="p-3 text-sm font-bold text-gray-900 name-full">${esc(p.Daily_Target||'—')}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold ${p.Accomplishment_Status==='Done'?'bg-green-100 text-green-700':p.Accomplishment_Status==='Partial'?'bg-gold-100 text-gold-700':p.Accomplishment_Status==='Missed'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-600'}">${statusAr(p.Accomplishment_Status)}</span></td></tr>`).join('')||'<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold">لا يوجد أوراد بعد</td></tr>'}</tbody></table></div>
-      </div>
-
-      <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
         <h3 class="text-xl font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('calendar','w-6 h-6 text-gold-500')} سجل حضوري</h3>
         <div class="max-h-[340px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الحالة</th></tr></thead><tbody class="divide-y divide-gray-50">${(d.attendanceHistory||[]).slice(0,40).map(a=>`<tr><td class="p-3 text-xs text-gray-500 font-bold whitespace-nowrap">${esc(a.Date)}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold ${a.Status==='Present'?'bg-green-100 text-green-700':a.Status==='Late'?'bg-gold-100 text-gold-700':'bg-red-100 text-red-700'}">${a.Status==='Present'?'حاضر':a.Status==='Late'?'متأخر':'غائب'}</span></td></tr>`).join('')||'<tr><td colspan="2" class="p-6 text-center text-gray-400 font-bold">لا سجل بعد</td></tr>'}</tbody></table></div>
       </div>
-    </div>
 
     <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50">
       <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('trophy','w-6 h-6 text-gold-500')} لوحة الشرف والشارات</h3>
@@ -3447,7 +3587,6 @@ async function loadChild(){
 
   const badges=(d.badges||[]).map(b=>`<div class="text-center p-3 bg-gold-50 border border-gold-100 rounded-2xl"><div class="text-3xl mb-1">${b.Icon||'🏅'}</div><div class="text-[11px] font-extrabold text-gold-700 name-full">${esc(b.Title)}</div></div>`).join('')||'<div class="col-span-full bg-surface border border-gray-100 p-6 rounded-2xl text-center"><p class="text-gray-400 font-bold text-sm">لا شارات بعد</p></div>';
   const logRows=(d.logs||[]).slice(0,30).map(l=>`<tr class="border-b border-gray-50 hover:bg-gray-50 transition"><td class="p-3 text-xs text-gray-500 font-bold">${esc(l.Date)}</td><td class="p-3 text-sm font-bold text-gray-900 name-full">${esc(l.Description)}</td><td class="p-3"><span class="font-extrabold px-2.5 py-1 rounded-full text-xs ${Number(l.Point_Value)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(l.Point_Value)>=0?'+':''}${esc(l.Point_Value)}</span></td></tr>`).join('')||'<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold">لا يوجد سجل نقاط</td></tr>';
-  const archiveRows=(d.plans||[]).slice(0,40).map(p=>`<tr class="border-b border-gray-50"><td class="p-3 text-xs text-gray-500 font-bold whitespace-nowrap">${esc(p.Date)}</td><td class="p-3 text-sm font-bold text-gray-900 name-full">${esc(p.Daily_Target||'—')}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold ${p.Accomplishment_Status==='Done'?'bg-green-100 text-green-700':p.Accomplishment_Status==='Partial'?'bg-gold-100 text-gold-700':p.Accomplishment_Status==='Missed'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-600'}">${statusAr(p.Accomplishment_Status)}</span></td></tr>`).join('')||'<tr><td colspan="3" class="p-6 text-center text-gray-400 font-bold">لا يوجد أوراد</td></tr>';
 
   $('childView').innerHTML=`<div class="grid md:grid-cols-5 gap-4 fade-in mt-6">
     <div class="rounded-3xl p-5 bg-brand-900 text-white shadow-saas"><div class="text-xs text-gold-500 font-bold mb-1">النقاط الكلية</div><div class="text-3xl font-extrabold tabular-nums">${d.totalPoints}</div></div>
@@ -3482,12 +3621,7 @@ async function loadChild(){
       <div class="max-h-[280px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">البند</th><th class="p-3">النقاط</th></tr></thead><tbody>${logRows}</tbody></table></div>
     </div>
 
-    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-3">
-      <h3 class="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('book','w-5 h-5 text-gold-500')} أرشيف الأوراد</h3>
-      <div class="max-h-[360px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الورد</th><th class="p-3">الحالة</th></tr></thead><tbody>${archiveRows}</tbody></table></div>
-    </div>
-
-    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-2">
+    <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 md:col-span-5">
       <h3 class="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">${svg('calendar','w-5 h-5 text-gold-500')} سجل حضور الابن</h3>
       <div class="max-h-[360px] overflow-y-auto border border-gray-100 rounded-2xl"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الحالة</th></tr></thead><tbody>${(d.attendanceHistory||[]).slice(0,40).map(a=>`<tr class="border-b border-gray-50"><td class="p-3 text-xs text-gray-500 font-bold whitespace-nowrap">${esc(a.Date)}</td><td class="p-3"><span class="px-2 py-1 rounded-full text-[11px] font-bold ${a.Status==='Present'?'bg-green-100 text-green-700':a.Status==='Late'?'bg-gold-100 text-gold-700':'bg-red-100 text-red-700'}">${a.Status==='Present'?'حاضر':a.Status==='Late'?'متأخر':'غائب'}</span></td></tr>`).join('')||'<tr><td colspan="2" class="p-6 text-center text-gray-400 font-bold">لا سجل</td></tr>'}</tbody></table></div>
     </div>
@@ -3536,6 +3670,7 @@ window.logout = async function(){
     getNewsComments(id){ return api('GET','/api/news-comments?id='+encodeURIComponent(id)); },
     addNewsComment(newsId,body){ return api('POST','/api/news-comments',{ newsId, body }); },
     changeUserId(oldId,newId){ return api('POST','/api/users/change-id',{ oldId, newId }); },
+    resetAllData(){ return api('POST','/api/admin/reset',{ confirm:'DELETE_ALL_DATA' }); },
     addEvent(title,description,date,type){ return api('POST','/api/events',{ title, description, date, type }); },
     deleteEvent(id){ return api('DELETE','/api/events',{ id }); },
     saveAttendance(studentId,date,status,note){ return api('POST','/api/attendance',{ studentId, date, status, note }); },

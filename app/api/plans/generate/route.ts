@@ -61,10 +61,13 @@ export async function POST(req: NextRequest) {
     // حساب التسلسل
     const startOrd = ayahOrdinal(String(fromSurah), fromA);
     const endOrd = ayahOrdinal(String(toSurah), toA);
-    if (!startOrd || !endOrd || endOrd < startOrd) {
+    if (!startOrd || !endOrd || startOrd === endOrd) {
       return NextResponse.json({ success: false, message: 'المدى القرآني غير صالح (تحقّق من السورة والآية)' }, { status: 400 });
     }
-    const totalAyat = endOrd - startOrd + 1;
+    const isDesc = endOrd < startOrd; // تصاعدي: من الناس إلى الفاتحة
+    const lowOrd = isDesc ? endOrd : startOrd;
+    const highOrd = isDesc ? startOrd : endOrd;
+    const totalAyat = highOrd - lowOrd + 1;
 
     // بناء قائمة أيام الحلقة
     const wd = new Set<number>(workDays.map((n: any) => Number(n)));
@@ -101,14 +104,21 @@ export async function POST(req: NextRequest) {
     // التقسيم والإدراج
     const daysOut: { date: string; target: string; fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; amount: number }[] = [];
     for (let i = 0; i < dates.length; i++) {
-      const dayStart = startOrd + i * daily;
-      if (dayStart > endOrd) break;
-      const dayEnd = Math.min(startOrd + (i + 1) * daily - 1, endOrd);
-      const s = fromOrdinal(dayStart);
-      const e = fromOrdinal(dayEnd);
+      let dayLow: number, dayHigh: number;
+      if (isDesc) {
+        dayHigh = highOrd - i * daily;
+        if (dayHigh < lowOrd) break;
+        dayLow = Math.max(highOrd - (i + 1) * daily + 1, lowOrd);
+      } else {
+        dayLow = lowOrd + i * daily;
+        if (dayLow > highOrd) break;
+        dayHigh = Math.min(lowOrd + (i + 1) * daily - 1, highOrd);
+      }
+      const s = fromOrdinal(dayLow);
+      const e = fromOrdinal(dayHigh);
       if (!s || !e) continue;
       const dayDate = dates[i];
-      const amount = String(dayEnd - dayStart + 1);
+      const amount = String(dayHigh - dayLow + 1);
       const dailyTarget = buildPlanTarget({
         fromSurah: s.surah,
         fromAyah: String(s.ayah),
@@ -138,7 +148,7 @@ export async function POST(req: NextRequest) {
         fromAyah: s.ayah,
         toSurah: e.surah,
         toAyah: e.ayah,
-        amount: dayEnd - dayStart + 1
+        amount: dayHigh - dayLow + 1
       });
     }
 
