@@ -8,16 +8,21 @@ export async function logPoints(studentId: string, itemId: string, teacherId: st
   const it = (await db.select().from(pointItems).where(eq(pointItems.id, itemId)))[0];
   if (!it) return { success: false, message: 'البند غير موجود' };
   const val = Number(it.pointValue) || 0;
-  await db.insert(pointLogs).values({ id: genId('L'), studentId, itemId, teacherId, date: today() });
+  await db.insert(pointLogs).values({ id: genId('L'), studentId, itemId, teacherId, date: today(), pointValue: val });
   const student = (await db.select().from(studentsData).where(eq(studentsData.studentId, studentId)))[0];
+  let newTotal = (Number(student?.totalPoints) || 0) + val;
   if (student) {
-    await db.update(studentsData).set({ totalPoints: (Number(student.totalPoints)||0) + val }).where(eq(studentsData.studentId, studentId));
+    // تحديث ذرّي: نعتمد على القيمة الحالية في القاعدة لا على قراءة JS قديمة (منعاً لفقدان النقاط عند التزامن).
+    await db.update(studentsData).set({ totalPoints: sql`${studentsData.totalPoints} + ${val}` }).where(eq(studentsData.studentId, studentId));
     if (student.groupId) {
       await db.update(groups).set({ totalPoints: sql`${groups.totalPoints} + ${val}` }).where(eq(groups.id, student.groupId));
     }
+    // نعيد استعلام السجل للحصول على المجموع الصحيح بعد التحديث الذرّي.
+    const after = (await db.select().from(studentsData).where(eq(studentsData.studentId, studentId)))[0];
+    if (after) newTotal = Number(after.totalPoints) || 0;
   }
   await tryAwardBadges(studentId);
-  return { success: true, points: val, newTotal: (Number(student?.totalPoints)||0) + val };
+  return { success: true, points: val, newTotal };
 }
 
 export async function fireTriggers(trigger: string, studentId: string, teacherId: string) {

@@ -46,7 +46,7 @@ export async function requireRole(...roles: SessionUser['role'][]): Promise<Sess
   return s;
 }
 
-export class AuthError extends Error {}
+export class AuthError extends Error { constructor(message?: string){ super(message); this.name = 'AuthError'; } }
 
 export async function hashPassword(pw: string) { return bcrypt.hash(pw, 10); }
 export async function verifyPassword(pw: string, hash: string) { return bcrypt.compare(pw, hash); }

@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_pw boolean DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin boolean DEFAULT false;
+UPDATE users SET is_admin = true WHERE role = 'Teacher' AND is_admin IS NOT TRUE;
 
 CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
@@ -74,6 +77,17 @@ CREATE TABLE IF NOT EXISTS point_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS logs_student_date_idx ON point_logs (student_id, date);
+ALTER TABLE point_logs ADD COLUMN IF NOT EXISTS point_value INTEGER;
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS push_user_idx ON push_subscriptions (user_id);
 
 CREATE TABLE IF NOT EXISTS news (
   id TEXT PRIMARY KEY,

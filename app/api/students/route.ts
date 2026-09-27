@@ -15,18 +15,33 @@ export async function POST(req: NextRequest) {
     const existing = await db.select().from(users).where(eq(users.id, id));
     if (existing.length) return NextResponse.json({ success: false, message: 'المعرّف موجود مسبقاً' });
     const hash = await hashPassword(String(data.Password));
-    await db.insert(users).values({ id, name: data.Name, role: 'Student', passwordHash: hash });
+    await db.insert(users).values({ id, name: data.Name, role: 'Student', passwordHash: hash, mustChangePw: true });
+
+    // إنشاء ولي أمر تلقائياً إذا طُلب ذلك أو لم يُحدَّد ولي أمر موجود
+    let parentId: string | null = data.Parent_ID || null;
+    let autoParent: { id: string; name: string; password: string } | null = null;
+    const wantAuto = data.AutoParent !== false && !parentId;
+    if (wantAuto) {
+      const pw = String(data.Parent_Password || '1234');
+      const pid = genId('P');
+      const pName = 'ولي أمر ' + data.Name;
+      await db.insert(users).values({ id: pid, name: pName, role: 'Parent', passwordHash: await hashPassword(pw), mustChangePw: true });
+      parentId = pid;
+      autoParent = { id: pid, name: pName, password: pw };
+    }
+
     try {
       await db.insert(studentsData).values({
-        studentId: id, parentId: data.Parent_ID || null, groupId: data.Group_ID || null,
+        studentId: id, parentId: parentId, groupId: data.Group_ID || null,
         studentPhone: data.Student_Phone || '', parentPhone: data.Parent_Phone || '',
         nazemId: data.Nazem_ID || ''
       });
     } catch (e) {
       await db.delete(users).where(eq(users.id, id));
+      if (autoParent) await db.delete(users).where(eq(users.id, autoParent.id));
       throw e;
     }
-    return NextResponse.json({ success: true, id });
+    return NextResponse.json({ success: true, id, autoParent });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });
   }
@@ -67,7 +82,23 @@ export async function DELETE(req: NextRequest) {
       const pts = Number(s.totalPoints) || 0;
       await db.update(groups).set({ totalPoints: sql`${groups.totalPoints} - ${pts}` }).where(eq(groups.id, s.groupId));
     }
+    const parentId = s?.parentId || null; // نحفظه قبل الحذف (الحذف يفكّ ارتباط students_data)
+    // point_logs بلا مفتاح أجنبي، فلا تُحذف تلقائياً — نحذفها يدوياً حتى لا تبقى سجلات نقاط يتيمة.
+    await db.delete(pointLogs).where(eq(pointLogs.studentId, id));
     await db.delete(users).where(eq(users.id, id)); // cascades to students_data, plans, attendance, badges via FK
+
+    // تنظيف ولي الأمر اليتيم: إن كان منشأً تلقائياً (اسمه يبدأ بـ 'ولي أمر ') ولم يبقَ له أي ابن.
+    if (parentId) {
+      try {
+        const others = await db.select().from(studentsData).where(eq(studentsData.parentId, parentId));
+        if (others.length === 0) {
+          const parent = (await db.select().from(users).where(eq(users.id, parentId)))[0];
+          if (parent && (parent.name || '').startsWith('ولي أمر ')) {
+            await db.delete(users).where(eq(users.id, parentId));
+          }
+        }
+      } catch { /* لا نكسر الحذف الأساسي إن فشل التنظيف */ }
+    }
     return NextResponse.json({ success: true });
   } catch (e: any) {
     return NextResponse.json({ success: false, message: e?.message || 'خطأ' }, { status: 500 });

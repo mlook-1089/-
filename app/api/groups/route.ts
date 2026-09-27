@@ -48,8 +48,9 @@ export async function POST(req: NextRequest) {
       if (!members.length) return NextResponse.json({ success: false, message: 'لا يوجد طلاب في المجموعة' });
       const t = today();
       for (const m of members) {
-        await db.insert(pointLogs).values({ id: genId('L'), studentId: m.studentId, itemId, teacherId: '', date: t });
-        await db.update(studentsData).set({ totalPoints: (Number(m.totalPoints)||0) + val }).where(eq(studentsData.studentId, m.studentId));
+        await db.insert(pointLogs).values({ id: genId('L'), studentId: m.studentId, itemId, teacherId: '', date: t, pointValue: val });
+        // تحديث ذرّي لكل عضو بدل الكتابة من قراءة واحدة قديمة (منعاً لسباق فقدان النقاط).
+        await db.update(studentsData).set({ totalPoints: sql`${studentsData.totalPoints} + ${val}` }).where(eq(studentsData.studentId, m.studentId));
         await tryAwardBadges(m.studentId);
       }
       await db.update(groups).set({ totalPoints: sql`${groups.totalPoints} + ${val * members.length}` }).where(eq(groups.id, groupId));

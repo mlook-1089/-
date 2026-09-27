@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, plans, studentsData, attendance } from '@/db/schema';
-import { and, eq, or } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { requireRole, hashPassword } from '@/lib/auth';
 import { nzFollowUp } from '@/lib/nazem';
 import { genId, buildPlanTarget, normAr, today } from '@/lib/utils';
@@ -9,6 +9,18 @@ import { genId, buildPlanTarget, normAr, today } from '@/lib/utils';
 function statusFromAtt(a: any): string | null {
   const n = Number(a); if (!isFinite(n)) return null;
   if (n === 2) return 'Present'; if (n === 1) return 'Late'; if (n === 0) return 'Absent'; return null;
+}
+
+// تطبيع نوع مسار البند القادم من ناظم إلى القيمتين المعتمدتين: conserve | revision.
+// أُلغي مسار «الإتقان» من الخلفية: أي بند إتقان قادم من ناظم يُحفظ باعتباره حفظاً
+// (conserve) حتى لا يضيع، والقيم غير المعروفة تعود بأمان إلى 'conserve' (لا نخترع
+// بيانات). ندعم كذلك مسميات عربية محتملة كشبكة أمان.
+function mapNazemType(it: any): 'conserve' | 'revision' {
+  const raw = String(it?.type ?? '').toLowerCase().trim();
+  if (raw === 'revision' || raw === 'conserve') return raw as any;
+  if (raw.includes('مراجع')) return 'revision';
+  if (raw.includes('حفظ') || raw.includes('تحفيظ')) return 'conserve';
+  return 'conserve';
 }
 
 export async function POST(req: NextRequest) {
@@ -54,7 +66,7 @@ export async function POST(req: NextRequest) {
           hearing: td.hearing != null ? Number(td.hearing) : null,
           repetition: td.repetition != null ? Number(td.repetition) : null,
           link: td.link != null ? Number(td.link) : null,
-          type: it.type === 'revision' ? 'revision' : 'conserve'
+          type: mapNazemType(it)
         };
         rec.dailyTarget = buildPlanTarget({ fromSurah: rec.fromSurah, fromAyah: rec.fromAyah, toSurah: rec.toSurah, toAyah: rec.toAyah, amount: rec.amount }) || 'مراجعة وتسميع';
         let status = 'Pending';
@@ -62,11 +74,15 @@ export async function POST(req: NextRequest) {
         else if (td.status === 'partial') status = 'Partial';
         else if (it.is_blocked_by_late) status = 'Missed';
 
+        // مطابقة الخطة القائمة: نعتمد معرّف البند اليومي من ناظم حصراً متى توفّر،
+        // لأن المطابقة بالطالب+التاريخ وحدها تدهس بنداً آخر لنفس اليوم
+        // (حفظ + مراجعة) فيختفي بند أو أكثر. عند غياب المعرّف (نادر)
+        // نعود للمطابقة بالطالب+التاريخ مقيّدة بالنوع حتى لا نمسّ نوعاً مختلفاً.
+        const tdId = (td.id != null && String(td.id).trim() !== '') ? String(td.id) : '';
         const existing = (await db.select().from(plans).where(
-          or(
-            eq(plans.nazemItemDayId, String(td.id || 'x')),
-            and(eq(plans.studentId, localId), eq(plans.date, date))
-          )
+          tdId
+            ? eq(plans.nazemItemDayId, tdId)
+            : and(eq(plans.studentId, localId), eq(plans.date, date), eq(plans.type, rec.type))
         ))[0];
 
         if (existing) {

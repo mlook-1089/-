@@ -5,6 +5,8 @@ export const users = pgTable('users', {
   name: text('name').notNull(),
   role: text('role').notNull(), // 'Teacher' | 'Student' | 'Parent'
   passwordHash: text('password_hash').notNull(),
+  mustChangePw: boolean('must_change_pw').default(false),
+  isAdmin: boolean('is_admin').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 });
 
@@ -66,10 +68,22 @@ export const pointLogs = pgTable('point_logs', {
   studentId: text('student_id').notNull(),
   itemId: text('item_id').notNull(),
   teacherId: text('teacher_id').default(''),
+  pointValue: integer('point_value'), // القيمة لحظة المنح (تاريخية) — nullable للسجلات القديمة
   date: date('date').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 }, (t) => ({
   studentDateIdx: index('logs_student_date_idx').on(t.studentId, t.date)
+}));
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  userIdx: index('push_user_idx').on(t.userId)
 }));
 
 export const news = pgTable('news', {

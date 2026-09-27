@@ -7,6 +7,12 @@ import { genId, today, buildPlanTarget } from '@/lib/utils';
 import { fireTriggers } from '@/lib/triggers';
 import { tryAwardBadges } from '@/lib/badges';
 
+// مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة، وأي قيمة قادمة
+// mastery تُطوى إلى conserve حتى لا يُكتب النوع الملغى من جديد.
+function normType(t: any): 'conserve' | 'revision' {
+  return String(t || '').toLowerCase() === 'revision' ? 'revision' : 'conserve';
+}
+
 export async function POST(req: NextRequest) {
   try {
     await requireRole('Teacher');
@@ -20,7 +26,7 @@ export async function POST(req: NextRequest) {
       id, studentId, date: plan.Date || today(),
       dailyTarget, fromSurah: plan.From_Surah||'', fromAyah: plan.From_Ayah||'',
       toSurah: plan.To_Surah||'', toAyah: plan.To_Ayah||'',
-      amount: plan.Amount||'', type: plan.Type||'conserve',
+      amount: plan.Amount||'', type: normType(plan.Type),
       status: 'Pending', source: 'Manual'
     });
     return NextResponse.json({ success: true, id });
@@ -39,7 +45,7 @@ export async function PATCH(req: NextRequest) {
     if (upd.To_Surah !== undefined) patch.toSurah = upd.To_Surah;
     if (upd.To_Ayah !== undefined) patch.toAyah = upd.To_Ayah;
     if (upd.Amount !== undefined) patch.amount = upd.Amount;
-    if (upd.Type !== undefined) patch.type = upd.Type;
+    if (upd.Type !== undefined) patch.type = normType(upd.Type);
     if (upd.Date !== undefined) patch.date = upd.Date;
     if (upd.Accomplishment_Status !== undefined) patch.status = upd.Accomplishment_Status;
     patch.dailyTarget = buildPlanTarget({
@@ -53,7 +59,7 @@ export async function PATCH(req: NextRequest) {
     let awarded: any[] = [];
     if (upd.Accomplishment_Status === 'Done') {
       await tryAwardBadges(p.studentId);
-      awarded = await fireTriggers(patch.type === 'revision' ? 'on_review_done' : 'on_done', p.studentId, teacher.id);
+      awarded = await fireTriggers((patch.type ?? p.type) === 'revision' ? 'on_review_done' : 'on_done', p.studentId, teacher.id);
     } else if (upd.Accomplishment_Status === 'Partial') {
       awarded = await fireTriggers('on_partial', p.studentId, teacher.id);
     }
