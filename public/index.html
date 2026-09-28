@@ -20,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <!-- Tailwind مبني مسبقاً (npm run build:css) بدل CDN الذي كان يبني الأنماط على جهاز المستخدم.
      Chart.js وxlsx تُحمَّلان عند الحاجة فقط (ensureLib) — الطالب وولي الأمر لا يحتاجانهما. -->
-<link rel="stylesheet" href="/tw.css?v=2">
+<link rel="stylesheet" href="/tw.css?v=4">
 
 <style>
 * { -webkit-tap-highlight-color: transparent; }
@@ -133,73 +133,6 @@ main#portal { padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !importan
 .gc-rank-2 { background: linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%); border: 1.5px solid #cbd5e1; }
 .gc-rank-3 { background: linear-gradient(135deg,#fef2e8 0%,#fed7aa 100%); border: 1.5px solid #fb923c; }
 
-/* ===== الوضع الليلي (تجاوزات مركّزة على الأسطح المحايدة) ===== */
-html.dark body { background-color:#0a1526 !important; color:#e8edf5; }
-html.dark .bg-white { background-color:#132339 !important; }
-html.dark .bg-surface, html.dark .bg-gray-50, html.dark .bg-gray-50\/50, html.dark .bg-gray-50\/30, html.dark .bg-surface\/40, html.dark .bg-surface\/50 { background-color:#0f1d31 !important; }
-html.dark .bg-gray-100 { background-color:#1c2c45 !important; }
-html.dark .bg-brand-50 { background-color:#1a2b47 !important; }
-html.dark .text-gray-900, html.dark .text-gray-800, html.dark .text-brand-900 { color:#eaf0f8 !important; }
-html.dark .text-gray-700, html.dark .text-gray-600 { color:#c4d0e0 !important; }
-html.dark .text-gray-500, html.dark .text-gray-400 { color:#8f9db4 !important; }
-html.dark .text-brand-700, html.dark .text-brand-600, html.dark .text-brand-800 { color:#9db4d8 !important; }
-html.dark .border-gray-50, html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-brand-100 { border-color:#243550 !important; }
-html.dark .input, html.dark .nz-mini-input { background-color:#0f1d31 !important; border-color:#2b3d5c !important; color:#eaf0f8 !important; }
-html.dark .modal-bg { background:rgba(0,0,0,.72) !important; }
-html.dark .nz-card, html.dark .gc-card { background:#132339 !important; border-color:#243550 !important; }
-html.dark .nz-item { background:#0f1d31 !important; border-color:#243550 !important; }
-html.dark .nz-item.done { background:#12261c !important; border-color:#2f6b4a !important; }
-html.dark .nz-progress-track, html.dark .gc-bar { background:#243550 !important; }
-html.dark .att-chip { background:#0f1d31; color:#8f9db4; }
-html.dark ::-webkit-scrollbar-thumb { background:#2b3d5c; }
-html.dark img.object-contain { filter:none; }
-
-/* رقائق -100 (شارات وحالات) في الوضع الليلي — طبقة أعمق من طبقة -50 */
-html.dark .bg-gold-100 { background-color:#3a3013 !important; }
-html.dark .bg-green-100 { background-color:#123924 !important; }
-html.dark .bg-red-100 { background-color:#3a1c1a !important; }
-html.dark .bg-blue-100 { background-color:#132a4a !important; }
-html.dark .bg-purple-100 { background-color:#291c4a !important; }
-html.dark .bg-orange-100 { background-color:#3a2a12 !important; }
-html.dark .bg-yellow-100 { background-color:#3a3013 !important; }
-html.dark .bg-emerald-100 { background-color:#123626 !important; }
-
-/* نصوص -700/-800/-900 على رقائق -100 في الوضع الليلي */
-html.dark .text-gold-700, html.dark .text-gold-600, html.dark .text-gold-800 { color:#f0d879 !important; }
-html.dark .text-green-700, html.dark .text-green-800, html.dark .text-green-900 { color:#7cd8a9 !important; }
-html.dark .text-red-700, html.dark .text-red-800, html.dark .text-red-900 { color:#f4a29a !important; }
-html.dark .text-blue-700, html.dark .text-blue-800, html.dark .text-blue-900 { color:#8ec0f9 !important; }
-html.dark .text-purple-700, html.dark .text-purple-800 { color:#c4a8f4 !important; }
-html.dark .text-orange-700, html.dark .text-orange-800, html.dark .text-orange-600 { color:#f4b285 !important; }
-html.dark .text-brand-700, html.dark .text-brand-600 { color:#a8bde0 !important; }
-html.dark .text-success { color:#4cc38a !important; }
-html.dark .text-danger { color:#f27a6c !important; }
-
-/* حواف -200 */
-html.dark .border-gold-200, html.dark .border-green-200, html.dark .border-red-200, html.dark .border-blue-200, html.dark .border-purple-200, html.dark .border-orange-200 { border-color:#3a4362 !important; }
-
-/* رقائق att-chip في الوضع الليلي */
-html.dark .att-chip.on-present { background:#123924 !important; color:#7cd8a9 !important; }
-html.dark .att-chip.on-late    { background:#3a3013 !important; color:#f0d879 !important; }
-html.dark .att-chip.on-absent  { background:#3a1c1a !important; color:#f4a29a !important; }
-/* الأسطح الملوّنة الفاتحة (بطاقات بوابتي الطالب وولي الأمر) → درجات داكنة */
-html.dark .bg-green-50 { background-color:#0f2a1f !important; }
-html.dark .bg-blue-50 { background-color:#102338 !important; }
-html.dark .bg-purple-50 { background-color:#1f1836 !important; }
-html.dark .bg-red-50 { background-color:#2e1719 !important; }
-html.dark .bg-gold-50, html.dark .bg-yellow-50 { background-color:#2a2413 !important; }
-html.dark .bg-orange-50 { background-color:#2e1f12 !important; }
-html.dark .bg-emerald-50 { background-color:#0f2a22 !important; }
-html.dark .border-green-100, html.dark .border-green-200 { border-color:#1c4634 !important; }
-html.dark .border-blue-100, html.dark .border-blue-200 { border-color:#1e3a5c !important; }
-html.dark .border-purple-100, html.dark .border-purple-200 { border-color:#3a2d63 !important; }
-html.dark .border-gold-100, html.dark .border-gold-200 { border-color:#4a3f1e !important; }
-html.dark .border-red-100 { border-color:#5a2626 !important; }
-/* نصوص الدرجات الداكنة على تلك البطاقات (‎-900/-800 تُستخدم على أسطح ‎-50، والرقائق ‎-700 تبقى كما هي) */
-html.dark .text-green-900, html.dark .text-green-800 { color:#6ee7b7 !important; }
-html.dark .text-blue-900, html.dark .text-blue-800 { color:#93c5fd !important; }
-html.dark .text-purple-900, html.dark .text-purple-800, html.dark .text-purple-700 { color:#c4b5fd !important; }
-html.dark .text-gold-900, html.dark .text-gold-800 { color:#f0d78a !important; }
 
 /* =====================================================================
    الهوية البصرية v4 — على طراز منصة التداول
@@ -341,6 +274,7 @@ table.tbl-v4 tr:last-child td { border-bottom:none; }
 .modal-v4 { background:#fff; width:100%; max-width:480px; border-radius:1.25rem 1.25rem 0 0; padding:1.15rem; max-height:92vh; overflow-y:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,.1); }
 @media (min-width:768px){ .modal-bg-v4 { align-items:center; padding:1rem; } .modal-v4 { border-radius:1.25rem; padding:1.5rem; } }
 </style>
+<link rel="stylesheet" href="/ui/app.css?v=2">
 </head>
 <body class="text-gray-800 antialiased overflow-hidden flex h-screen">
 
@@ -443,30 +377,13 @@ table.tbl-v4 tr:last-child td { border-bottom:none; }
             </div>
         </header>
 
-        <!-- شريط علوي للجوال (خارج portal حتى لا يُمسح مع كل رندر) -->
-        <div class="md:hidden pt-2 px-3">
-          <div class="mob-head">
-            <div class="brand-mark" id="mobBrandLogo">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="text-[13px] font-extrabold text-slate-800 leading-tight truncate" id="mobBrandName">حلقة ابن كثير</div>
-              <div class="text-[10px] font-bold text-slate-500 leading-tight" id="mobRoleLabel">—</div>
-            </div>
-            <button onclick="openNotifications()" class="relative w-9 h-9 rounded-lg bg-slate-50 text-slate-600 hover:text-brand flex items-center justify-center flex-shrink-0" title="الإشعارات">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
-              <span id="mobBellDot" class="hidden absolute top-1 right-1 w-2 h-2 bg-fail rounded-full"></span>
-            </button>
-            <button onclick="toggleDark()" class="w-9 h-9 rounded-lg bg-slate-50 text-slate-600 hover:text-brand flex items-center justify-center flex-shrink-0" title="ليلي/نهاري">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.4 15.4A9 9 0 018.6 3.6 9 9 0 0012 21a9 9 0 008.4-5.6z"/></svg>
-            </button>
-            <button onclick="logout()" class="w-9 h-9 rounded-lg bg-slate-50 text-fail hover:bg-fail-bg flex items-center justify-center flex-shrink-0" title="خروج">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-            </button>
-          </div>
-          <div class="pl-tabs-wrap" id="mobTabsWrap" style="display:none">
-            <div class="pl-tabs" id="mobTabs"></div>
-          </div>
+        <!-- رأس الجوال v6 (التنقل في الشريط السفلي؛ انظر ui/shell.js) -->
+        <div class="u-header md:hidden no-print">
+          <div class="u-brand" id="mobBrandLogo"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg></div>
+          <div class="u-grow"><div class="u-hname" id="uHeadName">حلقة ابن كثير</div><div class="u-hsub" id="uHeadSub"></div></div>
+          <button id="mobSearchBtn" onclick="toggleSearch(true)" class="u-icon-btn hidden" title="بحث"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></button>
+          <button onclick="openNotifications()" class="u-icon-btn" title="الإشعارات"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg><span id="mobBellDot" class="dot hidden"></span></button>
+          <div class="pl-tabs-wrap" id="mobTabsWrap" style="display:none"><div class="pl-tabs" id="mobTabs"></div></div>
         </div>
 
         <!-- Dynamic Portal -->
@@ -666,9 +583,16 @@ const DS = {
 
 const $=id=>document.getElementById(id);
 /* الوضع الليلي */
-function applyDark(on){ document.documentElement.classList.toggle('dark',!!on); const mt=document.querySelector('meta[name=theme-color]'); if(mt) mt.setAttribute('content', on?'#0a1526':'#0d1b30'); const ic=$('darkIcon'); if(ic) ic.innerHTML = on?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'; }
+function applyDark(on){ document.documentElement.classList.toggle('dark',!!on); const mt=document.querySelector('meta[name=theme-color]'); if(mt) mt.setAttribute('content', on?'#0B1220':'#F4F5F7'); const ic=$('darkIcon'); if(ic) ic.innerHTML = on?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>'; }
 function toggleDark(){ const on=!document.documentElement.classList.contains('dark'); applyDark(on); try{localStorage.setItem('ibk_dark',on?'1':'0')}catch(e){} }
-(function(){ let on=false; try{on=localStorage.getItem('ibk_dark')==='1'}catch(e){} applyDark(on); })();
+// الوضع الليلي: يتبع إعداد الجوال تلقائياً، ما لم يختر المستخدم وضعاً يدوياً (ibk_dark = '1' أو '0')
+(function(){
+  const mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  const pref = ()=>{ try{ return localStorage.getItem('ibk_dark'); }catch(e){ return null; } };
+  const apply = ()=>{ const p=pref(); applyDark(p==null ? !!(mq&&mq.matches) : p==='1'); };
+  apply();
+  if(mq && mq.addEventListener) mq.addEventListener('change', ()=>{ if(pref()==null) apply(); });
+})();
 let currentUser=null,_tData=null,_teacherTab='overview',_settingsSub='students',_newsSub='news';
 
 function loader(on,m){$('loader').classList.toggle('hidden',!on);$('loader').classList.toggle('flex',on);const el=$('loaderMsg');if(m){el.textContent=m;el.classList.remove('hidden')}else el.classList.add('hidden')}
@@ -772,8 +696,8 @@ function enterApp(u){
   // البحث العلوي يعتمد على بيانات المعلم — يُظهر للمعلم فقط
   const sb=$('topSearchBtn'); if(sb) sb.classList.toggle('hidden', u.Role!=='Teacher');
   // شريط الجوال العلوي — اسم المستخدم ودوره
-  const mn=$('mobBrandName'); if(mn) mn.textContent = u.Name || 'المنصة';
-  const mr=$('mobRoleLabel'); if(mr) mr.textContent = ROLE_AR[u.Role] || '';
+  if(typeof uiHeader==='function') uiHeader(u.Name || 'المنصة', ROLE_AR[u.Role] || '');
+  const ms=$('mobSearchBtn'); if(ms) ms.classList.toggle('hidden', u.Role!=='Teacher');
   routePortal();
   refreshNotifications();
   registerSW();
@@ -905,7 +829,12 @@ function handleAuthExpiry(){
   toast('انتهت الجلسة — يرجى تسجيل الدخول من جديد','warn');
   setTimeout(()=>{ location.reload(); }, 1400);
 }
-function routePortal(){if(currentUser.Role==='Teacher')renderTeacher();else if(currentUser.Role==='Student')renderStudent();else renderParent()}
+function routePortal(){
+  if(currentUser.Role==='Teacher') return renderTeacher();
+  // شريط سفلي أساسي (زر «حسابي»: كلمة المرور، الوضع الليلي، الخروج) — تستبدله البوابة إن عرّفت أقسامها
+  if(typeof uiNav==='function') uiNav([{k:'home',t:'الرئيسية',i:'home',onSelect:()=>routePortal()}],'home',{moreLabel:'حسابي',moreIcon:'lock'});
+  if(currentUser.Role==='Student') renderStudent(); else renderParent();
+}
 
 /* ============================================================
    بوابة المعلم
@@ -920,9 +849,17 @@ const TEACHER_TABS=[
 ];
 async function renderTeacher(){
   const d=await guard(DS.getTeacherData(),'تحميل البيانات…');if(!d)return; _tData=d;
-  $('mainNav').innerHTML=TEACHER_TABS.map(t=>`<button data-tab="${t.k}" onclick="switchTeacherTab('${t.k}', this)" class="w-full nav-item flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-gray-600 hover:bg-brand-50 hover:text-brand-900 transition-all-fast">${svg(t.i,'w-5 h-5')} ${t.t}</button>`).join('');
-  buildMobTabs(TEACHER_TABS, 'switchTeacherTab');
-  switchTeacherTab('overview', $('mainNav').querySelector('[data-tab="overview"]'));
+  const go = k => switchTeacherTab(k);
+  uiNav([
+    {k:'overview', t:'الرئيسية', i:'home',     onSelect:go},
+    {k:'plan',     t:'المتابعة', i:'book',     onSelect:go},
+    {k:'attend',   t:'الحضور',   i:'calendar', onSelect:go},
+    {k:'students', t:'الطلاب',   i:'users',    onSelect:go}
+  ], 'overview', {moreLabel:'المزيد', moreIcon:'cog', moreItems:[
+    {t:'الأخبار والفعاليات', i:'news', fn:()=>{ switchTeacherTab('news'); }},
+    {t:'الإعدادات',          i:'cog',  fn:()=>{ switchTeacherTab('settings'); }}
+  ]});
+  switchTeacherTab('overview');
 }
 /* تبويبات علوية للجوال — تعكس نفس أزرار الشريط الجانبي */
 function buildMobTabs(tabs, fnName){
@@ -980,108 +917,84 @@ function parentOptions(sel){
 /* ---------- الرئيسية ---------- */
 function renderOverviewTab(body){
   const {nameMap,groupMap}=tMaps();
-  const totalPts=_tData.students.reduce((a,s)=>a+(Number(s.Total_Points)||0),0);
-  const doneToday=_tData.plans.filter(p=>p.Date===ymd(new Date())&&p.Accomplishment_Status==='Done').length;
-  const presentToday=_tData.attendance.filter(a=>a.Date===ymd(new Date())&&(a.Status==='Present'||a.Status==='Late')).length;
-  
-  const stats=[
-    ['users','الطلاب',_tData.students.length,'text-blue-600 bg-blue-50'],
-    ['check','حضور اليوم',presentToday,'text-success bg-green-50'],
-    ['points','النقاط المكتسبة',totalPts,'text-purple-600 bg-purple-50'],
-    ['book','خطط منجزة اليوم',doneToday,'text-gold-600 bg-gold-100']
-  ];
-  
-  const top=[..._tData.students].sort((a,b)=>(Number(b.Total_Points)||0)-(Number(a.Total_Points)||0)).slice(0,5);
+  const t=ymd(new Date());
+  const students=_tData.students||[];
+  const plansToday=(_tData.plans||[]).filter(p=>p.Date===t);
+  const withPlan=new Set(plansToday.map(p=>String(p.Student_ID)));
+  // الطالب «أنجز» إذا اكتملت كل أوراده اليوم
+  const doneStudents=[...withPlan].filter(sid=>plansToday.filter(p=>String(p.Student_ID)===sid).every(p=>p.Accomplishment_Status==='Done')).length;
+  const attToday=(_tData.attendance||[]).filter(a=>a.Date===t);
+  const cnt=st=>attToday.filter(a=>a.Status===st).length;
+  const present=cnt('Present'), late=cnt('Late'), absent=cnt('Absent'), unmarked=Math.max(0,students.length-attToday.length);
+  const pct=withPlan.size?Math.round(doneStudents/withPlan.size*100):0;
 
-  // منافسة المجموعات — نعتمد رصيد المجموعة المُدار (Group_Total_Points) وهو نفسه الذي تراه بوابة الطالب
-  // (يُحدَّث ذرياً عند منح النقاط ونقل الطلاب) لضمان تطابق الأرقام عبر كل الشاشات.
-  const groupsRanked = _tData.groups.map(g=>{
-    const members = _tData.students.filter(s=>String(s.Group_ID)===String(g.Group_ID));
-    return { id:g.Group_ID, name:g.Group_Name, total: Number(g.Group_Total_Points)||0, count: members.length };
-  }).sort((a,b)=>b.total-a.total);
-  const maxG = Math.max(1, groupsRanked[0]?.total || 1);
+  // يحتاجون متابعة: لم يحفظ في آخر أوراده، أو غاب/تأخر مرتين فأكثر خلال ٧ أيام
+  const weekAgo=(()=>{const d=new Date();d.setDate(d.getDate()-7);return ymd(d)})();
+  const needs=[];
+  students.forEach(s=>{
+    const sid=String(s.Student_ID);
+    const last=(_tData.plans||[]).filter(p=>String(p.Student_ID)===sid&&p.Date<t).sort((a,b)=>b.Date.localeCompare(a.Date));
+    const lastTwo=last.slice(0,2);
+    const abs=(_tData.attendance||[]).filter(a=>String(a.Student_ID)===sid&&a.Date>=weekAgo&&a.Status==='Absent').length;
+    if(lastTwo.length===2&&lastTwo.every(p=>p.Accomplishment_Status==='Missed')) needs.push({sid,why:'لم يحفظ آخر وردين',pill:'bad',lbl:'متأخر'});
+    else if(abs>=2) needs.push({sid,why:`غاب ${abs} مرات هذا الأسبوع`,pill:'warn',lbl:'غياب'});
+  });
 
-  const compHtml = groupsRanked.length ? groupsRanked.map((g,i)=>{
-    const pct = maxG>0 ? Math.max(0, Math.round((g.total/maxG)*100)) : 0;
-    const rankCls = i===0?'gc-rank-1':i===1?'gc-rank-2':i===2?'gc-rank-3':'bg-white border border-gray-100';
-    const medal = [`<span class="w-7 h-7 rounded-full bg-gold-500 text-brand-900 flex items-center justify-center text-xs font-extrabold">1</span>`,`<span class="w-7 h-7 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs font-extrabold">2</span>`,`<span class="w-7 h-7 rounded-full bg-amber-700 text-white flex items-center justify-center text-xs font-extrabold">3</span>`][i] || `<span class="w-7 h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-extrabold">${i+1}</span>`;
-    return `<div class="p-4 rounded-2xl ${rankCls} mb-3">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="text-2xl shrink-0 w-8 text-center">${medal}</div>
-        <div class="flex-1 min-w-0">
-          <div class="font-extrabold text-brand-900 name-full text-base">${esc(g.name)}</div>
-          <div class="text-[11px] font-bold text-gray-600 mt-0.5">${g.count} طلاب</div>
-        </div>
-        <div class="text-left shrink-0">
-          <div class="text-2xl font-extrabold text-brand-900 tabular-nums leading-none">${g.total}</div>
-          <div class="text-[10px] font-bold text-gray-500 mt-0.5">نقطة</div>
-        </div>
-      </div>
-      <div class="gc-bar"><div class="gc-bar-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('') : '<div class="bg-surface p-8 rounded-xl text-center text-gray-400 font-bold">لا يوجد مجموعات — أضف من الإعدادات</div>';
+  const groupsRanked=(_tData.groups||[]).map(g=>({id:g.Group_ID,name:g.Group_Name,total:Number(g.Group_Total_Points)||0,count:students.filter(s=>String(s.Group_ID)===String(g.Group_ID)).length})).sort((a,b)=>b.total-a.total);
+  const top=[...students].sort((a,b)=>(Number(b.Total_Points)||0)-(Number(a.Total_Points)||0)).slice(0,5);
+  const hijri=(()=>{try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long'}).format(new Date())}catch(e){return ''}})();
+  const greg=new Intl.DateTimeFormat('ar',{weekday:'long',day:'numeric',month:'long'}).format(new Date());
+  const firstName=String(currentUser.Name||'').replace(/^(الأستاذ|الاستاذ|الشيخ|أ\.)\s*/,'').split(' ')[0]||currentUser.Name;
+  const row=(avatar,name,sub,end,onclick)=>`<div class="u-item ${onclick?'tap':''}" ${onclick?`onclick="${onclick}"`:''}>${avatar}<div class="u-grow"><div class="u-name">${name}</div>${sub?`<div class="u-muted">${sub}</div>`:''}</div>${end}</div>`;
+  const av=n=>`<div class="u-avatar">${esc(String(n||'?').trim().charAt(0))}</div>`;
 
-  body.innerHTML=`<div class="fade-in space-y-4">
+  body.innerHTML=`<div class="u-page fade-in">
+    <div class="u-top"><div><div class="u-sub">${esc(greg)}${hijri?' · '+esc(hijri):''}</div><h1>أهلاً، ${esc(firstName)}</h1></div></div>
 
-    <!-- بطاقة hero بأسلوب "الثروة" التداولي -->
-    <div class="hero-v4">
-      <div class="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <div class="text-[13px] font-semibold text-white/80 mb-1">أهلًا بك</div>
-          <div class="font-title font-black text-xl md:text-2xl name-full">${esc(currentUser.Name)}</div>
-        </div>
-        <div class="pill-v4 gold" style="background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)">${new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long'}).format(new Date())} هـ</div>
-      </div>
-      <div class="grid grid-cols-4 gap-2 md:gap-3 mt-4">
-        ${stats.map((s,i)=>`<div class="bg-white/10 border border-white/10 rounded-2xl p-2.5 md:p-3.5 backdrop-blur-md">
-          <div class="text-[10px] md:text-[11px] font-semibold text-white/70 mb-1 flex items-center gap-1 truncate">${s[1]}</div>
-          <div class="text-lg md:text-2xl font-black num text-white leading-none">${s[2]}</div>
-        </div>`).join('')}
-      </div>
+    <div class="u-hero">
+      <div class="l">إنجاز اليوم</div>
+      <div class="big">${withPlan.size?`${doneStudents} من ${withPlan.size} طلاب`:'لا أوراد مسجّلة اليوم'}</div>
+      <div class="u-bar"><i style="width:${pct}%"></i></div>
+      <div class="meta"><span>حضر ${present+late}${late?` (منهم ${late} متأخر)`:''} · غاب ${absent} · لم يُسجَّل ${unmarked}</span><span>${pct}٪</span></div>
     </div>
 
-    <!-- منافسة المجموعات -->
-    <div class="card-v4">
-      <div class="sec-head-v4">
-        <span class="sec-icon-badge gold">${svg('trophy','w-5 h-5')}</span>
-        <h2>منافسة المجموعات</h2>
-        <div class="mr-auto"></div>
-        <span class="pill-v4 info">رصيد المجموعة الكلي</span>
-      </div>
-      ${compHtml}
+    <div class="u-grid2">
+      <button class="u-btn u-btn-p lg" onclick="switchTeacherTab('attend')">${svg('calendar','w-5 h-5')} رصد الحضور</button>
+      <button class="u-btn u-btn-s lg" onclick="switchTeacherTab('plan')">${svg('book','w-5 h-5')} رصد التسميع</button>
     </div>
 
-    <div class="grid lg:grid-cols-3 gap-4">
-      <div class="lg:col-span-2 card-v4">
-        <div class="sec-head-v4"><span class="sec-icon-badge brand">${svg('chart','w-5 h-5')}</span><h2>أداء آخر ١٤ يوم</h2></div>
-        <canvas id="ch_days" height="120"></canvas>
-      </div>
-      <div class="card-v4">
-        <div class="sec-head-v4"><span class="sec-icon-badge gold">${svg('trophy','w-5 h-5')}</span><h2>المتصدرون</h2></div>
-        <div class="space-y-2">${top.map((s,i)=>`<div class="lb-item ${i===0?'top1':i===1?'top2':i===2?'top3':''}">
-          <div class="flex items-center gap-2 min-w-0 flex-1">
-            <span class="lb-rank">${i+1}</span>
-            <div class="flex-1 min-w-0">
-              <div class="font-bold text-slate-800 name-full text-sm">${esc(nameMap[s.Student_ID]||s.Student_ID)}</div>
-              <div class="text-[11px] text-slate-500 truncate">${esc(groupMap[s.Group_ID]||'—')}</div>
-            </div>
-          </div>
-          <span class="lb-return num">${s.Total_Points} <span class="text-[10px] font-bold opacity-60">نقطة</span></span>
-        </div>`).join('')||'<p class="text-slate-400 text-center py-4 font-bold">لا يوجد</p>'}</div>
-      </div>
+    ${needs.length?`<div class="u-card">
+      <div class="u-card-h"><h2>يحتاجون متابعة</h2><span class="u-pill bad">${needs.length}</span></div>
+      <div class="u-list">${needs.slice(0,6).map(n=>row(av(nameMap[n.sid]),esc(nameMap[n.sid]||n.sid),esc(n.why),`<span class="u-pill ${n.pill}">${n.lbl}</span>`,`openStudentProfile(${jsArg(n.sid)})`)).join('')}</div>
+    </div>`:''}
+
+    <div class="u-card">
+      <div class="u-card-h"><h2>منافسة المجموعات</h2>${groupsRanked.length?'':`<button class="u-link" onclick="switchTeacherTab('settings')">إضافة مجموعة</button>`}</div>
+      ${groupsRanked.length?`<div class="u-list">${groupsRanked.map((g,i)=>row(`<div class="u-rank ${i===0?'r1':''}">${i+1}</div>`,esc(g.name),`${g.count} طلاب`,`<span class="u-num">${g.total}</span>`)).join('')}</div>`:`<div class="u-empty">لا توجد مجموعات بعد</div>`}
+    </div>
+
+    <div class="u-card">
+      <div class="u-card-h"><h2>المتصدرون</h2><button class="u-link" onclick="switchTeacherTab('students')">كل الطلاب</button></div>
+      ${top.length?`<div class="u-list">${top.map((s,i)=>row(`<div class="u-rank ${i===0?'r1':''}">${i+1}</div>`,esc(nameMap[s.Student_ID]||s.Student_ID),esc(groupMap[s.Group_ID]||''),`<span class="u-num">${Number(s.Total_Points)||0}</span>`,`openStudentProfile(${jsArg(s.Student_ID)})`)).join('')}</div>`:`<div class="u-empty">لا يوجد طلاب بعد</div>`}
+    </div>
+
+    <div class="u-card">
+      <div class="u-card-h"><h2>الإنجاز خلال ١٤ يوماً</h2></div>
+      <canvas id="ch_days" height="170"></canvas>
     </div>
   </div>`;
   setTimeout(drawCharts, 50);
 }
 async function drawCharts(){
   try{ await ensureLib('chart'); }catch(e){ return; }
-  const tick='#64748b',grid='rgba(15,23,42,.05)';
+  const cs=getComputedStyle(document.documentElement); const cv=n=>cs.getPropertyValue(n).trim();
+  const tick=cv('--ink3')||'#8F97A6',grid=cv('--line')||'#E7E9EE';
   const days=[],labels=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const s=ymd(d);days.push(s);labels.push(s.slice(5))}
   const done=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Done').length);
   const par=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Partial').length);
   const mis=days.map(ds=>_tData.plans.filter(p=>p.Date===ds&&p.Accomplishment_Status==='Missed').length);
   const ctx=$('ch_days'); if(!ctx)return;
-  new Chart(ctx.getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'مكتمل',data:done,backgroundColor:'#10b981',stack:'s',borderRadius:6},{label:'جزئي',data:par,backgroundColor:'#d4af37',stack:'s',borderRadius:6},{label:'لم يحفظ',data:mis,backgroundColor:'#ef4444',stack:'s',borderRadius:6}]},options:{plugins:{legend:{labels:{font:{family:'Cairo'},color:tick}}},scales:{x:{stacked:true,ticks:{color:tick},grid:{color:grid}},y:{stacked:true,ticks:{color:tick},grid:{color:grid}}}}});
+  new Chart(ctx.getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'مكتمل',data:done,backgroundColor:cv('--ok'),stack:'s',borderRadius:5},{label:'جزئي',data:par,backgroundColor:cv('--warn'),stack:'s',borderRadius:5},{label:'لم يحفظ',data:mis,backgroundColor:cv('--bad'),stack:'s',borderRadius:5}]},options:{plugins:{legend:{position:'bottom',labels:{font:{family:'IBM Plex Sans Arabic'},color:tick,boxWidth:10,boxHeight:10}}},scales:{x:{stacked:true,ticks:{color:tick},grid:{color:grid}},y:{stacked:true,ticks:{color:tick},grid:{color:grid}}}}});
 }
 
 /* ---------- الطلاب ---------- */
@@ -3332,6 +3245,8 @@ function applyBranding(v){
   }
   const sbName = document.querySelector('#sidebar .brand-name-slot');
   if(sbName) sbName.textContent = name;
+  const mbLogo = document.getElementById('mobBrandLogo');
+  if(mbLogo && logo) mbLogo.innerHTML = `<img src="${esc(logo)}" alt="">`;
 
   // Login screen
   const lgLogo = document.querySelector('#loginScreen .brand-logo-slot');
@@ -3945,5 +3860,10 @@ window.logout = async function(){
 })();
 */
 </script>
+<!-- شاشات v6 (تُعرِّف دوال render تحل محل القديمة) -->
+<script src="/ui/portal.js?v=2"></script>
+<script src="/ui/attendance-students.js?v=2"></script>
+<script src="/ui/followup.js?v=2"></script>
+<script src="/ui/shell.js?v=2"></script>
 </body>
 </html>

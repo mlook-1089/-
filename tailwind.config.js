@@ -2,7 +2,7 @@
 // Mirrors the inline `tailwind.config` that public/index.html used with the Tailwind Play CDN.
 // Build: `npm run build:css` -> public/tw.css (runs automatically before `next build`).
 module.exports = {
-  content: ['./public/index.html'],
+  content: ['./public/index.html', './public/ui/*.js'],
   darkMode: 'class',
   theme: {
     extend: {
