@@ -2804,11 +2804,73 @@ async function doSavePlanDays(){
   if(!start||!end) return toast('أدخل تاريخي البداية والنهاية','warn');
   if(start>end) return toast('البداية يجب أن تسبق النهاية','warn');
   if(!days.length) return toast('اختر يوماً واحداً على الأقل','warn');
+
+  const prev = _tData?.planConfig || {};
+  const termChanged = String(prev.termStart||'') !== start || String(prev.termEnd||'') !== end || String((prev.workDays||[]).join(',')) !== days.join(',');
+
   await guard(DS.setSetting('plan_term_start',start),'حفظ…');
   await guard(DS.setSetting('plan_term_end',end),'حفظ…');
   await guard(DS.setSetting('plan_work_days',days.join(',')),'حفظ…');
   if(_tData) _tData.planConfig = { workDays: days, termStart: start, termEnd: end };
   toast('تم حفظ إعدادات الفصل');
+
+  // خطط قائمة + تغيّر الفصل → اعرض خيار إعادة التوليد
+  const manualPlans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && p.Type==='conserve');
+  if(termChanged && manualPlans.length){
+    const count = new Set(manualPlans.map(p => p.Student_ID)).size;
+    setTimeout(() => openRegenerateAllPlans(count), 400);
+  } else {
+    renderPlanDaysTab($('settingsSubBody'));
+  }
+}
+
+/* إعادة توليد كل خطط الحفظ اليدوية على الفصل الجديد — تُبقي المدى الكلي لكل طالب وتعيد توزيعه على أيام الفصل */
+function openRegenerateAllPlans(count){
+  openModal('تغيّر الفصل — إعادة توليد الخطط؟', `
+    <p class="text-sm text-gray-700 font-bold mb-4 leading-relaxed">تغيّرت تواريخ الفصل. لديك خطط حفظ يدوية لدى <b>${count}</b> طالباً على المدى السابق.<br>هل تريد إعادة توليدها على المدى الجديد؟ (تُحفَظ حالات الأوراد المُنجَزة سابقاً كما هي — يُستبدَل توزيع الأيام المتبقية فقط.)</p>
+    <div class="bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs font-bold text-orange-800 mb-4">تُستبدل الأوراد الحالية بأوراد جديدة موزّعة على أيام الفصل الجديد، بنفس المدى القرآني الكلي. المقدار اليومي يُحسَب تلقائياً.</div>
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="closeModal();renderPlanDaysTab($('settingsSubBody'))" class="btn bg-gray-100 text-gray-700">لاحقاً</button>
+      <button onclick="doRegenerateAllPlans()" class="btn bg-brand-900 text-white shadow-md">نعم، أعد التوليد</button>
+    </div>`);
+}
+async function doRegenerateAllPlans(){
+  closeModal();
+  const cfg = _tData?.planConfig || {};
+  const surs = _tData?.surahs||[], counts = _tData?.surahCounts||[];
+  const ord = (sur, ay) => { const i = surs.indexOf(sur); return i<0 ? 0 : counts.slice(0,i).reduce((a,b)=>a+b,0) + Number(ay); };
+  const plans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && p.Type==='conserve');
+  const byStudent = {};
+  plans.forEach(p => { (byStudent[p.Student_ID] = byStudent[p.Student_ID] || []).push(p); });
+  const studentIds = Object.keys(byStudent);
+  let ok=0, fail=0;
+  loader(true,`إعادة التوليد… 0/${studentIds.length}`);
+  for(let i=0;i<studentIds.length;i++){
+    const sid = studentIds[i];
+    loader(true,`إعادة التوليد… ${i+1}/${studentIds.length}`);
+    const cur = byStudent[sid].sort((a,b)=>a.Date.localeCompare(b.Date));
+    // استنتج النطاقات من الخطة القائمة (نفس منطق تعديل المقدار)
+    const ranges = [];
+    let curStart = cur[0], curEnd = cur[0];
+    for(let j=1;j<cur.length;j++){
+      const prevEndOrd = ord(curEnd.To_Surah, curEnd.To_Ayah);
+      const thisStartOrd = ord(cur[j].From_Surah, cur[j].From_Ayah);
+      if(thisStartOrd === prevEndOrd + 1 || thisStartOrd === prevEndOrd - 1){ curEnd = cur[j]; }
+      else { ranges.push({from:curStart,to:curEnd}); curStart = cur[j]; curEnd = cur[j]; }
+    }
+    ranges.push({from:curStart,to:curEnd});
+    const payload = {
+      studentId:sid, type:'conserve',
+      startDate:cfg.termStart, endDate:cfg.termEnd,
+      ranges: ranges.map(r=>({fromSurah:r.from.From_Surah,fromAyah:Number(r.from.From_Ayah)||1,toSurah:r.to.To_Surah,toAyah:Number(r.to.To_Ayah)||1})),
+      workDays:cfg.workDays,
+      replaceExisting:true
+    };
+    try{ const r = await DS.planGenerate(payload); if(r&&r.success) ok++; else fail++; }catch(e){ fail++; }
+  }
+  loader(false);
+  toast(`أُعيد توليد ${ok} خطة${fail?` · فشل ${fail}`:''}`);
+  await refreshTeacherStudents();
   renderPlanDaysTab($('settingsSubBody'));
 }
 
