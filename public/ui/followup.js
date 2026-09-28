@@ -181,8 +181,9 @@ function renderMpStudentCard(st, dayPlans){
       <div class="u-muted" style="font-weight:600;margin-bottom:6px">الحضور</div>
       <div class="u-seg" style="margin-bottom:12px">${attSeg}</div>
       ${items}
-      ${total ? `<div class="u-row" style="margin-top:10px;gap:8px">
+      ${total ? `<div class="u-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
         <button type="button" class="u-btn sm u-btn-s u-grow" onclick="openCreateManualPlan(${jsArg(sid)})">${svg('plus','w-4 h-4')} خطة جديدة</button>
+        ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-g" onclick="openEditDailyAmount(${jsArg(sid)})">${svg('edit','w-4 h-4')} تعديل المقدار</button>`:''}
         ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-bad" onclick="_mp.studentId=${jsArg(sid)};confirmClearManualPlans()">${svg('trash','w-4 h-4')} مسح الخطة</button>`:''}
       </div>` : ''}
     </div>
@@ -332,6 +333,62 @@ function _fuSetRangeDir(sfx, dir){
   if($(id('toA'))) $(id('toA')).value = '1';
   _cpUpdateAyahMax(id('fromA'), id('fromS'));
   _cpUpdateAyahMax(id('toA'), id('toS'));
+}
+/* تعديل المقدار اليومي لخطة قائمة — يعيد التوليد بمقدار جديد مع الحفاظ على المدى الكلي */
+async function openEditDailyAmount(sid){
+  const targetId = sid || _mp.studentId;
+  const cur = (_tData.plans||[]).filter(p => String(p.Student_ID)===String(targetId) && p.Source==='Manual' && p.Type==='conserve').sort((a,b)=>a.Date.localeCompare(b.Date));
+  if(!cur.length) return toast('لا توجد خطة حفظ يدوية لهذا الطالب','warn');
+  const {nameMap} = tMaps();
+  const cfg = _tData?.planConfig || {};
+  if(!cfg.termStart || !cfg.termEnd) return toast('عيّن بداية ونهاية الفصل من الإعدادات','warn');
+
+  // استنتج النطاقات من الخطة القائمة: كل تغيير في To_Surah/To_Ayah غير متتالٍ = نطاق جديد
+  // نستعمل ما رصده مولّد الخطة الأصلي: أدنى وأعلى آية في السلسلة المتتالية
+  const surs = _tData?.surahs||[], counts = _tData?.surahCounts||[];
+  const ord = (sur, ay) => { const i = surs.indexOf(sur); return i<0 ? 0 : counts.slice(0,i).reduce((a,b)=>a+b,0) + Number(ay); };
+  const ranges = [];
+  let curStart = cur[0], curEnd = cur[0];
+  for(let i=1;i<cur.length;i++){
+    const prevEndOrd = ord(curEnd.To_Surah, curEnd.To_Ayah);
+    const thisStartOrd = ord(cur[i].From_Surah, cur[i].From_Ayah);
+    // متتالٍ إذا كان start = prevEnd + 1 (تصاعدي) أو = prevEnd - 1 (تنازلي)
+    if(thisStartOrd === prevEndOrd + 1 || thisStartOrd === prevEndOrd - 1){ curEnd = cur[i]; }
+    else { ranges.push({ from: curStart, to: curEnd }); curStart = cur[i]; curEnd = cur[i]; }
+  }
+  ranges.push({ from: curStart, to: curEnd });
+
+  const rangesText = ranges.map(r => `${esc(r.from.From_Surah)} ${esc(r.from.From_Ayah)} → ${esc(r.to.To_Surah)} ${esc(r.to.To_Ayah)}`).join(' · ');
+  const totalAyat = ranges.reduce((sum, r) => sum + Math.abs(ord(r.to.To_Surah, r.to.To_Ayah) - ord(r.from.From_Surah, r.from.From_Ayah)) + 1, 0);
+  const currentDaily = Number(cur[0].Amount) || 1;
+
+  openModal('تعديل المقدار اليومي — ' + (nameMap[targetId]||targetId), `
+    <div class="u-plan" style="background:var(--card2);margin-bottom:12px;font-size:13px;color:var(--ink2)">
+      <div style="font-weight:700;color:var(--ink);margin-bottom:6px">النطاقات الحالية</div>
+      <div style="line-height:1.7">${rangesText}</div>
+      <div style="margin-top:8px;font-weight:600">مجموع الآيات: <span class="u-num">${totalAyat}</span> · المقدار الحالي: <span class="u-num">${currentDaily}</span> آية/يوم</div>
+    </div>
+    <div class="u-field">
+      <label>المقدار اليومي الجديد (آية)</label>
+      <input type="number" inputmode="numeric" id="eda_daily" min="1" value="${currentDaily}" class="u-input u-num" style="text-align:center">
+    </div>
+    <div class="u-grid2" style="margin:0">
+      <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
+      <button type="button" class="u-btn u-btn-p" onclick="doEditDailyAmount(${jsArg(targetId)},${JSON.stringify(ranges.map(r=>({fromSurah:r.from.From_Surah,fromAyah:Number(r.from.From_Ayah)||1,toSurah:r.to.To_Surah,toAyah:Number(r.to.To_Ayah)||1})))})">حفظ وإعادة التوليد</button>
+    </div>`);
+}
+async function doEditDailyAmount(sid, ranges){
+  const daily = Number($('eda_daily').value)||0;
+  if(daily<1) return toast('أدخل مقداراً صالحاً','warn');
+  const cfg = _tData?.planConfig || {};
+  const payload = { studentId:sid, type:'conserve', startDate:cfg.termStart, endDate:cfg.termEnd, ranges, workDays:cfg.workDays, dailyAmount:daily, replaceExisting:true };
+  const r = await guard(DS.planGenerate(payload),'إعادة التوليد…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  closeModal();
+  toast(`تم — ${r.created} ورد جديد`);
+  await refreshTeacherStudents();
+  _mp.openIds.add(String(sid));
+  renderManualPlanTab($('fuSubBody'));
 }
 function openCreateManualPlan(sid){
   const targetId = sid || _mp.studentId;
