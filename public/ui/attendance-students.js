@@ -327,6 +327,7 @@ function openStActions(sid){
       ${item('trophy', 'منح شارة', `openGrantBadge(${jsArg(sid)})`)}
       ${item('edit', 'تعديل البيانات', `openEditStudent(${jsArg(sid)})`)}
       ${item('print', 'تقرير الطالب', `closeModal();doExportReport(${jsArg(sid)})`)}
+      ${item('lock', 'باركود الدخول', `closeModal();openLoginQR([${jsArg(sid)}])`)}
       ${wa ? `<a href="${esc(wa)}" target="_blank" rel="noopener" class="u-btn u-btn-g w" style="justify-content:flex-start" onclick="closeModal()">${svg('wa','w-5 h-5')} مراسلة ولي الأمر</a>` : ''}
       ${item('trash', 'حذف الطالب', `confirmDeleteStudent(${jsArg(sid)},${jsArg(nameMap[sid]||'')})`, 'u-btn-bad')}
     </div>`);
@@ -340,6 +341,7 @@ function openStToolsMenu(){
     ${item('cloud', 'استيراد الطلاب من ناظم', 'closeModal();openNazemImport()')}
     ${item('cloud', 'تصدير إلى Excel', 'closeModal();exportStudentsExcel()')}
     ${item('lock', 'بيانات الدخول', 'openCredentials()')}
+    ${item('lock', 'طباعة باركودات الدخول', 'closeModal();openLoginQRAll()')}
     ${item('repeat', 'تحديث القائمة', 'closeModal();doRefreshStudents()')}
   </div>`);
 }
