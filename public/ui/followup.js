@@ -26,9 +26,19 @@ function _fuAyahRange(p){
 
 /* ---------- Hub: المتابعة اليدوية / ناظم ---------- */
 function renderFollowUpHub(body){
-  // المتابعة اليدوية فقط — ناظم مصدر أسماء لا مصدر متابعة (استيراد الطلاب من الإعدادات)
-  body.innerHTML = `<div id="fuSubBody"></div>`;
-  renderManualPlanTab($('fuSubBody'));
+  body.innerHTML = `<div class="u-page fade-in">
+    <div class="u-top">
+      <div class="u-grow"><div class="u-sub" id="fuSubTitle"></div><h1>المتابعة</h1></div>
+      <div class="u-actions" id="fuActions"></div>
+    </div>
+    <div class="u-seg" style="margin-bottom:14px">
+      <button type="button" class="${_fuSub==='manual'?'on':''}" onclick="_fuSub='manual';renderFollowUpHub($('portal'))">المتابعة اليدوية</button>
+      <button type="button" class="${_fuSub==='nazem'?'on':''}" onclick="_fuSub='nazem';renderFollowUpHub($('portal'))">متابعة ناظم</button>
+    </div>
+    <div id="fuSubBody"></div>
+  </div>`;
+  if(_fuSub==='manual') renderManualPlanTab($('fuSubBody'));
+  else renderNazemTab($('fuSubBody'));
 }
 
 /* ---------- تجميع بيانات اليوم ---------- */

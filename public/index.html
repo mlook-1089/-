@@ -2138,7 +2138,7 @@ async function renderNazemTab(body){
           <label class="block text-[11px] font-bold text-gray-500 mb-1.5 uppercase tracking-wide">بحث عن طالب</label>
           <input type="text" id="nz_search" placeholder="اكتب اسم الطالب..." oninput="nzSetSearch(this.value)" class="input py-2.5">
         </div>
-        <button onclick="doNzSyncDay()" class="btn bg-gradient-to-l from-success to-emerald-600 text-white shadow-md py-2.5 px-5 text-sm hover:shadow-lg">${svg('bolt','w-4 h-4')} استيراد اليوم</button>
+        <button onclick="doNzSyncDay()" class="btn bg-gradient-to-l from-success to-emerald-600 text-white shadow-md py-2.5 px-5 text-sm hover:shadow-lg">${svg('plus','w-4 h-4')} استيراد الأسماء</button>
       </div>
     </div>
     <div id="nz_body"></div>
@@ -2700,15 +2700,14 @@ async function doNzBulkAttSet(status){
 
 async function doNzSyncDay(){
   if(!_nz.planId||!_nz.date)return toast('اضبط الفصل والخطة من الإعدادات','warn');
-  openModal('مزامنة مع ناظم',`<p class="text-sm font-bold text-gray-600 mb-6 leading-relaxed">سيتم استيراد خطط اليوم من ناظم إلى المنصة. الخطط المستوردة سيتم تمييزها وحمايتها بقفل.</p>
-    <label class="flex items-center gap-3 text-sm font-bold text-gray-900 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-200 cursor-pointer"><input type="checkbox" id="nz_ac" class="accent-brand-900 w-5 h-5">إنشاء حسابات للطلاب الجدد تلقائياً في حال عدم التطابق</label>
-    <div class="flex gap-3"><button onclick="confirmNzSync()" class="btn bg-success text-white flex-1 shadow-md">بدء المزامنة</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`);
+  openModal('استيراد الأسماء من ناظم',`<p class="text-sm font-bold text-gray-600 mb-6 leading-relaxed">يُنشأ حساب على المنصة لكل طالب في هذه الخطة ليس له حساب، ويُربط بمعرّفه في ناظم.<br><b>ملاحظة:</b> لا يُستورد أي ورد أو حضور أو نقاط من ناظم — كل المتابعة تُدار يدوياً من المنصة.</p>
+    <div class="flex gap-3"><button onclick="confirmNzSync()" class="btn bg-success text-white flex-1 shadow-md">استيراد الأسماء</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`);
 }
 
 async function confirmNzSync(){
-  const ac=$('nz_ac').checked;closeModal();
-  const r=await guard(DS.nazemSyncPlanDay(_nz.planId,_nz.date,ac),'جارٍ المزامنة واستيراد الخطط…');
-  if(!r||!r.success)return toast((r&&r.message)||'فشل المزامنة','error');
+  closeModal();
+  const r=await guard(DS.nazemSyncPlanDay(_nz.planId,_nz.date,true),'استيراد أسماء الطلاب من ناظم…');
+  if(!r||!r.success)return toast((r&&r.message)||'فشل الاستيراد','error');
   toast(r.message);
   const d=await DS.getTeacherData();if(d&&d.success!==false)_tData=d;
   if(r.newAccounts&&r.newAccounts.length){
@@ -3863,7 +3862,7 @@ window.logout = async function(){
 <!-- شاشات v6 (تُعرِّف دوال render تحل محل القديمة) -->
 <script src="/ui/portal.js?v=2"></script>
 <script src="/ui/attendance-students.js?v=3"></script>
-<script src="/ui/followup.js?v=3"></script>
+<script src="/ui/followup.js?v=4"></script>
 <script src="/ui/shell.js?v=2"></script>
 </body>
 </html>
