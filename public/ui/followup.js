@@ -181,11 +181,6 @@ function renderMpStudentCard(st, dayPlans){
       <div class="u-muted" style="font-weight:600;margin-bottom:6px">الحضور</div>
       <div class="u-seg" style="margin-bottom:12px">${attSeg}</div>
       ${items}
-      ${total ? `<div class="u-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
-        <button type="button" class="u-btn sm u-btn-s u-grow" onclick="openCreateManualPlan(${jsArg(sid)})">${svg('plus','w-4 h-4')} خطة جديدة</button>
-        ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-g" onclick="openEditDailyAmount(${jsArg(sid)})">${svg('edit','w-4 h-4')} تعديل الخطة</button>`:''}
-        ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-bad" onclick="_mp.studentId=${jsArg(sid)};confirmClearManualPlans()">${svg('trash','w-4 h-4')} مسح الخطة</button>`:''}
-      </div>` : ''}
     </div>
   </details>`;
 }
@@ -232,8 +227,8 @@ function renderMpPlanItem(p){
   const head = `<div class="u-row" style="gap:6px;margin-bottom:8px">
       ${typeTag}${statusPill}
       <span class="u-grow"></span>
-      <button type="button" class="u-icon-btn" ${smallBtn} title="تعديل" aria-label="تعديل" onclick="openEditManualPlan(${jsArg(pid)})">${svg('edit','w-4 h-4')}</button>
-      <button type="button" class="u-icon-btn" ${smallBtn} title="حذف" aria-label="حذف" onclick="doMpDeleteItem(${jsArg(pid)})">${svg('trash','w-4 h-4')}</button>
+      <button type="button" class="u-icon-btn" ${smallBtn} title="خيارات" aria-label="خيارات" onclick="openMpPlanMenu(${jsArg(pid)},${jsArg(p.Student_ID)})">${svg('edit','w-4 h-4')}</button>
+      <button type="button" class="u-icon-btn" ${smallBtn} title="حذف الورد" aria-label="حذف الورد" onclick="doMpDeleteItem(${jsArg(pid)})">${svg('trash','w-4 h-4')}</button>
     </div>
     <div class="u-name" style="font-size:15px">${_fuAyahRange(p)}</div>
     ${amount?`<div class="u-muted" style="margin-top:2px">المقدار: <span class="u-num">${amount}</span> آية</div>`:''}`;
@@ -274,6 +269,19 @@ function renderMpPlanItem(p){
       </div>
     </div>
   </div>`;
+}
+
+/* قائمة إجراءات على مستوى خطة الطالب كلها — تُفتح من زر القلم على بطاقة الورد */
+function openMpPlanMenu(planId, sid){
+  const {nameMap} = tMaps();
+  const hasAnyManual = (_tData.plans||[]).some(p => String(p.Student_ID)===String(sid) && p.Source==='Manual');
+  const item = (icon, label, js, cls) => `<button type="button" class="u-btn u-btn-${cls||'g'} w" style="justify-content:flex-start" onclick="closeModal();setTimeout(()=>{${js}},60)">${svg(icon,'w-5 h-5')} ${label}</button>`;
+  openModal('خيارات الخطة — ' + (nameMap[sid]||sid), `<div style="display:grid;gap:8px">
+    ${item('edit','تعديل هذا الورد','openEditManualPlan('+jsArg(planId)+')','s')}
+    ${item('plus','خطة جديدة','openCreateManualPlan('+jsArg(sid)+')')}
+    ${hasAnyManual ? item('edit','تعديل الخطة','openEditDailyAmount('+jsArg(sid)+')') : ''}
+    ${hasAnyManual ? item('trash','مسح الخطة','_mp.studentId='+jsArg(sid)+';confirmClearManualPlans()','bad') : ''}
+  </div>`);
 }
 
 /* ---------- نقاط جماعية ---------- */
