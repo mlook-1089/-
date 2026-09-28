@@ -287,7 +287,7 @@ function renderStList(){
       <div class="u-muted" style="margin-top:4px;font-weight:500">أضف أول طالب يدوياً أو استورد من ناظم</div>
       <div class="u-row" style="justify-content:center;margin-top:14px;flex-wrap:wrap">
         <button type="button" class="u-btn u-btn-p sm" onclick="openAddStudent()">${svg('plus','w-4 h-4')} إضافة طالب</button>
-        <button type="button" class="u-btn u-btn-s sm" onclick="switchTeacherTab('nazem')">استيراد من ناظم</button>
+        <button type="button" class="u-btn u-btn-s sm" onclick="openNazemImport()">استيراد من ناظم</button>
       </div></div></div>`;
     return;
   }
@@ -336,9 +336,69 @@ function openStActions(sid){
 function openStToolsMenu(){
   const item = (icon, label, js) => `<button type="button" class="u-btn u-btn-g w" style="justify-content:flex-start" onclick="${js}">${svg(icon,'w-5 h-5')} ${label}</button>`;
   openModal('إدارة الطلاب', `<div style="display:grid;gap:8px">
-    ${item('arrowup', 'استيراد من ملف', 'openImportStudents()')}
+    ${item('arrowup', 'استيراد من ملف Excel', 'openImportStudents()')}
+    ${item('cloud', 'استيراد الطلاب من ناظم', 'closeModal();openNazemImport()')}
     ${item('cloud', 'تصدير إلى Excel', 'closeModal();exportStudentsExcel()')}
     ${item('lock', 'بيانات الدخول', 'openCredentials()')}
     ${item('repeat', 'تحديث القائمة', 'closeModal();doRefreshStudents()')}
   </div>`);
+}
+
+/* استيراد أسماء الطلاب من ناظم — يتطلب حساب ناظم مربوطاً في الإعدادات */
+async function openNazemImport(){
+  const st = await guard(DS.nazemStatus(), 'فحص ربط ناظم…');
+  if(!st || !st.linked){
+    return openModal('استيراد من ناظم', `<div class="u-empty">${svg('warn','w-8 h-8')}
+      <div style="margin-top:8px;font-weight:700;color:var(--ink)">لم يُربط حساب ناظم بعد</div>
+      <div class="u-muted" style="margin-top:4px">افتح الإعدادات ثم «ناظم» وأدخل بيانات الدخول أولاً.</div>
+      <button type="button" class="u-btn u-btn-p sm" style="margin-top:14px" onclick="closeModal();switchTeacherTab('settings')">فتح الإعدادات</button>
+    </div>`);
+  }
+  const [terms, planKey] = await Promise.all([
+    guard(DS.nazemTerms(), 'جلب الفصول…'),
+    guard(DS.getSettings(['nz_term','nz_plan']), '')
+  ]);
+  const cfg = planKey?.values || {};
+  const nzTerm = cfg.nz_term || '';
+  const nzPlan = cfg.nz_plan || '';
+  const termsList = (terms?.terms || terms?.data || []);
+  const termOpts = termsList.map(t => `<option value="${esc(t.id||t.term_id)}" ${String(t.id||t.term_id)===String(nzTerm)?'selected':''}>${esc(t.name||t.term_name||t.id)}</option>`).join('');
+  openModal('استيراد الطلاب من ناظم', `<div class="u-field">
+    <label>الفصل</label>
+    <select id="nzi_term" class="u-input" onchange="_nzLoadPlansFor(this.value)">${'<option value="">— اختر —</option>'+termOpts}</select>
+  </div>
+  <div class="u-field">
+    <label>الخطة</label>
+    <select id="nzi_plan" class="u-input"><option value="">— اختر الفصل أولاً —</option></select>
+  </div>
+  <div class="u-plan" style="background:var(--info-soft);border-color:transparent;font-size:12.5px;color:var(--info);margin-bottom:14px">
+    يُنشأ حساب لكل طالب في الخطة ليس له حساب على المنصة، ويُربط بمعرّفه في ناظم لتفادي التكرار.
+    <br><b>ملاحظة:</b> لا يُستورد أي ورد أو حضور أو نقاط — كل المتابعة تُدار يدوياً من المنصة.
+  </div>
+  <div class="u-grid2" style="margin:0">
+    <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
+    <button type="button" class="u-btn u-btn-p" onclick="doNazemImport()">استيراد الأسماء</button>
+  </div>`);
+  if(nzTerm) _nzLoadPlansFor(nzTerm, nzPlan);
+}
+async function _nzLoadPlansFor(termId, preselect){
+  const sel = $('nzi_plan'); if(!sel) return;
+  sel.innerHTML = '<option value="">جارٍ التحميل…</option>';
+  const r = await guard(DS.nazemPlans(termId), '');
+  const list = r?.plans || r?.data || [];
+  sel.innerHTML = '<option value="">— اختر خطة —</option>' + list.map(p => `<option value="${esc(p.id||p.plan_id)}" ${String(p.id||p.plan_id)===String(preselect||'')?'selected':''}>${esc(p.name||p.plan_name||p.id)}</option>`).join('');
+}
+async function doNazemImport(){
+  const planId = $('nzi_plan')?.value; if(!planId) return toast('اختر خطة','warn');
+  const date = ymd(new Date()); // أي تاريخ ضمن الخطة يعطي قائمة الطلاب
+  const r = await guard(DS.nazemSyncPlanDay(planId, date, true), 'استيراد الطلاب من ناظم…');
+  if(!r || !r.success) return toast((r&&r.message)||'فشل الاستيراد','error');
+  closeModal();
+  await refreshTeacherStudents();
+  renderStudentsTab($('portal'));
+  if(r.newAccounts && r.newAccounts.length){
+    showCredentials('حسابات الطلاب الجدد', credRowsFrom(r.newAccounts), `تم إنشاء <b>${r.newAccounts.length}</b> حساب من ناظم.`, r.unmatched||[]);
+  } else {
+    toast(r.message || 'لا يوجد طلاب جدد للاستيراد');
+  }
 }

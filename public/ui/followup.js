@@ -26,19 +26,9 @@ function _fuAyahRange(p){
 
 /* ---------- Hub: المتابعة اليدوية / ناظم ---------- */
 function renderFollowUpHub(body){
-  body.innerHTML = `<div class="u-page fade-in">
-    <div class="u-top">
-      <div class="u-grow"><div class="u-sub" id="fuSubTitle"></div><h1>المتابعة</h1></div>
-      <div class="u-actions" id="fuActions"></div>
-    </div>
-    <div class="u-seg" style="margin-bottom:14px">
-      <button type="button" class="${_fuSub==='manual'?'on':''}" onclick="_fuSub='manual';renderFollowUpHub($('portal'))">المتابعة اليدوية</button>
-      <button type="button" class="${_fuSub==='nazem'?'on':''}" onclick="_fuSub='nazem';renderFollowUpHub($('portal'))">متابعة ناظم</button>
-    </div>
-    <div id="fuSubBody"></div>
-  </div>`;
-  if(_fuSub==='manual') renderManualPlanTab($('fuSubBody'));
-  else renderNazemTab($('fuSubBody'));
+  // المتابعة اليدوية فقط — ناظم مصدر أسماء لا مصدر متابعة (استيراد الطلاب من الإعدادات)
+  body.innerHTML = `<div id="fuSubBody"></div>`;
+  renderManualPlanTab($('fuSubBody'));
 }
 
 /* ---------- تجميع بيانات اليوم ---------- */
@@ -208,6 +198,8 @@ async function _mpSetAttendance(sid, status){
   if(!r || r.success===false) return toast((r&&r.message)||'فشل حفظ الحضور','error');
   _tData.attendance = (_tData.attendance||[]).filter(a=>!(String(a.Student_ID)===String(sid) && String(a.Date)===String(_mp.date)));
   _tData.attendance.push({ Att_ID:'A_'+sid+'_'+_mp.date, Student_ID:sid, Date:_mp.date, Status:status, Note:'مع الرصد' });
+  // أبطل ذاكرة صفحة التحضير حتى تُعيد التحميل من _tData.attendance عند فتحها
+  if(typeof _att !== 'undefined') _att._loadedDate = null;
   _mp.openIds.add(String(sid));
   toast('تم حفظ الحضور');
   mpSetSearch(_mp.search);
@@ -304,7 +296,11 @@ function openBulkPointsModal(){
 const _FU_LBL = 'style="display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:5px"';
 function _fuRangeHTML(sfx, surOpts){
   const id = k => `cp_${k}${sfx}`;
-  return `<div class="u-grid2" style="gap:8px;margin-bottom:8px">
+  return `<div class="u-seg" style="margin-bottom:8px">
+      <button type="button" class="on" id="${id('dirAsc')}" onclick="_fuSetRangeDir(${jsArg(sfx)},'asc')">من الفاتحة إلى الناس</button>
+      <button type="button" id="${id('dirDesc')}" onclick="_fuSetRangeDir(${jsArg(sfx)},'desc')">من الناس إلى الفاتحة</button>
+    </div>
+    <div class="u-grid2" style="gap:8px;margin-bottom:8px">
       <div><label ${_FU_LBL}>من سورة</label><select id="${id('fromS')}" onchange="_cpUpdateAyahMax('${id('fromA')}','${id('fromS')}')" class="u-input">${surOpts}</select></div>
       <div><label ${_FU_LBL}>من آية</label><input type="number" inputmode="numeric" id="${id('fromA')}" min="1" value="1" class="u-input u-num" style="text-align:center"></div>
     </div>
@@ -312,6 +308,20 @@ function _fuRangeHTML(sfx, surOpts){
       <div><label ${_FU_LBL}>إلى سورة</label><select id="${id('toS')}" onchange="_cpUpdateAyahMax('${id('toA')}','${id('toS')}')" class="u-input">${surOpts}</select></div>
       <div><label ${_FU_LBL}>إلى آية</label><input type="number" inputmode="numeric" id="${id('toA')}" min="1" value="1" class="u-input u-num" style="text-align:center"></div>
     </div>`;
+}
+/* اتجاه نطاق واحد — يعبّئ سورتَي البداية والنهاية بسرعة، ثم يترك للمستخدم ضبط الآيات */
+function _fuSetRangeDir(sfx, dir){
+  const id = k => `cp_${k}${sfx}`;
+  const surs = _tData?.surahs || []; if(!surs.length) return;
+  const first = surs[0]||'', last = surs[surs.length-1]||'';
+  $(id('dirAsc'))?.classList.toggle('on', dir==='asc');
+  $(id('dirDesc'))?.classList.toggle('on', dir==='desc');
+  if($(id('fromS'))) $(id('fromS')).value = dir==='desc' ? last : first;
+  if($(id('toS'))) $(id('toS')).value = dir==='desc' ? first : last;
+  if($(id('fromA'))) $(id('fromA')).value = '1';
+  if($(id('toA'))) $(id('toA')).value = '1';
+  _cpUpdateAyahMax(id('fromA'), id('fromS'));
+  _cpUpdateAyahMax(id('toA'), id('toS'));
 }
 function openCreateManualPlan(sid){
   const targetId = sid || _mp.studentId;
@@ -337,15 +347,6 @@ function openCreateManualPlan(sid){
     <div id="cp_custom_wrap" class="hidden u-field">
       <label>عدد الآيات في اليوم</label>
       <input type="number" inputmode="numeric" id="cp_daily" min="1" placeholder="10" class="u-input u-num" style="text-align:center">
-    </div>
-    <div class="u-field">
-      <label>اتجاه الخطة</label>
-      <input type="radio" name="cp_dir" value="asc" checked hidden>
-      <input type="radio" name="cp_dir" value="desc" hidden>
-      <div class="u-seg" id="cp_dir_seg">
-        <button type="button" id="cp_dir_asc_lbl" class="on" onclick="_fuSetDir('asc')">من الفاتحة إلى الناس</button>
-        <button type="button" id="cp_dir_desc_lbl" onclick="_fuSetDir('desc')">من الناس إلى الفاتحة</button>
-      </div>
     </div>
     <div class="u-plan" style="background:var(--card2);margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">المدى القرآني</div>
