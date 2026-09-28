@@ -496,6 +496,7 @@ const DS = {
       apiGrantBadge:            () => ['POST','/api/badges',{studentId:a[0],title:a[1],icon:a[2],code:a[3]}],
       apiRevokeBadge:           () => ['DELETE','/api/badges',{id:a[0]}],
       apiGetAudit:              () => ['GET','/api/audit'],
+      apiDeleteAuditLog:        () => ['DELETE','/api/audit',{id:a[0]}],
       apiPushVapid:             () => ['GET','/api/push/vapid'],
       apiPushSubscribe:         () => ['POST','/api/push/subscribe',a[0]],
       apiPushPolicyGet:         () => ['GET','/api/push/policy'],
@@ -567,7 +568,7 @@ const DS = {
   bulkStudents(list,auto,pw){return this.c('apiBulkStudents',list,auto,pw)},
   grantBadge(sid,title,icon,code){return this.c('apiGrantBadge',sid,title,icon,code)},
   revokeBadge(id){return this.c('apiRevokeBadge',id)},
-  getAudit(){return this.c('apiGetAudit')},
+  getAudit(){return this.c('apiGetAudit')},deleteAuditLog(id){return this.c('apiDeleteAuditLog',id)},
   pushVapid(){return this.c('apiPushVapid')},
   pushSubscribe(sub){return this.c('apiPushSubscribe',sub)},
   pushPolicyGet(){return this.c('apiPushPolicyGet')},
@@ -3031,22 +3032,39 @@ async function renderAuditTab(body){
         <span id="audit_count" class="text-xs font-bold text-gray-500 bg-surface px-3 py-1 rounded-full border border-gray-100 whitespace-nowrap">${_auditLogs.length}</span>
       </div>
     </div>
-    <div class="overflow-x-auto max-h-[600px] overflow-y-auto"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الطالب</th><th class="p-3">البند</th><th class="p-3">النقاط</th><th class="p-3">بواسطة</th></tr></thead><tbody id="audit_tbody"></tbody></table></div>
-    <p class="p-3 text-[11px] font-bold text-gray-400 border-t border-gray-50">يعرض سجل منح/خصم النقاط فقط (آخر ٢٠٠). القيم تاريخية كما كانت لحظة المنح.</p>
+    <div class="overflow-x-auto max-h-[600px] overflow-y-auto"><table class="w-full text-right"><thead class="sticky top-0 bg-surface border-b border-gray-100 text-gray-500 text-xs font-bold"><tr><th class="p-3">التاريخ</th><th class="p-3">الطالب</th><th class="p-3">البند</th><th class="p-3">النقاط</th><th class="p-3">بواسطة</th><th class="p-3 w-10"></th></tr></thead><tbody id="audit_tbody"></tbody></table></div>
+    <p class="p-3 text-[11px] font-bold text-gray-400 border-t border-gray-50">يعرض سجل منح/خصم النقاط فقط (آخر ٢٠٠). القيم تاريخية كما كانت لحظة المنح. حذف سجل يسحب نقاطه من مجموع الطالب — السجلات المرتبطة بورد أو حضور تُلغى من صفحة المتابعة.</p>
   </div>`;
   renderAuditRows();
 }
 function auditSearch(v){ _auditSearch=v||''; renderAuditRows(); }
+async function confirmDeleteAuditLog(id, studentName, itemDesc, pts){
+  const p = Number(pts) || 0;
+  const sign = p >= 0 ? '+' : '';
+  const ok = await confirmModal({
+    title: 'حذف سجل نقاط',
+    message: `<div class="text-right leading-relaxed">حذف هذا السجل سيسحب <b class="${p>=0?'text-danger':'text-success'}">${sign}${esc(String(p))}</b> من مجموع الطالب <b>${esc(studentName)}</b>.<div class="text-xs text-gray-500 mt-2">${esc(itemDesc)}</div></div>`,
+    confirmText: 'حذف',
+    danger: true
+  });
+  if(!ok) return;
+  const r = await guard(DS.deleteAuditLog(id), 'حذف…');
+  if(!r || !r.success) return toast((r&&r.message)||'فشل الحذف', 'error');
+  _auditLogs = _auditLogs.filter(x => x.id !== id);
+  renderAuditRows();
+  toast('تم حذف السجل');
+}
 function renderAuditRows(){
   let logs=_auditLogs;
   if(_auditSearch){ logs=logs.filter(l=>arMatches(l.studentName||'',_auditSearch)||arMatches(l.itemDesc||'',_auditSearch)); }
-  const rows=logs.map(l=>`<tr class="border-b border-gray-50 hover:bg-gray-50">
+  const rows=logs.map(l=>`<tr class="border-b border-gray-50 hover:bg-gray-50" data-audit-id="${esc(l.id||'')}">
     <td class="p-3 text-xs text-gray-500 font-bold whitespace-nowrap">${esc(l.date)}</td>
     <td class="p-3 text-sm font-bold text-gray-900 name-full">${esc(l.studentName)}</td>
     <td class="p-3 text-sm text-gray-600 name-full">${esc(l.itemDesc)}</td>
     <td class="p-3"><span class="font-extrabold px-2.5 py-1 rounded-full text-xs ${Number(l.points)>=0?'bg-green-100 text-green-700':'bg-red-100 text-red-700'}">${Number(l.points)>=0?'+':''}${esc(l.points)}</span></td>
     <td class="p-3 text-xs text-gray-500 font-bold name-full">${esc(l.teacherName)}</td>
-  </tr>`).join('')||'<tr><td colspan="5" class="p-8 text-center text-gray-400 font-bold">لا نتائج</td></tr>';
+    <td class="p-3">${l.auto ? `<span class="text-gray-300" title="مرتبط بورد/حضور — يُلغى من شاشة المتابعة">${svg('lock','w-4 h-4')}</span>` : `<button onclick="confirmDeleteAuditLog(${jsArg(l.id||'')},${jsArg(l.studentName||'')},${jsArg(l.itemDesc||'')},${jsArg(String(l.points))})" class="text-gray-400 hover:text-danger p-1 rounded-md hover:bg-red-50 transition" title="حذف السجل">${svg('trash','w-4 h-4')}</button>`}</td>
+  </tr>`).join('')||'<tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold">لا نتائج</td></tr>';
   const tb=$('audit_tbody'); if(tb) tb.innerHTML=rows;
   const c=$('audit_count'); if(c) c.textContent=logs.length;
 }
