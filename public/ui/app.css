@@ -159,7 +159,7 @@ body{ font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,sans-serif !importa
    ===================================================================== */
 .u-header{ display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 16px 8px; background:var(--bg); }
 .u-header .u-brand{ width:38px; height:38px; border-radius:12px; background:var(--brand); color:var(--gold-bright); display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
-.u-header .u-brand img{ width:100%; height:100%; object-fit:cover; }
+.u-header .u-brand img{ width:100%; height:100%; object-fit:contain; }
 .u-header .u-brand svg{ width:20px; height:20px; }
 .u-header .u-hname{ font-size:15px; font-weight:700; color:var(--ink); line-height:1.25; }
 .u-header .u-hsub{ font-size:11.5px; color:var(--ink3); }

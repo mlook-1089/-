@@ -20,7 +20,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <!-- Tailwind مبني مسبقاً (npm run build:css) بدل CDN الذي كان يبني الأنماط على جهاز المستخدم.
      Chart.js وxlsx تُحمَّلان عند الحاجة فقط (ensureLib) — الطالب وولي الأمر لا يحتاجانهما. -->
-<link rel="stylesheet" href="/tw.css?v=5">
+<link rel="stylesheet" href="/tw.css?v=6">
 
 <style>
 * { -webkit-tap-highlight-color: transparent; }
@@ -3237,15 +3237,11 @@ async function renderAppearanceTab(body){
 
   body.innerHTML=`<div class="grid md:grid-cols-2 gap-6 fade-in">
 
-    <!-- بطاقة صحة قاعدة البيانات (تظهر أعلى القسمين) -->
     <div class="md:col-span-2 bg-gradient-to-l from-brand-900 to-brand-800 text-white p-6 rounded-2xl shadow-saas">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center text-gold-500">${svg('warn','w-6 h-6')}</div>
-          <div>
-            <h3 class="text-lg font-extrabold">صحة قاعدة البيانات</h3>
-            <p class="text-sm font-bold text-gold-100/80">فحص وإصلاح الربط بين المستخدمين وسجلات الطلاب والمجموعات</p>
-          </div>
+          <div><h3 class="text-lg font-extrabold">صحة قاعدة البيانات</h3><p class="text-sm font-bold text-gold-100/80">فحص وإصلاح الربط بين المستخدمين وسجلات الطلاب والمجموعات</p></div>
         </div>
         <div class="flex gap-2">
           <button onclick="doDbHealthCheck()" class="btn bg-white/10 backdrop-blur text-white hover:bg-white/20 border border-white/20 text-sm">فحص</button>
@@ -3256,46 +3252,92 @@ async function renderAppearanceTab(body){
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
-      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">شعار الحلقة والهوية</h3>
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6">شعار الحلقة والهوية</h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">رابط الشعار (URL)</label>
-          <input id="ap_logo" value="${esc(currentLogo)}" placeholder="https://example.com/logo.png" class="input" oninput="apPreviewLogo(this.value)">
-          <p class="text-[11px] font-bold text-gray-500 mt-2 leading-relaxed">ارفع الشعار على Google Drive أو أي خدمة استضافة، وانسخ الرابط المباشر هنا. الأفضل PNG بخلفية شفافة، أبعاد مربّعة (256×256).</p>
+          <label class="block text-sm font-bold text-gray-700 mb-2">شعار الحلقة</label>
+          <input type="hidden" id="ap_logo" value="${esc(currentLogo)}">
+          <input type="file" id="ap_logo_file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onchange="apPickLogo(this.files[0])" class="hidden">
+          <div id="ap_dropzone" onclick="document.getElementById('ap_logo_file').click()" ondragover="event.preventDefault();this.classList.add('ring-2','ring-brand-400')" ondragleave="this.classList.remove('ring-2','ring-brand-400')" ondrop="event.preventDefault();this.classList.remove('ring-2','ring-brand-400');apPickLogo(event.dataTransfer?.files?.[0])" class="cursor-pointer border-2 border-dashed border-gray-300 hover:border-brand-400 hover:bg-brand-50 rounded-xl p-4 text-center transition">
+            <div class="text-gray-400 mb-2 flex justify-center">${svg('arrowup','w-8 h-8')}</div>
+            <p class="text-sm font-bold text-brand-900">اضغط لاختيار صورة، أو أفلتها هنا</p>
+            <p class="text-[11px] font-bold text-gray-500 mt-1">PNG أو JPG أو WEBP · يُصغَّر تلقائياً إلى 256×256 للحفظ</p>
+          </div>
         </div>
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">اسم الحلقة (يظهر في الشريط الجانبي)</label>
+          <label class="block text-sm font-bold text-gray-700 mb-2">اسم الحلقة</label>
           <input id="ap_name" value="${esc(currentName)}" placeholder="حلقة ابن كثير" class="input">
         </div>
         <div>
-          <label class="block text-sm font-bold text-gray-700 mb-2">الشعار الفرعي (Tagline)</label>
+          <label class="block text-sm font-bold text-gray-700 mb-2">الشعار الفرعي</label>
           <input id="ap_tag" value="${esc(currentTag)}" placeholder="مجمع حلق الراجحي" class="input">
         </div>
         <button onclick="doSaveAppearance()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-2">حفظ وتطبيق</button>
-        ${currentLogo?`<button onclick="doClearLogo()" class="w-full bg-red-50 text-danger font-bold py-2 rounded-xl border border-red-100 hover:bg-red-100 transition text-sm">إزالة الشعار الحالي</button>`:''}
+        <button id="ap_clear_btn" onclick="doClearLogo()" class="w-full bg-red-50 text-danger font-bold py-2 rounded-xl border border-red-100 hover:bg-red-100 transition text-sm ${currentLogo?'':'hidden'}">إزالة الشعار الحالي</button>
       </div>
     </div>
 
     <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50">
-      <h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">معاينة الشعار</h3>
+      <h3 class="text-lg font-extrabold text-brand-900 mb-6">المعاينة</h3>
       <div class="bg-gradient-to-br from-brand-900 to-brand-800 p-8 rounded-2xl text-center min-h-[240px] flex flex-col items-center justify-center">
-        <div id="ap_preview_wrap" class="w-32 h-32 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center mb-4 overflow-hidden">
+        <div id="ap_preview_wrap" class="w-32 h-32 rounded-2xl bg-white flex items-center justify-center mb-4 overflow-hidden p-2 shadow-lg">
           ${currentLogo
             ? `<img id="ap_preview" src="${esc(currentLogo)}" alt="Logo" class="w-full h-full object-contain">`
-            : `<span class="text-gold-500">${svg('book','w-12 h-12')}</span>`}
+            : `<span class="text-brand-900">${svg('book','w-14 h-14')}</span>`}
         </div>
         <div class="text-white font-extrabold text-lg">${esc(currentName||'حلقة ابن كثير')}</div>
         <div class="text-gold-500 font-bold text-xs mt-1">${esc(currentTag||'مجمع حلق الراجحي')}</div>
       </div>
-      <p class="text-[11px] font-bold text-gray-500 mt-4 text-center leading-relaxed">سيظهر الشعار في: <br>▪ الشريط الجانبي ▪ شاشة تسجيل الدخول ▪ التقارير المُصدَّرة</p>
+      <p class="text-[11px] font-bold text-gray-500 mt-4 text-center leading-relaxed">يظهر الشعار في: شاشة الدخول · الشريط الجانبي · رأس الجوال · التقارير المطبوعة</p>
     </div>
   </div>`;
 }
-function apPreviewLogo(url){
-  const wrap = $('ap_preview_wrap'); if(!wrap) return;
-  if(!url){ wrap.innerHTML = `<span class="text-gold-500">${svg('book','w-12 h-12')}</span>`; return; }
-  wrap.innerHTML = `<img src="${esc(url)}" alt="Logo" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'text-red-400 font-bold text-sm\\'>خطأ</span>'">`;
+
+/* اقرأ ملف الصورة، صغّرها إلى 256×256 مع الحفاظ على النسبة، وخزّنها base64 */
+async function apPickLogo(file){
+  if(!file) return;
+  if(!file.type.startsWith('image/')) return toast('يجب اختيار ملف صورة','warn');
+  if(file.size > 5 * 1024 * 1024) return toast('حجم الصورة يجب أن يكون أقل من 5MB','warn');
+  try{
+    const dataUrl = await _apResizeImage(file, 256);
+    $('ap_logo').value = dataUrl;
+    const wrap = $('ap_preview_wrap');
+    if(wrap) wrap.innerHTML = `<img src="${dataUrl}" alt="Logo" class="w-full h-full object-contain">`;
+    const clr = $('ap_clear_btn'); if(clr) clr.classList.remove('hidden');
+    toast('اختيرت الصورة — اضغط «حفظ وتطبيق»','info');
+  } catch(e){
+    toast(e.message || 'تعذّر معالجة الصورة','error');
+  }
 }
+
+/* تصغير صورة إلى مربّع max×max مع الحفاظ على النسبة (padding شفاف)، والإخراج PNG */
+function _apResizeImage(file, max){
+  return new Promise((resolve, reject) => {
+    if(file.type === 'image/svg+xml'){
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('تعذّر قراءة الملف'));
+      r.readAsDataURL(file);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = max; canvas.height = max;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, max, max);
+      ctx.drawImage(img, (max - w) / 2, (max - h) / 2, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('صيغة الصورة غير مدعومة')); };
+    img.src = url;
+  });
+}
+
 async function doSaveAppearance(){
   const logo=$('ap_logo').value.trim(), name=$('ap_name').value.trim(), tag=$('ap_tag').value.trim();
   await guard(Promise.all([
@@ -3314,39 +3356,35 @@ async function doClearLogo(){
   renderAppearanceTab($('settingsSubBody'));
 }
 
-/* تطبيق الهوية على الشريط الجانبي وشاشة الدخول */
+/* تطبيق الهوية على الشريط الجانبي وشاشة الدخول ورأس الجوال */
 function applyBranding(v){
   v = v || {};
   const logo = v.logo_url || '';
   const name = v.halaqa_name || 'حلقة ابن كثير';
   const tag  = v.halaqa_tagline || 'مجمع حلق الراجحي';
 
-  // Sidebar
-  const sbLogo = document.querySelector('#sidebar .brand-logo-slot');
-  if(sbLogo){
-    sbLogo.innerHTML = logo
-      ? `<img src="${esc(logo)}" alt="Logo" class="w-full h-full object-contain rounded-xl">`
-      : `<svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>`;
-  }
+  const setSlot = (root, cls, sz) => {
+    const el = typeof root === 'string' ? document.querySelector(root + ' ' + cls) : root;
+    if(!el) return;
+    el.style.background = logo ? '#ffffff' : '';
+    el.style.padding = logo ? '4px' : '';
+    el.innerHTML = logo
+      ? `<img src="${esc(logo)}" alt="Logo" style="width:100%;height:100%;object-fit:contain;display:block">`
+      : `<svg style="width:${sz};height:${sz}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>`;
+  };
+
+  setSlot('#sidebar', '.brand-logo-slot', '28px');
+  setSlot('#loginScreen', '.brand-logo-slot', '40px');
+  setSlot(document.getElementById('mobBrandLogo'), '', '20px');
+
   const sbName = document.querySelector('#sidebar .brand-name-slot');
   if(sbName) sbName.textContent = name;
-  const mbLogo = document.getElementById('mobBrandLogo');
-  if(mbLogo && logo) mbLogo.innerHTML = `<img src="${esc(logo)}" alt="">`;
-
-  // Login screen
-  const lgLogo = document.querySelector('#loginScreen .brand-logo-slot');
-  if(lgLogo){
-    lgLogo.innerHTML = logo
-      ? `<img src="${esc(logo)}" alt="Logo" class="w-full h-full object-contain rounded-xl">`
-      : `<svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`;
-  }
   const lgName = document.querySelector('#loginScreen .brand-name-slot');
   if(lgName) lgName.textContent = name;
   const lgTag  = document.querySelector('#loginScreen .brand-tag-slot');
   if(lgTag) lgTag.textContent = tag;
 }
 
-/* ---------- فحص وإصلاح قاعدة البيانات ---------- */
 async function doDbHealthCheck(){
   const box = $('db_health_result');
   if(box) box.innerHTML = '<div class="text-white/70 text-sm font-bold">جارٍ الفحص...</div>';
