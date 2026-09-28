@@ -183,7 +183,7 @@ function renderMpStudentCard(st, dayPlans){
       ${items}
       ${total ? `<div class="u-row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
         <button type="button" class="u-btn sm u-btn-s u-grow" onclick="openCreateManualPlan(${jsArg(sid)})">${svg('plus','w-4 h-4')} خطة جديدة</button>
-        ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-g" onclick="openEditDailyAmount(${jsArg(sid)})">${svg('edit','w-4 h-4')} تعديل المقدار</button>`:''}
+        ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-g" onclick="openEditDailyAmount(${jsArg(sid)})">${svg('edit','w-4 h-4')} تعديل الخطة</button>`:''}
         ${hasAnyManual?`<button type="button" class="u-btn sm u-btn-bad" onclick="_mp.studentId=${jsArg(sid)};confirmClearManualPlans()">${svg('trash','w-4 h-4')} مسح الخطة</button>`:''}
       </div>` : ''}
     </div>
@@ -362,14 +362,25 @@ async function openEditDailyAmount(sid){
   const totalAyat = ranges.reduce((sum, r) => sum + Math.abs(ord(r.to.To_Surah, r.to.To_Ayah) - ord(r.from.From_Surah, r.from.From_Ayah)) + 1, 0);
   const currentDaily = Number(cur[0].Amount) || 1;
 
-  openModal('تعديل المقدار اليومي — ' + (nameMap[targetId]||targetId), `
+  // اختر الوحدة الأقرب لمقدار حالي (استرشاداً بأول ورد)
+  const first = cur[0];
+  const nowUnitAyat = qExactAyahs(first.From_Surah, Number(first.From_Ayah)||1, 'full') || 10;
+  const ratio = currentDaily / (nowUnitAyat || 10);
+  const guessedUnit = ratio <= 0.35 ? 'quarter' : ratio <= 0.7 ? 'half' : ratio <= 1.4 ? 'full' : 'page';
+  const unitOpts = Object.entries(MP_UNITS).map(([k,v]) => `<option value="${k}" ${k===guessedUnit?'selected':''}>${v.label}</option>`).join('') + `<option value="custom">مخصّص (بالآيات)</option>`;
+
+  openModal('تعديل الخطة — ' + (nameMap[targetId]||targetId), `
     <div class="u-plan" style="background:var(--card2);margin-bottom:12px;font-size:13px;color:var(--ink2)">
       <div style="font-weight:700;color:var(--ink);margin-bottom:6px">النطاقات الحالية</div>
       <div style="line-height:1.7">${rangesText}</div>
       <div style="margin-top:8px;font-weight:600">مجموع الآيات: <span class="u-num">${totalAyat}</span> · المقدار الحالي: <span class="u-num">${currentDaily}</span> آية/يوم</div>
     </div>
     <div class="u-field">
-      <label>المقدار اليومي الجديد (آية)</label>
+      <label>المقدار اليومي</label>
+      <select id="eda_unit" onchange="_edaToggleUnit()" class="u-input">${unitOpts}</select>
+    </div>
+    <div id="eda_custom_wrap" class="u-field${guessedUnit==='custom'?'':' hidden'}">
+      <label>عدد الآيات في اليوم</label>
       <input type="number" inputmode="numeric" id="eda_daily" min="1" value="${currentDaily}" class="u-input u-num" style="text-align:center">
     </div>
     <div class="u-grid2" style="margin:0">
@@ -377,9 +388,14 @@ async function openEditDailyAmount(sid){
       <button type="button" class="u-btn u-btn-p" onclick="doEditDailyAmount(${jsArg(targetId)},${JSON.stringify(ranges.map(r=>({fromSurah:r.from.From_Surah,fromAyah:Number(r.from.From_Ayah)||1,toSurah:r.to.To_Surah,toAyah:Number(r.to.To_Ayah)||1})))})">حفظ وإعادة التوليد</button>
     </div>`);
 }
+function _edaToggleUnit(){ const u = $('eda_unit')?.value; const w = $('eda_custom_wrap'); if(!w) return; w.classList.toggle('hidden', u!=='custom'); }
 async function doEditDailyAmount(sid, ranges){
-  const daily = Number($('eda_daily').value)||0;
-  if(daily<1) return toast('أدخل مقداراً صالحاً','warn');
+  const unit = $('eda_unit')?.value || 'full';
+  const first = ranges[0] || {};
+  let daily;
+  if(unit === 'custom') daily = Number($('eda_daily')?.value) || 0;
+  else daily = qExactAyahs(first.fromSurah, Number(first.fromAyah)||1, unit) || MP_UNITS[unit]?.ayat || 10;
+  if(!daily || daily < 1) return toast('أدخل مقداراً صالحاً','warn');
   const cfg = _tData?.planConfig || {};
   const payload = { studentId:sid, type:'conserve', startDate:cfg.termStart, endDate:cfg.termEnd, ranges, workDays:cfg.workDays, dailyAmount:daily, replaceExisting:true };
   const r = await guard(DS.planGenerate(payload),'إعادة التوليد…');
