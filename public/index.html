@@ -634,21 +634,24 @@ function confirmModal(opts){
 
 /* تغيير كلمة المرور — متاح لكل الأدوار */
 function openChangePassword(forced){
-  openModal('تغيير كلمة المرور',`<div class="space-y-4">
-    ${forced?`<div class="bg-gold-50 border border-gold-200 rounded-xl p-3 text-sm font-bold text-brand-900 leading-relaxed">حسابك يستخدم كلمة مرور افتراضية. يُرجى تعيين كلمة مرور خاصة بك الآن لحماية حسابك.</div>`:''}
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور الحالية</label><input id="cp_old" type="password" class="input" autocomplete="current-password"></div>
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور الجديدة</label><input id="cp_new" type="password" class="input" autocomplete="new-password"></div>
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">تأكيد الجديدة</label><input id="cp_new2" type="password" class="input" onkeydown="if(event.key==='Enter')doChangePassword()"></div>
+  const title = forced ? 'تعيين كلمة المرور' : 'تغيير كلمة المرور';
+  openModal(title, `<div class="space-y-4">
+    ${forced?`<div class="bg-gold-50 border border-gold-200 rounded-xl p-3 text-sm font-bold text-brand-900 leading-relaxed">أهلاً بك! لتفعيل حسابك، رجاءً عيّن كلمة مرور خاصة بك الآن.</div>`:''}
+    ${forced?'':`<div><label class="block text-sm font-bold text-gray-700 mb-2">كلمة المرور الحالية</label><input id="cp_old" type="password" class="input" autocomplete="current-password"></div>`}
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">${forced?'كلمة المرور الجديدة':'كلمة المرور الجديدة'}</label><input id="cp_new" type="password" class="input" autocomplete="new-password"></div>
+    <div><label class="block text-sm font-bold text-gray-700 mb-2">تأكيد كلمة المرور</label><input id="cp_new2" type="password" class="input" onkeydown="if(event.key==='Enter')doChangePassword()"></div>
     <p class="text-xs font-bold text-gray-500">٦ خانات على الأقل، وتجنّب الأرقام المتكررة أو المتسلسلة.</p>
-    <div class="flex gap-3 pt-1"><button onclick="doChangePassword()" class="btn bg-brand-900 text-white flex-1 shadow-md">حفظ</button>${forced?`<button onclick="logout()" class="btn bg-gray-100 text-gray-700 flex-1">خروج</button>`:`<button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>`}</div>
+    <div class="flex gap-3 pt-1"><button onclick="doChangePassword()" class="btn bg-brand-900 text-white flex-1 shadow-md">${forced?'تعيين ومتابعة':'حفظ'}</button>${forced?`<button onclick="logout()" class="btn bg-gray-100 text-gray-700 flex-1">خروج</button>`:`<button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button>`}</div>
   </div>`);
   // كلمة افتراضية/مؤقتة: لا يُسمح بإغلاق النافذة قبل تعيين كلمة خاصة (الخيار الوحيد الآخر: الخروج)
   _pwForced = !!forced;
 }
 let _pwForced = false;
 async function doChangePassword(){
-  const o=$('cp_old').value, n=$('cp_new').value, n2=$('cp_new2').value;
-  if(!o||!n) return toast('أكمل الحقول','warn');
+  const oEl=$('cp_old');
+  const o = oEl ? oEl.value : '';
+  const n=$('cp_new').value, n2=$('cp_new2').value;
+  if((oEl && !o) || !n) return toast('أكمل الحقول','warn');
   if(n.length<6) return toast('كلمة المرور يجب أن تكون ٦ خانات على الأقل','warn');
   if(n!==n2) return toast('كلمتا المرور غير متطابقتين','warn');
   const r=await guard(DS.changePassword(o,n),'حفظ…');
@@ -2745,21 +2748,24 @@ function renderNewsCombinedTab(body){
   if(_newsSub==='news') renderNewsTab($('newsSubBody')); else renderCalendarTab($('newsSubBody'));
 }
 function renderSettingsTab(body){
-  const tab=(k,label)=>`<button onclick="_settingsSub='${k}';renderSettingsTab($('portal'))" class="whitespace-nowrap px-6 py-2 rounded-xl font-bold transition-all-fast ${_settingsSub===k?'bg-brand-900 text-white shadow-md':'bg-white text-gray-600 hover:bg-gray-50'}">${label}</button>`;
-  body.innerHTML=`<div class="fade-in space-y-6">
-    <div class="flex gap-2 overflow-x-auto pb-2 border-b border-gray-200">
-      ${tab('students','إدارة الطلاب')}
+  const tab = (k, label) => `<button type="button" class="u-chip ${_settingsSub===k?'on':''}" onclick="_settingsSub='${k}';renderSettingsTab($('portal'))">${label}</button>`;
+  body.innerHTML = `<div class="u-page fade-in">
+    <div class="u-top"><div class="u-grow"><h1>الإعدادات</h1></div></div>
+    <div class="u-chips" style="margin-bottom:14px" id="settingsChips">
+      ${tab('students','الطلاب')}
       ${tab('accounts','المعلمون والأولياء')}
       ${tab('groups','المجموعات')}
-      ${tab('items','إعدادات النقاط')}
+      ${tab('items','النقاط')}
       ${tab('audit','سجل النقاط')}
       ${tab('plandays','أيام الحلقة')}
-      ${currentUser&&currentUser.isAdmin?tab('push','الإشعارات الخارجية'):''}
-      ${tab('appearance','المظهر والشعار')}
-      ${currentUser&&currentUser.isAdmin?`<button onclick="_settingsSub='reset';renderSettingsTab($('portal'))" class="whitespace-nowrap px-6 py-2 rounded-xl font-bold transition-all-fast text-danger border border-danger/30 ${_settingsSub==='reset'?'bg-danger text-white shadow-md':'bg-white hover:bg-red-50'}">تصفير البيانات</button>`:''}
+      ${currentUser&&currentUser.isAdmin?tab('push','الإشعارات'):''}
+      ${tab('appearance','المظهر')}
+      ${currentUser&&currentUser.isAdmin?`<button type="button" class="u-chip ${_settingsSub==='reset'?'on':''}" style="${_settingsSub==='reset'?'background:var(--bad);border-color:var(--bad);color:#fff':'color:var(--bad);border-color:var(--bad-soft)'}" onclick="_settingsSub='reset';renderSettingsTab($('portal'))">تصفير البيانات</button>`:''}
     </div>
     <div id="settingsSubBody"></div>
   </div>`;
+  // مرّر التبويب النشط إلى منتصف الشريط
+  requestAnimationFrame(() => { document.querySelector('#settingsChips .u-chip.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }); });
   if(_settingsSub==='students') renderStudentsTab($('settingsSubBody'));
   else if(_settingsSub==='accounts') renderAccountsTab($('settingsSubBody'));
   else if(_settingsSub==='groups') renderManageTab($('settingsSubBody'));
