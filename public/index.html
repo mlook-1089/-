@@ -2858,7 +2858,7 @@ function renderSettingsTab(body){
 }
 
 /* ---------- خطط جميع الطلاب (ملخص لكل طالب في مكان واحد) ---------- */
-const _ap = { search: '', typeFilter: 'all' };
+const _ap = { search: '', typeFilter: 'all', openIds: new Set() };
 function renderAllPlansTab(body){
   const {nameMap, groupMap} = tMaps();
   const cfg = _tData?.planConfig || {};
@@ -2946,34 +2946,63 @@ function renderApStudentRow(r){
     ? `<span class="pill-v4 info">${svg('repeat','w-3 h-3')} مراجعة</span>`
     : `<span class="pill-v4 ok">${svg('leaf','w-3 h-3')} حفظ</span>`;
   const c = String(r.name).trim().charAt(0);
-  return `<div class="card-v4" style="padding:.75rem">
-    <div class="flex items-start gap-2.5 mb-2">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand to-brand-deep text-gold-400 flex items-center justify-center font-black text-base shrink-0">${esc(c)}</div>
-      <div class="flex-1 min-w-0">
-        <div class="font-extrabold text-slate-800 name-full text-[14px] leading-tight">${esc(r.name)}</div>
-        <div class="flex items-center gap-1 flex-wrap mt-1">
-          ${typeBadge}
-          <span class="pill-v4 gold num">${r.amt} آية/يوم</span>
-          <span class="pill-v4 info num">${r.total} ورد</span>
+  const key = r.sid + '::' + r.type;
+  const isOpen = _ap.openIds.has(key);
+  const allPlans = (_tData?.plans||[])
+    .filter(p => String(p.Student_ID)===String(r.sid) && p.Type===r.type && p.Source==='Manual')
+    .sort((a,b) => String(a.Date).localeCompare(String(b.Date)));
+  const items = isOpen ? allPlans.map(renderApPlanItem).join('') : '';
+  return `<details class="nz-card" ${isOpen?'open':''} ontoggle="_apToggleStudent('${esc(key)}', this.open)">
+    <summary class="p-3 cursor-pointer hover:bg-slate-50/60 select-none outline-none" style="list-style:none">
+      <div class="flex items-start gap-2.5">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand to-brand-deep text-gold-400 flex items-center justify-center font-black text-base shrink-0">${esc(c)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-extrabold text-slate-800 name-full text-[14px] leading-tight">${esc(r.name)}</div>
+          <div class="flex items-center gap-1 flex-wrap mt-1">
+            ${typeBadge}
+            <span class="pill-v4 gold num">${r.amt} آية/يوم</span>
+            <span class="pill-v4 info num">${r.total} ورد</span>
+          </div>
+          ${r.groupName?`<div class="text-[10px] font-bold text-slate-500 mt-1 truncate">${esc(r.groupName)}</div>`:''}
         </div>
-        ${r.groupName?`<div class="text-[10px] font-bold text-slate-500 mt-1 truncate">${esc(r.groupName)}</div>`:''}
+        <button onclick="event.preventDefault();event.stopPropagation();openEditManualPlan(${jsArg(r.first.Plan_ID)})" class="w-8 h-8 rounded-lg bg-brand-50 text-brand hover:bg-brand-100 border border-brand-200 flex items-center justify-center shrink-0" title="تعديل الخطة">${svg('edit','w-3.5 h-3.5')}</button>
       </div>
-      <button onclick="openEditManualPlan(${jsArg(r.first.Plan_ID)})" class="w-8 h-8 rounded-lg bg-brand-50 text-brand hover:bg-brand-100 border border-brand-200 flex items-center justify-center shrink-0" title="تعديل الخطة">${svg('edit','w-3.5 h-3.5')}</button>
+      <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[12px] font-bold text-slate-700 name-full leading-snug mt-2">
+        <span class="text-brand">من</span> ${esc(r.first.From_Surah)} <span class="num text-slate-400">(${esc(r.first.From_Ayah)})</span>
+        <span class="text-brand mx-1">←</span>
+        ${esc(r.last.To_Surah)} <span class="num text-slate-400">(${esc(r.last.To_Ayah)})</span>
+      </div>
+      <div class="flex items-center gap-2 mt-2">
+        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-pass rounded-full transition-all" style="width:${r.pct}%"></div></div>
+        <span class="text-[11px] font-extrabold text-slate-700 num shrink-0">${r.done}/${r.total} · ${r.pct}%</span>
+      </div>
+      ${r.partial||r.missed ? `<div class="flex items-center gap-1 mt-1.5 text-[10px] font-bold">
+        ${r.partial?`<span class="pill-v4 gold">◐ جزئي ${r.partial}</span>`:''}
+        ${r.missed?`<span class="pill-v4 err">✗ فائت ${r.missed}</span>`:''}
+      </div>` : ''}
+    </summary>
+    <div class="p-3 pt-2 border-t border-slate-100 bg-slate-50/40 space-y-1.5">${items}</div>
+  </details>`;
+}
+function _apToggleStudent(key, isOpen){
+  if(isOpen) _ap.openIds.add(key); else _ap.openIds.delete(key);
+}
+function renderApPlanItem(p){
+  const status = p.Accomplishment_Status || 'Pending';
+  const statusBadge = status==='Done'    ? '<span class="pill-v4 ok">✓ مكتمل</span>'
+                    : status==='Partial' ? '<span class="pill-v4 gold">◐ جزئي</span>'
+                    : status==='Missed'  ? '<span class="pill-v4 err">✗ فائت</span>'
+                    : '<span class="pill-v4 info">— قيد التنفيذ</span>';
+  return `<div class="bg-white border border-slate-200 rounded-lg p-2">
+    <div class="flex items-center justify-between gap-2 mb-1">
+      <span class="text-[11px] font-bold text-slate-500 num">${esc(p.Date)}</span>
+      ${statusBadge}
     </div>
-    <div class="bg-slate-50 border border-slate-200 rounded-lg p-2 text-[12px] font-bold text-slate-700 name-full leading-snug mb-2">
-      <span class="text-brand">من</span> ${esc(r.first.From_Surah)} <span class="num text-slate-400">(${esc(r.first.From_Ayah)})</span>
+    <div class="text-[12px] font-bold text-slate-800 name-full leading-snug">
+      <span class="text-brand">من</span> ${esc(p.From_Surah)} <span class="num text-slate-400">(${esc(p.From_Ayah)})</span>
       <span class="text-brand mx-1">←</span>
-      ${esc(r.last.To_Surah)} <span class="num text-slate-400">(${esc(r.last.To_Ayah)})</span>
+      ${esc(p.To_Surah)} <span class="num text-slate-400">(${esc(p.To_Ayah)})</span>
     </div>
-    <div class="flex items-center gap-2">
-      <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-pass rounded-full transition-all" style="width:${r.pct}%"></div></div>
-      <span class="text-[11px] font-extrabold text-slate-700 num shrink-0">${r.done}/${r.total} · ${r.pct}%</span>
-    </div>
-    ${r.partial||r.missed ? `<div class="flex items-center gap-1 mt-1.5 text-[10px] font-bold">
-      ${r.partial?`<span class="pill-v4 gold">◐ جزئي ${r.partial}</span>`:''}
-      ${r.missed?`<span class="pill-v4 err">✗ فائت ${r.missed}</span>`:''}
-    </div>` : ''}
-    <div class="text-[10px] font-bold text-slate-500 mt-1.5 num">${esc(r.first.Date)} ← ${esc(r.last.Date)}</div>
   </div>`;
 }
 

@@ -1,7 +1,7 @@
 // Service Worker — إشعارات Web Push + غلاف التطبيق للعمل دون اتصال (PWA) لمنصة حلقة ابن كثير
 
 // غيّر رقم الإصدار عند تعديل قائمة الملفات المخزّنة مسبقاً
-const CACHE_NAME = 'ibk-shell-v4';
+const CACHE_NAME = 'ibk-shell-v5';
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
