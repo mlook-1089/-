@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { plans } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 import { requireRole, errorResponse } from '@/lib/auth';
-import { genId, today, buildPlanTarget } from '@/lib/utils';
+import { genId, today, buildPlanTarget, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 import { applyPlanStatus, revokeRefs } from '@/lib/triggers';
 
 // مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة، وأي قيمة قادمة
@@ -50,6 +50,22 @@ export async function PATCH(req: NextRequest) {
       if (!['Pending', 'Done', 'Partial', 'Missed'].includes(upd.Accomplishment_Status)) return NextResponse.json({ success: false, message: 'حالة غير صالحة' }, { status: 400 });
       patch.status = upd.Accomplishment_Status;
     }
+    // التحقق من صحة حدود الآيات عند تعديل النطاق
+    const fsName = patch.fromSurah ?? p.fromSurah;
+    const tsName = patch.toSurah ?? p.toSurah;
+    if (patch.fromSurah !== undefined || patch.fromAyah !== undefined) {
+      const si = SURAHS.indexOf(String(fsName || ''));
+      const fa = Number(patch.fromAyah ?? p.fromAyah);
+      if (si < 0) return NextResponse.json({ success: false, message: 'اسم سورة البداية غير صالح' }, { status: 400 });
+      if (fa > SURAH_AYAH_COUNT[si]) return NextResponse.json({ success: false, message: `آية البداية تتجاوز آيات سورة ${fsName} (${SURAH_AYAH_COUNT[si]})` }, { status: 400 });
+    }
+    if (patch.toSurah !== undefined || patch.toAyah !== undefined) {
+      const si = SURAHS.indexOf(String(tsName || ''));
+      const ta = Number(patch.toAyah ?? p.toAyah);
+      if (si < 0) return NextResponse.json({ success: false, message: 'اسم سورة النهاية غير صالح' }, { status: 400 });
+      if (ta > SURAH_AYAH_COUNT[si]) return NextResponse.json({ success: false, message: `آية النهاية تتجاوز آيات سورة ${tsName} (${SURAH_AYAH_COUNT[si]})` }, { status: 400 });
+    }
+
     patch.dailyTarget = buildPlanTarget({
       fromSurah: patch.fromSurah ?? p.fromSurah, fromAyah: patch.fromAyah ?? p.fromAyah,
       toSurah: patch.toSurah ?? p.toSurah, toAyah: patch.toAyah ?? p.toAyah,

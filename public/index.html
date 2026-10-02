@@ -2046,7 +2046,7 @@ function openEditManualPlan(planId){
   `);
 }
 async function doSaveEditPlan(planId){
-  const upd = { Type: $('ep_type').value, From_Surah: $('ep_fromS').value, From_Ayah: String($('ep_fromA').value||1), To_Surah: $('ep_toS').value, To_Ayah: String($('ep_toA').value||1) };
+  const upd = { Date: $('ep_date').value, Type: $('ep_type').value, From_Surah: $('ep_fromS').value, From_Ayah: String($('ep_fromA').value||1), To_Surah: $('ep_toS').value, To_Ayah: String($('ep_toA').value||1) };
   const r = await guard(DS.updatePlan(planId, upd), 'حفظ…');
   if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
   const p = (_tData.plans||[]).find(x=>String(x.Plan_ID)===String(planId));
