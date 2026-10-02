@@ -505,7 +505,8 @@ const DS = {
       apiPlansByStudent:        () => ['GET','/api/plans/by-student?studentId='+encodeURIComponent(a[0])+'&from='+encodeURIComponent(a[1]||'')+'&to='+encodeURIComponent(a[2]||'')+'&type='+encodeURIComponent(a[3]||'all')],
       apiAttendanceHistory:     () => ['GET','/api/attendance/history?studentId='+encodeURIComponent(a[0])+(a[1]?'&from='+encodeURIComponent(a[1]):'')+(a[2]?'&to='+encodeURIComponent(a[2]):'')],
       apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}],
-      apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}]
+      apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}],
+      apiAuthForgotPassword:    () => ['POST','/api/auth/forgot-password',{identity:a[0]}]
     };
     const spec = M[fn] ? M[fn]() : null;
     if(!spec) throw new Error('Unknown API: '+fn);
@@ -579,7 +580,8 @@ const DS = {
   pushUnsubscribe(ep){return this.c('apiPushUnsubscribe',ep)},
   nazemCreateStudents(payload){return this.c('apiNazemCreateStudents',payload)},
   dayData(d){return this.c('apiDayData',d)},
-  deleteManualPlans(sid){return this.c('apiDeleteManualPlans',sid)}
+  deleteManualPlans(sid){return this.c('apiDeleteManualPlans',sid)},
+  forgotPassword(identity){return this.c('apiAuthForgotPassword',identity)}
 };
 
 const $=id=>document.getElementById(id);
@@ -686,12 +688,39 @@ window.addEventListener('DOMContentLoaded',async()=>{loadBrandingOnce();const s=
   else { clearSession(); $('loginScreen').classList.remove('hidden'); }
 });
 function showForgotPassword(){
-  openModal('نسيت كلمة المرور؟',`<div class="space-y-4 text-center">
-    <div class="text-gray-300">${svg('lock','w-12 h-12 mx-auto')}</div>
-    <p class="text-gray-700 font-bold leading-relaxed">لا تُخزَّن كلمات المرور كنصّ ولا يمكن استرجاعها. لإعادة تعيين كلمتك، تواصل مع <b>معلم الحلقة</b> ليعيّن لك كلمة جديدة من لوحة المعلم.</p>
-    <p class="text-sm font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">المعلم: افتح «الطلاب» أو «المعلمون والأولياء» ← اختر الحساب ← تعديل ← كلمة مرور جديدة.</p>
-    <button onclick="closeModal()" class="btn bg-brand-900 text-white w-full shadow-md">فهمت</button>
+  openModal('نسيت كلمة المرور؟',`<div class="space-y-4">
+    <p class="text-sm font-bold text-gray-600 leading-relaxed">أدخل رقم هويتك الوطنية أو إقامتك — سيُتحقَّق منه عبر نظام ناظم ثم ستنتقل مباشرةً لإعادة تعيين كلمة المرور.</p>
+    <div>
+      <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهوية / الإقامة</label>
+      <input type="text" id="fp_identity" inputmode="numeric" maxlength="10"
+        placeholder="1xxxxxxxxx"
+        class="input py-3 text-center text-lg num"
+        onkeydown="if(event.key==='Enter')doForgotPassword()">
+    </div>
+    <p id="fp_err" class="text-danger text-sm font-bold text-center hidden bg-red-50 py-2 rounded-xl border border-red-100"></p>
+    <div class="grid grid-cols-2 gap-2 pt-1">
+      <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
+      <button onclick="doForgotPassword()" class="btn-v4 btn-v4-primary">تحقق ودخول</button>
+    </div>
   </div>`);
+}
+async function doForgotPassword(){
+  const identity = ($('fp_identity')?.value||'').trim();
+  const errEl = $('fp_err');
+  if(errEl) errEl.classList.add('hidden');
+  if(!identity || !/^\d{9,10}$/.test(identity)){
+    if(errEl){ errEl.textContent='أدخل رقم هوية صحيحاً (9-10 أرقام)'; errEl.classList.remove('hidden'); }
+    return;
+  }
+  const r = await guard(DS.forgotPassword(identity),'جارٍ التحقق من ناظم…');
+  if(!r) return;
+  if(!r.success){
+    if(errEl){ errEl.textContent=r.message||'فشل التحقق'; errEl.classList.remove('hidden'); }
+    return;
+  }
+  closeModal();
+  saveSession(r.user, false);
+  enterApp(r.user);
 }
 async function handleLogin(){const id=$('loginId').value.trim(),p=$('loginPass').value.trim();if(!id||!p){$('loginErr').textContent='أدخل البيانات';$('loginErr').classList.remove('hidden');return}const r=await guard(DS.login(id,p),'جارٍ الدخول…');if(!r)return;if(!r.success){$('loginErr').textContent=r.message;$('loginErr').classList.remove('hidden');return}saveSession(r.user,$('rememberMe').checked);enterApp(r.user)}
 function enterApp(u){
@@ -2017,43 +2046,37 @@ async function doCreateManualPlan(){
 function openEditManualPlan(planId){
   const p = (_tData.plans||[]).find(x=>String(x.Plan_ID)===String(planId));
   if(!p) return toast('لم يُعثر على الورد','error');
-  const surs = _tData?.surahs || [];
-  const surOpts = (sel)=>surs.map(s=>`<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
-  const surs2=_tData?.surahs||[],counts2=_tData?.surahCounts||[];
-  const ayahMax=(s)=>{const i=surs2.indexOf(s);return i>=0?counts2[i]:999;};
-  openModal('تعديل الورد', `
-    <div class="space-y-3">
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="block text-xs font-bold text-slate-500 mb-1">التاريخ</label><input type="date" id="ep_date" value="${esc(p.Date)}" class="input py-2 num"></div>
-        <div><label class="block text-xs font-bold text-slate-500 mb-1">النوع</label><select id="ep_type" class="input py-2"><option value="conserve" ${p.Type==='conserve'?'selected':''}>حفظ</option><option value="revision" ${p.Type==='revision'?'selected':''}>مراجعة</option></select></div>
-      </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="text-xs font-bold text-slate-600 mb-2">المدى</div>
-        <div class="grid grid-cols-2 gap-2 mb-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="ep_fromS" onchange="_epUpdateAyahMax('ep_fromA','ep_fromS')" class="input py-2 text-sm">${surOpts(p.From_Surah)}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="ep_fromA" min="1" max="${ayahMax(p.From_Surah)}" value="${esc(p.From_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="ep_toS" onchange="_epUpdateAyahMax('ep_toA','ep_toS')" class="input py-2 text-sm">${surOpts(p.To_Surah)}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="ep_toA" min="1" max="${ayahMax(p.To_Surah)}" value="${esc(p.To_Ayah||1)}" class="input py-2 text-sm text-center num"></div>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
-        <button onclick="doSaveEditPlan(${jsArg(planId)})" class="btn-v4 btn-v4-primary">حفظ التعديل</button>
-      </div>
-    </div>
-  `);
-}
-async function doSaveEditPlan(planId){
-  const upd = { Date: $('ep_date').value, Type: $('ep_type').value, From_Surah: $('ep_fromS').value, From_Ayah: String($('ep_fromA').value||1), To_Surah: $('ep_toS').value, To_Ayah: String($('ep_toA').value||1) };
-  const r = await guard(DS.updatePlan(planId, upd), 'حفظ…');
-  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
-  const p = (_tData.plans||[]).find(x=>String(x.Plan_ID)===String(planId));
-  if(p) Object.assign(p, upd);
-  closeModal();
-  toast('تم التعديل');
-  renderManualPlanTab($('fuSubBody'));
+  const sid = p.Student_ID, type = p.Type;
+
+  // كل أوراد الطالب من نفس النوع، مرتّبة بالتاريخ
+  const sp = (_tData.plans||[])
+    .filter(x=>String(x.Student_ID)===String(sid)&&x.Type===type&&x.Source==='Manual')
+    .sort((a,b)=>a.Date.localeCompare(b.Date));
+  if(!sp.length) return toast('لم تُعثر على أوراد','error');
+
+  const first=sp[0], last=sp[sp.length-1];
+  const amt=Number(first.Amount);
+
+  // افتح نافذة إنشاء خطة جديدة (تستخدم تواريخ الفصل المحفوظة تلقائياً)
+  openCreateManualPlan(sid);
+
+  // سبق الحقول بقيم الخطة القائمة
+  const typeEl=$('cp_type'); if(typeEl) typeEl.value=type;
+  const fromSEl=$('cp_fromS'); if(fromSEl){ fromSEl.value=first.From_Surah; _cpUpdateAyahMax('cp_fromA','cp_fromS'); }
+  const fromAEl=$('cp_fromA'); if(fromAEl) fromAEl.value=first.From_Ayah||1;
+  const toSEl=$('cp_toS');   if(toSEl){ toSEl.value=last.To_Surah; _cpUpdateAyahMax('cp_toA','cp_toS'); }
+  const toAEl=$('cp_toA');   if(toAEl) toAEl.value=last.To_Ayah||1;
+
+  // المقدار اليومي (مخصّص)
+  if(amt>0){
+    const unitEl=$('cp_unit'); if(unitEl){ unitEl.value='custom'; _mpToggleUnit(); }
+    const dailyEl=$('cp_daily'); if(dailyEl) dailyEl.value=amt;
+  }
+
+  // استبدال تلقائي + تغيير نص زر الحفظ
+  const replEl=$('cp_replace'); if(replEl) replEl.checked=true;
+  const saveBtn=document.querySelector('[onclick="doCreateManualPlan()"]');
+  if(saveBtn) saveBtn.textContent='إعادة التوليد';
 }
 async function confirmClearManualPlans(){
   const ok = await confirmModal({title:'مسح',message:'حذف <b>جميع أوراد المتابعة اليدوية</b> لهذا الطالب؟',danger:true});
