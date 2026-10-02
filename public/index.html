@@ -2061,14 +2061,22 @@ function openEditManualPlan(planId){
   const cfg = _tData?.planConfig || {};
   const surOptsFrom = surs.map(s=>`<option value="${esc(s)}"${s===first.From_Surah?' selected':''}>${esc(s)}</option>`).join('');
   const surOptsTo   = surs.map(s=>`<option value="${esc(s)}"${s===last.To_Surah?' selected':''}>${esc(s)}</option>`).join('');
-  const cfgInfo = cfg.termStart && cfg.termEnd
-    ? `<div class="text-[10px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg px-3 py-2">الفصل: ${esc(cfg.termStart)} — ${esc(cfg.termEnd)} · الأيام: ${(cfg.workDays||[]).map(d=>['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][d]||d).join('، ')}</div>`
-    : `<div class="text-[10px] font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">${svg('warn','w-3 h-3 inline')} لم يتم تعيين بيانات الفصل — اذهب إلى الإعدادات &gt; أيام الحلقة</div>`;
+  const startDate = cfg.termStart || first.Date || '';
+  const endDate   = cfg.termEnd   || last.Date  || '';
 
   _mp.studentId = sid;
 
   openModal('تعديل الخطة — ' + esc(name), `<div class="space-y-3">
-    ${cfgInfo}
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">البداية</label>
+        <input type="date" id="ep2_start" value="${esc(startDate)}" class="input py-2 num text-center">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">النهاية</label>
+        <input type="date" id="ep2_end" value="${esc(endDate)}" class="input py-2 num text-center">
+      </div>
+    </div>
     <div class="grid grid-cols-2 gap-2">
       <div>
         <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
@@ -2107,13 +2115,14 @@ async function doEditManualPlan(){
   const fromAyah  = Number($('ep2_fromA')?.value)||1;
   const toSurah   = $('ep2_toS')?.value;
   const toAyah    = Number($('ep2_toA')?.value)||1;
+  const startDate = $('ep2_start')?.value || '';
+  const endDate   = $('ep2_end')?.value || '';
   if(!fromSurah||!toSurah) return toast('اختر نطاق القرآن','warn');
   if(daily<1) return toast('أدخل مقداراً يومياً صحيحاً','warn');
+  if(!startDate||!endDate) return toast('أدخل تاريخي البداية والنهاية','warn');
+  if(startDate>endDate) return toast('البداية يجب أن تسبق النهاية','warn');
   const cfg = _tData?.planConfig || {};
-  const startDate = cfg.termStart||'', endDate = cfg.termEnd||'';
-  const workDays = cfg.workDays?.length ? cfg.workDays : [];
-  if(!startDate||!endDate) return toast('عيّن بداية ونهاية الفصل في الإعدادات → أيام الحلقة','warn');
-  if(!workDays.length) return toast('عيّن أيام الحلقة في الإعدادات → أيام الحلقة','warn');
+  const workDays = cfg.workDays?.length ? cfg.workDays : [0,1,2,3,4];
   const payload = { studentId:sid, type, startDate, endDate, ranges:[{fromSurah,fromAyah,toSurah,toAyah}], workDays, dailyAmount:daily, replaceExisting:true };
   const r = await guard(DS.planGenerate(payload),'إعادة توليد الخطة…');
   if(!r||!r.success) return toast((r&&r.message)||'فشل التوليد','error');
