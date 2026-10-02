@@ -2040,7 +2040,6 @@ async function doCreateManualPlan(){
   closeModal();
   toast(`تم توليد ${r.created} يوم${r.replaced?` (استُبدل ${r.replaced})`:''}`);
   await refreshTeacherStudents();
-  _mp.openIds.add(String(_mp.studentId));
   if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
   else if($('settingsSubBody') && _settingsSub==='allplans') renderAllPlansTab($('settingsSubBody'));
 }
@@ -4062,7 +4061,7 @@ window.logout = async function(){
 <script src="/ui/portal.js?v=2"></script>
 <script src="/ui/login-qr.js?v=2"></script>
 <script src="/ui/attendance-students.js?v=4"></script>
-<script src="/ui/followup.js?v=8"></script>
+<script src="/ui/followup.js?v=9"></script>
 <script src="/ui/shell.js?v=2"></script>
 </body>
 </html>

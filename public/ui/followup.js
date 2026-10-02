@@ -58,6 +58,24 @@ function _mpStudentState(plans){
   if(plans.every(p => p.Accomplishment_Status==='Done')) return 'done';
   return 'behind';
 }
+/* البطاقات مفتوحة افتراضياً، وتنطوي تلقائياً حين تُرصد أوراد الطالب كلها لذلك اليوم.
+   الفتح/الطيّ اليدوي يبقى إلى أن تتغيّر حالة رصد الطالب (رصدٌ أو إعادة فتح). */
+function _mpCardOpen(sid, dayPlans){
+  if(_mp.cardsDate !== _mp.date){ _mp.cards = {}; _mp.cardsDate = _mp.date; }
+  const st = _mpStudentState(dayPlans);
+  const recorded = st === 'done' || st === 'behind';
+  const c = _mp.cards[sid];
+  if(!c || c.recorded !== recorded){
+    if(c && recorded) _mp.justFolded = sid;
+    _mp.cards[sid] = { recorded, open: !recorded };
+  }
+  return _mp.cards[sid].open;
+}
+/* بعد طيّ بطاقة رُصدت للتو: أبقِها في مجال الرؤية ليظهر الطالب التالي تحتها مباشرة */
+function _mpRevealFolded(){
+  const sid = _mp.justFolded; _mp.justFolded = null;
+  if(sid) document.querySelector(`[data-mp-student="${CSS.escape(sid)}"]`)?.scrollIntoView({ block:'nearest' });
+}
 const _MP_FILTERS = [
   ['all','الكل'], ['pending','لم يُرصد'], ['done','مكتمل'], ['behind','متعثّر'], ['none','بلا خطة']
 ];
@@ -121,6 +139,7 @@ async function renderManualPlanTab(body){
     <div class="u-chips" id="mp_chips">${_mpChipsHTML(searched, byStudent)}</div>
     <div id="mp_list">${_mpListHTML(searched, byStudent)}</div>
   </div>`;
+  _mpRevealFolded();
 }
 function _mpShiftDay(n){
   const d = new Date(_mp.date + 'T12:00:00'); d.setDate(d.getDate() + n);
@@ -132,6 +151,7 @@ function mpSetSearch(v){
   const { searched, byStudent } = _mpDayData();
   const c = $('mp_chips'); if(c) c.innerHTML = _mpChipsHTML(searched, byStudent);
   const box = $('mp_list'); if(box) box.innerHTML = _mpListHTML(searched, byStudent);
+  _mpRevealFolded();
 }
 function mpSetFilter(k){
   _mp.filter = k || 'all';
@@ -159,13 +179,13 @@ function renderMpStudentCard(st, dayPlans){
                   : state==='behind' ? `<span class="u-pill warn">متعثّر <span class="u-num">${done}/${total}</span></span>`
                   : `<span class="u-pill info">لم يُرصد <span class="u-num">${done}/${total}</span></span>`;
   const attSt = getAttendanceStatus(sid, _mp.date);
-  const isOpen = _mp.openIds.has(sid);
+  const isOpen = _mpCardOpen(sid, dayPlans);
   const items = total ? dayPlans.map(p => renderMpPlanItem(p)).join('') : renderMpEmpty(sid);
   const hasAnyManual = (_tData.plans||[]).some(p => String(p.Student_ID)===sid && p.Source==='Manual');
   const attSeg = [['Present','حاضر','on-ok'],['Late','متأخر','on-warn'],['Absent','غائب','on-bad']]
     .map(([v,t,on]) => `<button type="button" class="${attSt===v?on:''}" onclick="_mpSetAttendance(${jsArg(sid)},${jsArg(v)})">${t}</button>`).join('');
 
-  return `<details class="u-card" style="padding:0;overflow:hidden" ${isOpen?'open':''} data-mp-student="${esc(sid)}" ontoggle="_mpToggleStudent(${jsArg(sid)}, this.open)">
+  return `<details class="u-card" style="padding:0;overflow:hidden;scroll-margin-top:12px" ${isOpen?'open':''} data-mp-student="${esc(sid)}" ontoggle="_mpToggleStudent(${jsArg(sid)}, this.open)">
     <summary style="display:block;list-style:none;cursor:pointer;padding:12px 14px;outline:none">
       <div class="u-row" style="align-items:flex-start">
         <div class="u-avatar">${esc(String(name).trim().charAt(0))}</div>
@@ -186,7 +206,7 @@ function renderMpStudentCard(st, dayPlans){
 }
 function _mpToggleStudent(sid, isOpen){
   sid = String(sid);
-  if(isOpen) _mp.openIds.add(sid); else _mp.openIds.delete(sid);
+  if(_mp.cards && _mp.cards[sid]) _mp.cards[sid].open = isOpen;
   const card = document.querySelector(`[data-mp-student="${CSS.escape(sid)}"] [data-mp-chev]`);
   if(card) card.style.transform = isOpen ? 'rotate(180deg)' : '';
 }
@@ -206,7 +226,6 @@ async function _mpSetAttendance(sid, status){
   _tData.attendance.push({ Att_ID:'A_'+sid+'_'+_mp.date, Student_ID:sid, Date:_mp.date, Status:status, Note:'مع الرصد' });
   // أبطل ذاكرة صفحة التحضير حتى تُعيد التحميل من _tData.attendance عند فتحها
   if(typeof _att !== 'undefined') _att._loadedDate = null;
-  _mp.openIds.add(String(sid));
   toast('تم حفظ الحضور');
   mpSetSearch(_mp.search);
 }
@@ -469,7 +488,6 @@ async function doSaveFullPlan(sid, origType){
   closeModal();
   toast('تم حفظ الخطة' + (r.created != null ? ' — ' + r.created + ' ورد' : ''));
   await refreshTeacherStudents();
-  _mp.openIds.add(String(sid));
   if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
   else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
 }
