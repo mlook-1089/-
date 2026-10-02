@@ -90,7 +90,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     await requireRole('Teacher');
-    const { id, studentId, source } = await req.json();
+    const { id, studentId, source, type } = await req.json();
     if (id) {
       // حذف ورد بعينه (غالباً أُضيف خطأً) → تُسحب نقاطه أيضاً
       const ids = (await db.delete(plans).where(eq(plans.id, id)).returning({ id: plans.id })).map(r => r.id);
@@ -98,8 +98,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: true, deleted: ids.length });
     }
     if (studentId && source === 'Manual') {
-      // مسح الخطة كاملة لإعادة بنائها: لا نسحب نقاط أيام سُمّعت فعلاً
-      const ids = (await db.delete(plans).where(and(eq(plans.studentId, studentId), eq(plans.source, 'Manual'))).returning({ id: plans.id }));
+      // مسح الخطة كاملة لإعادة بنائها: لا نسحب نقاط أيام سُمّعت فعلاً.
+      // type اختياري: يقصر الحذف على خطة الحفظ أو المراجعة وحدها.
+      const conds = [eq(plans.studentId, studentId), eq(plans.source, 'Manual')];
+      if (type === 'conserve' || type === 'revision') conds.push(eq(plans.type, type));
+      const ids = (await db.delete(plans).where(and(...conds)).returning({ id: plans.id }));
       return NextResponse.json({ success: true, deleted: ids.length });
     }
     return NextResponse.json({ success: false, message: 'بيانات الحذف ناقصة' }, { status: 400 });

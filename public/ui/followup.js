@@ -274,13 +274,14 @@ function renderMpPlanItem(p){
 /* قائمة إجراءات على مستوى خطة الطالب كلها — تُفتح من زر القلم على بطاقة الورد */
 function openMpPlanMenu(planId, sid){
   const {nameMap} = tMaps();
-  const hasAnyManual = (_tData.plans||[]).some(p => String(p.Student_ID)===String(sid) && p.Source==='Manual');
+  const p = (_tData.plans||[]).find(x => String(x.Plan_ID)===String(planId));
+  const type = p && p.Type==='revision' ? 'revision' : 'conserve';
   const item = (icon, label, js, cls) => `<button type="button" class="u-btn u-btn-${cls||'g'} w" style="justify-content:flex-start" onclick="closeModal();setTimeout(()=>{${js}},60)">${svg(icon,'w-5 h-5')} ${label}</button>`;
   openModal('خيارات الخطة — ' + (nameMap[sid]||sid), `<div style="display:grid;gap:8px">
-    ${item('edit','تعديل هذا الورد','openEditManualPlan('+jsArg(planId)+')','s')}
+    ${item('edit','تعديل الخطة كاملة','openEditFullPlan('+jsArg(sid)+','+jsArg(type)+')','p')}
+    ${item('edit','تعديل ورد هذا اليوم فقط','openEditManualPlan('+jsArg(planId)+')')}
     ${item('plus','خطة جديدة','openCreateManualPlan('+jsArg(sid)+')')}
-    ${hasAnyManual ? item('edit','تعديل الخطة','openEditDailyAmount('+jsArg(sid)+')') : ''}
-    ${hasAnyManual ? item('trash','مسح الخطة','_mp.studentId='+jsArg(sid)+';confirmClearManualPlans()','bad') : ''}
+    ${item('trash','مسح الخطة','_mp.studentId='+jsArg(sid)+';confirmClearManualPlans()','bad')}
   </div>`);
 }
 
@@ -342,79 +343,137 @@ function _fuSetRangeDir(sfx, dir){
   _cpUpdateAyahMax(id('fromA'), id('fromS'));
   _cpUpdateAyahMax(id('toA'), id('toS'));
 }
-/* تعديل المقدار اليومي لخطة قائمة — يعيد التوليد بمقدار جديد مع الحفاظ على المدى الكلي */
-async function openEditDailyAmount(sid){
-  const targetId = sid || _mp.studentId;
-  const cur = (_tData.plans||[]).filter(p => String(p.Student_ID)===String(targetId) && p.Source==='Manual' && p.Type==='conserve').sort((a,b)=>a.Date.localeCompare(b.Date));
-  if(!cur.length) return toast('لا توجد خطة حفظ يدوية لهذا الطالب','warn');
-  const {nameMap} = tMaps();
-  const cfg = _tData?.planConfig || {};
-  if(!cfg.termStart || !cfg.termEnd) return toast('عيّن بداية ونهاية الفصل من الإعدادات','warn');
-
-  // استنتج النطاقات من الخطة القائمة: كل تغيير في To_Surah/To_Ayah غير متتالٍ = نطاق جديد
-  // نستعمل ما رصده مولّد الخطة الأصلي: أدنى وأعلى آية في السلسلة المتتالية
-  const surs = _tData?.surahs||[], counts = _tData?.surahCounts||[];
-  const ord = (sur, ay) => { const i = surs.indexOf(sur); return i<0 ? 0 : counts.slice(0,i).reduce((a,b)=>a+b,0) + Number(ay); };
-  const ranges = [];
-  let curStart = cur[0], curEnd = cur[0];
-  for(let i=1;i<cur.length;i++){
-    const prevEndOrd = ord(curEnd.To_Surah, curEnd.To_Ayah);
-    const thisStartOrd = ord(cur[i].From_Surah, cur[i].From_Ayah);
-    // متتالٍ إذا كان start = prevEnd + 1 (تصاعدي) أو = prevEnd - 1 (تنازلي)
-    if(thisStartOrd === prevEndOrd + 1 || thisStartOrd === prevEndOrd - 1){ curEnd = cur[i]; }
-    else { ranges.push({ from: curStart, to: curEnd }); curStart = cur[i]; curEnd = cur[i]; }
-  }
-  ranges.push({ from: curStart, to: curEnd });
-
-  const rangesText = ranges.map(r => `${esc(r.from.From_Surah)} ${esc(r.from.From_Ayah)} → ${esc(r.to.To_Surah)} ${esc(r.to.To_Ayah)}`).join(' · ');
-  const totalAyat = ranges.reduce((sum, r) => sum + Math.abs(ord(r.to.To_Surah, r.to.To_Ayah) - ord(r.from.From_Surah, r.from.From_Ayah)) + 1, 0);
-  const currentDaily = Number(cur[0].Amount) || 1;
-
-  // اختر الوحدة الأقرب لمقدار حالي (استرشاداً بأول ورد)
-  const first = cur[0];
-  const nowUnitAyat = qExactAyahs(first.From_Surah, Number(first.From_Ayah)||1, 'full') || 10;
-  const ratio = currentDaily / (nowUnitAyat || 10);
-  const guessedUnit = ratio <= 0.35 ? 'quarter' : ratio <= 0.7 ? 'half' : ratio <= 1.4 ? 'full' : 'page';
-  const unitOpts = Object.entries(MP_UNITS).map(([k,v]) => `<option value="${k}" ${k===guessedUnit?'selected':''}>${v.label}</option>`).join('') + `<option value="custom">مخصّص (بالآيات)</option>`;
-
-  openModal('تعديل الخطة — ' + (nameMap[targetId]||targetId), `
-    <div class="u-plan" style="background:var(--card2);margin-bottom:12px;font-size:13px;color:var(--ink2)">
-      <div style="font-weight:700;color:var(--ink);margin-bottom:6px">النطاقات الحالية</div>
-      <div style="line-height:1.7">${rangesText}</div>
-      <div style="margin-top:8px;font-weight:600">مجموع الآيات: <span class="u-num">${totalAyat}</span> · المقدار الحالي: <span class="u-num">${currentDaily}</span> آية/يوم</div>
-    </div>
-    <div class="u-field">
-      <label>المقدار اليومي</label>
-      <select id="eda_unit" onchange="_edaToggleUnit()" class="u-input">${unitOpts}</select>
-    </div>
-    <div id="eda_custom_wrap" class="u-field${guessedUnit==='custom'?'':' hidden'}">
-      <label>عدد الآيات في اليوم</label>
-      <input type="number" inputmode="numeric" id="eda_daily" min="1" value="${currentDaily}" class="u-input u-num" style="text-align:center">
-    </div>
-    <div class="u-grid2" style="margin:0">
-      <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
-      <button type="button" class="u-btn u-btn-p" onclick="doEditDailyAmount(${jsArg(targetId)},${JSON.stringify(ranges.map(r=>({fromSurah:r.from.From_Surah,fromAyah:Number(r.from.From_Ayah)||1,toSurah:r.to.To_Surah,toAyah:Number(r.to.To_Ayah)||1})))})">حفظ وإعادة التوليد</button>
-    </div>`);
+/* ---------- تعريف الخطة كما أُدخلت: يُستنتج من أورادها (عكس ما يفعله مولّد الخطط في الخادم) ---------- */
+function _fuOrd(surah, ayah){
+  const surs = _tData?.surahs || [], counts = _tData?.surahCounts || [];
+  const i = surs.indexOf(String(surah||'')); if(i < 0) return 0;
+  let o = 0; for(let k = 0; k < i; k++) o += counts[k] || 0;
+  return o + Math.max(1, Number(ayah) || 1);
 }
-function _edaToggleUnit(){ const u = $('eda_unit')?.value; const w = $('eda_custom_wrap'); if(!w) return; w.classList.toggle('hidden', u!=='custom'); }
-async function doEditDailyAmount(sid, ranges){
-  const unit = $('eda_unit')?.value || 'full';
-  const first = ranges[0] || {};
-  let daily;
-  if(unit === 'custom') daily = Number($('eda_daily')?.value) || 0;
-  else daily = qExactAyahs(first.fromSurah, Number(first.fromAyah)||1, unit) || MP_UNITS[unit]?.ayat || 10;
-  if(!daily || daily < 1) return toast('أدخل مقداراً صالحاً','warn');
+/* أوراد متتالية في الترتيب = نطاق واحد. المولّد يكتب كل ورد من الأدنى إلى الأعلى،
+   فالنطاق التنازلي (من الناس نحو الفاتحة) يتقدّم بأورادٍ كل منها قبل سابقه مباشرة. */
+function _fuPlanRanges(items){
+  const seq = items.map(p => {
+    const a = _fuOrd(p.From_Surah, p.From_Ayah), b = _fuOrd(p.To_Surah, p.To_Ayah);
+    return a <= b
+      ? { lo:a, hi:b, loS:p.From_Surah, loA:p.From_Ayah, hiS:p.To_Surah, hiA:p.To_Ayah }
+      : { lo:b, hi:a, loS:p.To_Surah, loA:p.To_Ayah, hiS:p.From_Surah, hiA:p.From_Ayah };
+  }).filter(x => x.lo > 0);
+  const runs = [];
+  let run = null;
+  for(const x of seq){
+    if(run){
+      const last = run.items[run.items.length - 1];
+      const asc = x.lo === last.hi + 1, desc = x.hi === last.lo - 1;
+      if((asc && run.dir !== 'desc') || (desc && run.dir !== 'asc')){
+        run.dir = run.dir || (asc ? 'asc' : 'desc');
+        run.items.push(x);
+        continue;
+      }
+      runs.push(run);
+    }
+    run = { dir:'', items:[x] };
+  }
+  if(run) runs.push(run);
+  return runs.map(r => {
+    const f = r.items[0], l = r.items[r.items.length - 1];
+    return r.dir === 'desc'
+      ? { fromSurah:f.hiS, fromAyah:Number(f.hiA)||1, toSurah:l.loS, toAyah:Number(l.loA)||1 }
+      : { fromSurah:f.loS, fromAyah:Number(f.loA)||1, toSurah:l.hiS, toAyah:Number(l.hiA)||1 };
+  });
+}
+/* المقدار اليومي = الأكثر تكراراً (آخر ورد في كل نطاق قد يكون أقصر) */
+function _fuPlanDaily(items){
+  const cnt = {};
+  items.forEach(p => { const n = Number(p.Amount) || 0; if(n > 0) cnt[n] = (cnt[n] || 0) + 1; });
+  let best = 0, bestC = 0;
+  Object.keys(cnt).forEach(k => { const n = Number(k), c = cnt[k]; if(c > bestC || (c === bestC && n > best)){ best = n; bestC = c; } });
+  return best;
+}
+/* أوراد الخطة كاملة — بيانات المعلم تحمل آخر ٤٥ يوماً فقط، فنجلب الفصل كله من الخادم */
+async function _fuLoadPlanItems(sid, type){
   const cfg = _tData?.planConfig || {};
-  const payload = { studentId:sid, type:'conserve', startDate:cfg.termStart, endDate:cfg.termEnd, ranges, workDays:cfg.workDays, dailyAmount:daily, replaceExisting:true };
-  const r = await guard(DS.planGenerate(payload),'إعادة التوليد…');
-  if(!r||!r.success) return toast((r&&r.message)||'فشل','error');
+  let items = [];
+  if(cfg.termStart && cfg.termEnd){
+    const r = await guard(DS.plansByStudent(sid, cfg.termStart, cfg.termEnd, type), 'تحميل الخطة…');
+    if(r && r.success && Array.isArray(r.plans)) items = r.plans.filter(p => p.Source === 'Manual' && p.Type === type);
+  }
+  if(!items.length) items = (_tData.plans || []).filter(p => String(p.Student_ID) === String(sid) && p.Type === type && p.Source === 'Manual');
+  return items.slice().sort((a, b) => String(a.Date).localeCompare(String(b.Date)));
+}
+
+/* تعديل الخطة كاملة — نفس نافذة إنشاء الخطة، معبّأة بالخطة كما أُدخلت */
+async function openEditFullPlan(sid, type){
+  sid = String(sid || _mp.studentId || '');
+  type = type === 'revision' ? 'revision' : 'conserve';
+  if(!sid) return toast('اختر طالباً','warn');
+  const cfg = _tData?.planConfig || {};
+  if(!cfg.termStart || !cfg.termEnd) return toast('عيّن بداية ونهاية الفصل من الإعدادات ← أيام الحلقة','warn');
+  const items = await _fuLoadPlanItems(sid, type);
+  if(!items.length) return toast('لا توجد خطة ' + (type === 'revision' ? 'مراجعة' : 'حفظ') + ' لهذا الطالب — أنشئ خطة جديدة','warn');
+  const ranges = _fuPlanRanges(items);
+  if(!ranges.length) return toast('تعذّر قراءة مدى الخطة','error');
+  const recorded = items.filter(p => (p.Accomplishment_Status || 'Pending') !== 'Pending').length;
+  openCreateManualPlan(sid, { type, ranges, daily: _fuPlanDaily(items), recorded });
+}
+function _fuPrefillPlan(edit){
+  if($('cp_type')) $('cp_type').value = edit.type;
+  edit.ranges.forEach((rg, i) => {
+    if(i > 0) _cpAddRange();
+    const sfx = i > 0 ? '_' + _cpRangeCount : '';
+    const id = k => `cp_${k}${sfx}`;
+    const desc = _fuOrd(rg.fromSurah, rg.fromAyah) > _fuOrd(rg.toSurah, rg.toAyah);
+    $(id('dirAsc'))?.classList.toggle('on', !desc);
+    $(id('dirDesc'))?.classList.toggle('on', desc);
+    if($(id('fromS'))){ $(id('fromS')).value = rg.fromSurah; _cpUpdateAyahMax(id('fromA'), id('fromS')); }
+    if($(id('fromA'))) $(id('fromA')).value = rg.fromAyah;
+    if($(id('toS'))){ $(id('toS')).value = rg.toSurah; _cpUpdateAyahMax(id('toA'), id('toS')); }
+    if($(id('toA'))) $(id('toA')).value = rg.toAyah;
+  });
+  const r0 = edit.ranges[0];
+  const unit = ['full','half','quarter','page'].find(k => qExactAyahs(r0.fromSurah, r0.fromAyah, k) === edit.daily) || 'custom';
+  if($('cp_unit')) $('cp_unit').value = unit;
+  if($('cp_daily')) $('cp_daily').value = edit.daily || '';
+  _mpToggleUnit();
+}
+function _fuReadPlanForm(){
+  const val = id => $(id)?.value;
+  const ranges = [];
+  const add = sfx => {
+    const fS = val('cp_fromS' + sfx), tS = val('cp_toS' + sfx);
+    if(fS && tS) ranges.push({ fromSurah:fS, fromAyah:Number(val('cp_fromA' + sfx))||1, toSurah:tS, toAyah:Number(val('cp_toA' + sfx))||1 });
+  };
+  add('');
+  document.querySelectorAll('[id^="cp_range_"]').forEach(div => add('_' + div.id.replace('cp_range_', '')));
+  const unit = val('cp_unit') || 'full', r0 = ranges[0];
+  const daily = unit === 'custom'
+    ? Number(val('cp_daily')) || 0
+    : (r0 ? (qExactAyahs(r0.fromSurah, r0.fromAyah, unit) || MP_UNITS[unit]?.ayat || 0) : 0);
+  return { type: val('cp_type') === 'revision' ? 'revision' : 'conserve', ranges, daily };
+}
+async function doSaveFullPlan(sid, origType){
+  const cfg = _tData?.planConfig || {};
+  if(!cfg.termStart || !cfg.termEnd) return toast('عيّن بداية ونهاية الفصل من الإعدادات ← أيام الحلقة','warn');
+  const f = _fuReadPlanForm();
+  if(!f.ranges.length) return toast('اختر المدى القرآني','warn');
+  if(!f.daily || f.daily < 1) return toast('أدخل مقداراً يومياً صحيحاً','warn');
+  const typeChanged = f.type !== origType;
+  if(typeChanged && (_tData.plans||[]).some(p => String(p.Student_ID) === String(sid) && p.Type === f.type && p.Source === 'Manual'))
+    return toast('لدى الطالب خطة ' + (f.type === 'revision' ? 'مراجعة' : 'حفظ') + ' قائمة — عدّلها هي بدلاً من تغيير النوع','warn');
+  const payload = { studentId:sid, type:f.type, startDate:cfg.termStart, endDate:cfg.termEnd, ranges:f.ranges,
+    workDays: cfg.workDays?.length ? cfg.workDays : [0,1,2,3,4], dailyAmount:f.daily, replaceExisting:true };
+  const r = await guard(DS.planGenerate(payload), 'حفظ الخطة وإعادة توليدها…');
+  if(!r || !r.success) return toast((r && r.message) || 'فشل حفظ الخطة','error');
+  // الخطة الجديدة حُفظت أولاً؛ عند تغيير النوع نحذف أوراد النوع السابق فقط
+  if(typeChanged) await guard(DS.deleteManualPlans(sid, origType), 'حذف الخطة السابقة…');
   closeModal();
-  toast(`تم — ${r.created} ورد جديد`);
+  toast('تم حفظ الخطة' + (r.created != null ? ' — ' + r.created + ' ورد' : ''));
   await refreshTeacherStudents();
   _mp.openIds.add(String(sid));
-  renderManualPlanTab($('fuSubBody'));
+  if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
+  else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
 }
-function openCreateManualPlan(sid){
+function openCreateManualPlan(sid, edit){
   const targetId = sid || _mp.studentId;
   if(!targetId) return toast('اختر طالباً','warn');
   _mp.studentId = targetId;
@@ -429,8 +488,10 @@ function openCreateManualPlan(sid){
   const cfgInfo = cfg.termStart && cfg.termEnd
     ? `<div class="u-plan" style="background:var(--brand-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--brand-ink);margin-bottom:12px">الفصل: <span class="u-num">${esc(cfg.termStart)}</span> — <span class="u-num">${esc(cfg.termEnd)}</span><br>الأيام: ${(cfg.workDays||[]).map(d=>dayN[d]||d).join('، ')}</div>`
     : `<div class="u-plan" style="background:var(--warn-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--warn);margin-bottom:12px">لم تُعيَّن بيانات الفصل — من الإعدادات ثم أيام الحلقة</div>`;
-  openModal('خطة فصلية — ' + name, `
+  const editNote = edit ? `<div class="u-plan" style="background:var(--warn-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:12px">عند الحفظ تُعاد الخطة كاملة على أيام الفصل بالقيم أدناه${edit.recorded ? ` — يُستبدل <span class="u-num">${edit.recorded}</span> ورد مرصود سابقاً، وتبقى نقاطه` : ''}.</div>` : '';
+  openModal((edit ? 'تعديل الخطة — ' : 'خطة فصلية — ') + name, `
     ${cfgInfo}
+    ${editNote}
     <div class="u-grid2" style="gap:8px">
       <div><label ${_FU_LBL}>النوع</label><select id="cp_type" class="u-input"><option value="conserve">حفظ</option><option value="revision">مراجعة</option></select></div>
       <div><label ${_FU_LBL}>المقدار اليومي</label><select id="cp_unit" onchange="_mpToggleUnit()" class="u-input">${unitOpts}</select></div>
@@ -445,13 +506,16 @@ function openCreateManualPlan(sid){
       <div id="cp_extra_ranges"></div>
       <button type="button" class="u-btn sm u-btn-s w" style="margin-top:10px" onclick="_cpAddRange()">${svg('plus','w-4 h-4')} نطاق تالٍ</button>
     </div>
-    <label class="u-row" style="gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:14px;cursor:pointer">
+    ${edit ? '' : `<label class="u-row" style="gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:14px;cursor:pointer">
       <input type="checkbox" id="cp_replace" style="width:18px;height:18px;accent-color:var(--brand)"> استبدال أي خطة قائمة من النوع نفسه في هذا المدى
-    </label>
+    </label>`}
     <div class="u-grid2" style="margin:0">
       <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
-      <button type="button" class="u-btn u-btn-p" onclick="doCreateManualPlan()">إنشاء الخطة</button>
+      ${edit
+        ? `<button type="button" class="u-btn u-btn-p" onclick="doSaveFullPlan(${jsArg(targetId)},${jsArg(edit.type)})">حفظ وإعادة التوليد</button>`
+        : `<button type="button" class="u-btn u-btn-p" onclick="doCreateManualPlan()">إنشاء الخطة</button>`}
     </div>`);
+  if(edit) _fuPrefillPlan(edit);
 }
 function _fuSetDir(dir){
   const r = document.querySelector(`[name="cp_dir"][value="${dir}"]`); if(r) r.checked = true;
@@ -490,7 +554,7 @@ function openEditManualPlan(planId){
   const surs = _tData?.surahs || [], counts = _tData?.surahCounts || [];
   const surOpts = sel => surs.map(s=>`<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
   const ayahMax = s => { const i = surs.indexOf(s); return i>=0 ? (counts[i]||999) : 999; };
-  openModal('تعديل الورد', `
+  openModal('تعديل ورد هذا اليوم فقط', `
     <div class="u-grid2" style="gap:8px">
       <div><label ${_FU_LBL}>التاريخ</label><input type="date" id="ep_date" value="${esc(p.Date)}" class="u-input u-num"></div>
       <div><label ${_FU_LBL}>النوع</label><select id="ep_type" class="u-input"><option value="conserve" ${p.Type==='conserve'?'selected':''}>حفظ</option><option value="revision" ${p.Type==='revision'?'selected':''}>مراجعة</option></select></div>
@@ -510,4 +574,15 @@ function openEditManualPlan(planId){
       <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
       <button type="button" class="u-btn u-btn-p" onclick="doSaveEditPlan(${jsArg(planId)})">حفظ التعديل</button>
     </div>`);
+}
+async function doSaveEditPlan(planId){
+  const upd = { Date: $('ep_date').value, Type: $('ep_type').value, From_Surah: $('ep_fromS').value, From_Ayah: String($('ep_fromA').value||1), To_Surah: $('ep_toS').value, To_Ayah: String($('ep_toA').value||1) };
+  const r = await guard(DS.updatePlan(planId, upd), 'حفظ…');
+  if(!r || !r.success) return toast((r && r.message) || 'فشل الحفظ','error');
+  const p = (_tData.plans||[]).find(x => String(x.Plan_ID)===String(planId));
+  if(p) Object.assign(p, upd);
+  closeModal();
+  toast('تم التعديل');
+  if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
+  else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
 }

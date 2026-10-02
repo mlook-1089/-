@@ -28,11 +28,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'نوع الخطة غير صالح' }, { status: 400 });
     }
 
-    const conds = [
-      eq(plans.studentId, studentId),
-      gte(plans.date, from),
-      lte(plans.date, to)
-    ];
+    // studentId='*' = خطط كل الطلاب في المدى (لصفحة «خطط جميع الطلاب»)
+    const conds = [gte(plans.date, from), lte(plans.date, to)];
+    if (studentId !== '*') conds.push(eq(plans.studentId, studentId));
     if (type !== 'all') conds.push(eq(plans.type, type));
 
     const rows = await db.select().from(plans).where(and(...conds)).orderBy(asc(plans.date));
@@ -41,6 +39,7 @@ export async function GET(req: NextRequest) {
       success: true,
       plans: rows.map(p => ({
         Plan_ID: p.id,
+        Student_ID: p.studentId,
         Date: String(p.date),
         Type: p.type,
         Source: p.source,
