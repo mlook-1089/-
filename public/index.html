@@ -2047,6 +2047,8 @@ function openEditManualPlan(planId){
   const p = (_tData.plans||[]).find(x=>String(x.Plan_ID)===String(planId));
   if(!p) return toast('لم يُعثر على الورد','error');
   const sid = p.Student_ID, type = p.Type;
+  const {nameMap} = tMaps();
+  const name = nameMap[sid] || sid;
 
   // كل أوراد الطالب من نفس النوع، مرتّبة بالتاريخ
   const sp = (_tData.plans||[])
@@ -2057,26 +2059,29 @@ function openEditManualPlan(planId){
   const first=sp[0], last=sp[sp.length-1];
   const amt=Number(first.Amount);
 
-  // افتح نافذة إنشاء خطة جديدة (تستخدم تواريخ الفصل المحفوظة تلقائياً)
+  // افتح نافذة إنشاء خطة (نفس النموذج الكامل)
   openCreateManualPlan(sid);
 
-  // سبق الحقول بقيم الخطة القائمة
+  // عدّل العنوان ليعكس وضع التعديل
+  $('modalTitle').textContent = 'تعديل الخطة — ' + name;
+
+  // سبق حقول المدى القرآني بقيم الخطة القائمة
   const typeEl=$('cp_type'); if(typeEl) typeEl.value=type;
   const fromSEl=$('cp_fromS'); if(fromSEl){ fromSEl.value=first.From_Surah; _cpUpdateAyahMax('cp_fromA','cp_fromS'); }
   const fromAEl=$('cp_fromA'); if(fromAEl) fromAEl.value=first.From_Ayah||1;
   const toSEl=$('cp_toS');   if(toSEl){ toSEl.value=last.To_Surah; _cpUpdateAyahMax('cp_toA','cp_toS'); }
   const toAEl=$('cp_toA');   if(toAEl) toAEl.value=last.To_Ayah||1;
 
-  // المقدار اليومي (مخصّص)
+  // المقدار اليومي المخصّص
   if(amt>0){
     const unitEl=$('cp_unit'); if(unitEl){ unitEl.value='custom'; _mpToggleUnit(); }
     const dailyEl=$('cp_daily'); if(dailyEl) dailyEl.value=amt;
   }
 
-  // استبدال تلقائي + تغيير نص زر الحفظ
+  // استبدال تلقائي + تحديث نص الزر
   const replEl=$('cp_replace'); if(replEl) replEl.checked=true;
   const saveBtn=document.querySelector('[onclick="doCreateManualPlan()"]');
-  if(saveBtn) saveBtn.textContent='إعادة التوليد';
+  if(saveBtn) saveBtn.textContent='حفظ وإعادة التوليد';
 }
 async function confirmClearManualPlans(){
   const ok = await confirmModal({title:'مسح',message:'حذف <b>جميع أوراد المتابعة اليدوية</b> لهذا الطالب؟',danger:true});
