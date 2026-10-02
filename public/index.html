@@ -2057,80 +2057,68 @@ function openEditManualPlan(planId){
 
   const first=sp[0], last=sp[sp.length-1];
   const amt=Number(first.Amount)||7;
-  const surs = _tData?.surahs || [];
-  const cfg = _tData?.planConfig || {};
-  const surOptsFrom = surs.map(s=>`<option value="${esc(s)}"${s===first.From_Surah?' selected':''}>${esc(s)}</option>`).join('');
-  const surOptsTo   = surs.map(s=>`<option value="${esc(s)}"${s===last.To_Surah?' selected':''}>${esc(s)}</option>`).join('');
-  const startDate = cfg.termStart || first.Date || '';
-  const endDate   = cfg.termEnd   || last.Date  || '';
-
   _mp.studentId = sid;
 
-  openModal('تعديل الخطة — ' + esc(name), `<div class="space-y-3">
-    <div class="grid grid-cols-2 gap-2">
-      <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">البداية</label>
-        <input type="date" id="ep2_start" value="${esc(startDate)}" class="input py-2 num text-center">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">النهاية</label>
-        <input type="date" id="ep2_end" value="${esc(endDate)}" class="input py-2 num text-center">
-      </div>
-    </div>
-    <div class="grid grid-cols-2 gap-2">
-      <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
-        <select id="ep2_type" class="input py-2">
-          <option value="conserve"${type==='conserve'?' selected':''}>حفظ</option>
-          <option value="revision"${type==='revision'?' selected':''}>مراجعة</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">المقدار اليومي (آيات)</label>
-        <input type="number" id="ep2_daily" min="1" value="${amt}" class="input py-2 num text-center">
-      </div>
-    </div>
-    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-      <div class="text-xs font-bold text-slate-600 mb-2">المدى القرآني</div>
-      <div class="grid grid-cols-2 gap-2 mb-2">
-        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="ep2_fromS" onchange="_cpUpdateAyahMax('ep2_fromA','ep2_fromS')" class="input py-2 text-sm">${surOptsFrom}</select></div>
-        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="ep2_fromA" min="1" value="${esc(String(first.From_Ayah||1))}" class="input py-2 text-sm text-center num"></div>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="ep2_toS" onchange="_cpUpdateAyahMax('ep2_toA','ep2_toS')" class="input py-2 text-sm">${surOptsTo}</select></div>
-        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="ep2_toA" min="1" value="${esc(String(last.To_Ayah||1))}" class="input py-2 text-sm text-center num"></div>
-      </div>
-    </div>
-    <div class="grid grid-cols-2 gap-2 pt-1">
-      <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
-      <button onclick="doEditManualPlan()" class="btn-v4 btn-v4-primary">حفظ وإعادة التوليد</button>
-    </div>
-  </div>`);
+  // افتح نفس نموذج إنشاء الخطة ثم عبّئ القيم من الخطة القائمة
+  openCreateManualPlan(sid);
+
+  // بدّل العنوان والزر وضع وضع التعديل
+  $('modalTitle').textContent = 'تعديل الخطة الكاملة — ' + name;
+  const btn = document.querySelector('#modalBody button[onclick="doCreateManualPlan()"]');
+  if(btn){ btn.setAttribute('onclick','doEditManualPlan()'); btn.textContent = 'حفظ وإعادة التوليد'; }
+
+  // عبّئ النوع
+  if($('cp_type')) $('cp_type').value = type;
+  // اضبط المقدار على مخصّص وأدخل العدد الفعلي للآيات
+  if($('cp_unit')) { $('cp_unit').value = 'custom'; _mpToggleUnit(); }
+  if($('cp_daily')) $('cp_daily').value = amt;
+  // المدى القرآني
+  if($('cp_fromS')) { $('cp_fromS').value = first.From_Surah; _cpUpdateAyahMax('cp_fromA','cp_fromS'); }
+  if($('cp_fromA')) $('cp_fromA').value = Number(first.From_Ayah)||1;
+  if($('cp_toS'))   { $('cp_toS').value = last.To_Surah; _cpUpdateAyahMax('cp_toA','cp_toS'); }
+  if($('cp_toA'))   $('cp_toA').value = Number(last.To_Ayah)||1;
+  // استبدال تلقائي عند الحفظ
+  if($('cp_replace')) $('cp_replace').checked = true;
 }
 async function doEditManualPlan(){
   const sid = _mp.studentId;
-  const type = $('ep2_type')?.value;
-  const daily = Number($('ep2_daily')?.value)||0;
-  const fromSurah = $('ep2_fromS')?.value;
-  const fromAyah  = Number($('ep2_fromA')?.value)||1;
-  const toSurah   = $('ep2_toS')?.value;
-  const toAyah    = Number($('ep2_toA')?.value)||1;
-  const startDate = $('ep2_start')?.value || '';
-  const endDate   = $('ep2_end')?.value || '';
-  if(!fromSurah||!toSurah) return toast('اختر نطاق القرآن','warn');
-  if(daily<1) return toast('أدخل مقداراً يومياً صحيحاً','warn');
-  if(!startDate||!endDate) return toast('أدخل تاريخي البداية والنهاية','warn');
-  if(startDate>endDate) return toast('البداية يجب أن تسبق النهاية','warn');
+  const type = $('cp_type')?.value || 'conserve';
+  const unit = $('cp_unit')?.value || 'custom';
   const cfg = _tData?.planConfig || {};
-  const workDays = cfg.workDays?.length ? cfg.workDays : [0,1,2,3,4];
-  const payload = { studentId:sid, type, startDate, endDate, ranges:[{fromSurah,fromAyah,toSurah,toAyah}], workDays, dailyAmount:daily, replaceExisting:true };
+  const startDate = cfg.termStart || '';
+  const endDate   = cfg.termEnd   || '';
+  const workDays  = cfg.workDays?.length ? cfg.workDays : [0,1,2,3,4];
+  if(!startDate||!endDate) return toast('عيّن بداية ونهاية الفصل في الإعدادات → أيام الحلقة','warn');
+
+  // النطاقات (مع نطاقات إضافية إن وُجدت)
+  const ranges = [];
+  const fromSurah0 = $('cp_fromS')?.value, toSurah0 = $('cp_toS')?.value;
+  const fromAyah0  = Number($('cp_fromA')?.value)||1, toAyah0 = Number($('cp_toA')?.value)||1;
+  if(!fromSurah0||!toSurah0) return toast('اختر نطاق القرآن','warn');
+  ranges.push({fromSurah:fromSurah0,fromAyah:fromAyah0,toSurah:toSurah0,toAyah:toAyah0});
+  document.querySelectorAll('[id^="cp_range_"]').forEach(div=>{
+    const n = div.id.replace('cp_range_','');
+    const fS = document.getElementById(`cp_fromS_${n}`)?.value;
+    const fA = Number(document.getElementById(`cp_fromA_${n}`)?.value)||1;
+    const tS = document.getElementById(`cp_toS_${n}`)?.value;
+    const tA = Number(document.getElementById(`cp_toA_${n}`)?.value)||1;
+    if(fS&&tS) ranges.push({fromSurah:fS,fromAyah:fA,toSurah:tS,toAyah:tA});
+  });
+
+  let daily;
+  if(unit==='custom') daily = Number($('cp_daily')?.value) || undefined;
+  else daily = qExactAyahs(fromSurah0,fromAyah0,unit) || MP_UNITS[unit]?.ayat;
+  if(!daily || daily<1) return toast('أدخل مقداراً يومياً صحيحاً','warn');
+
+  const payload = { studentId:sid, type, startDate, endDate, ranges, workDays, dailyAmount:daily, replaceExisting:true };
   const r = await guard(DS.planGenerate(payload),'إعادة توليد الخطة…');
   if(!r||!r.success) return toast((r&&r.message)||'فشل التوليد','error');
   closeModal();
   toast(`تم توليد ${r.created} يوم${r.replaced?` (استُبدل ${r.replaced})`:''}`);
   await refreshTeacherStudents();
   _mp.openIds.add(String(sid));
-  renderManualPlanTab($('fuSubBody'));
+  if(_settingsSub==='allplans' && $('settingsSubBody')) renderAllPlansTab($('settingsSubBody'));
+  else renderManualPlanTab($('fuSubBody'));
 }
 async function confirmClearManualPlans(){
   const ok = await confirmModal({title:'مسح',message:'حذف <b>جميع أوراد المتابعة اليدوية</b> لهذا الطالب؟',danger:true});
