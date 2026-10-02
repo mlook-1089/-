@@ -2050,38 +2050,78 @@ function openEditManualPlan(planId){
   const {nameMap} = tMaps();
   const name = nameMap[sid] || sid;
 
-  // كل أوراد الطالب من نفس النوع، مرتّبة بالتاريخ
   const sp = (_tData.plans||[])
     .filter(x=>String(x.Student_ID)===String(sid)&&x.Type===type&&x.Source==='Manual')
     .sort((a,b)=>a.Date.localeCompare(b.Date));
   if(!sp.length) return toast('لم تُعثر على أوراد','error');
 
   const first=sp[0], last=sp[sp.length-1];
-  const amt=Number(first.Amount);
+  const amt=Number(first.Amount)||7;
+  const surs = _tData?.surahs || [];
+  const cfg = _tData?.planConfig || {};
+  const surOptsFrom = surs.map(s=>`<option value="${esc(s)}"${s===first.From_Surah?' selected':''}>${esc(s)}</option>`).join('');
+  const surOptsTo   = surs.map(s=>`<option value="${esc(s)}"${s===last.To_Surah?' selected':''}>${esc(s)}</option>`).join('');
+  const cfgInfo = cfg.termStart && cfg.termEnd
+    ? `<div class="text-[10px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg px-3 py-2">الفصل: ${esc(cfg.termStart)} — ${esc(cfg.termEnd)} · الأيام: ${(cfg.workDays||[]).map(d=>['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][d]||d).join('، ')}</div>`
+    : `<div class="text-[10px] font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">${svg('warn','w-3 h-3 inline')} لم يتم تعيين بيانات الفصل — اذهب إلى الإعدادات &gt; أيام الحلقة</div>`;
 
-  // افتح نافذة إنشاء خطة (نفس النموذج الكامل)
-  openCreateManualPlan(sid);
+  _mp.studentId = sid;
 
-  // عدّل العنوان ليعكس وضع التعديل
-  $('modalTitle').textContent = 'تعديل الخطة — ' + name;
-
-  // سبق حقول المدى القرآني بقيم الخطة القائمة
-  const typeEl=$('cp_type'); if(typeEl) typeEl.value=type;
-  const fromSEl=$('cp_fromS'); if(fromSEl){ fromSEl.value=first.From_Surah; _cpUpdateAyahMax('cp_fromA','cp_fromS'); }
-  const fromAEl=$('cp_fromA'); if(fromAEl) fromAEl.value=first.From_Ayah||1;
-  const toSEl=$('cp_toS');   if(toSEl){ toSEl.value=last.To_Surah; _cpUpdateAyahMax('cp_toA','cp_toS'); }
-  const toAEl=$('cp_toA');   if(toAEl) toAEl.value=last.To_Ayah||1;
-
-  // المقدار اليومي المخصّص
-  if(amt>0){
-    const unitEl=$('cp_unit'); if(unitEl){ unitEl.value='custom'; _mpToggleUnit(); }
-    const dailyEl=$('cp_daily'); if(dailyEl) dailyEl.value=amt;
-  }
-
-  // استبدال تلقائي + تحديث نص الزر
-  const replEl=$('cp_replace'); if(replEl) replEl.checked=true;
-  const saveBtn=document.querySelector('[onclick="doCreateManualPlan()"]');
-  if(saveBtn) saveBtn.textContent='حفظ وإعادة التوليد';
+  openModal('تعديل الخطة — ' + esc(name), `<div class="space-y-3">
+    ${cfgInfo}
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
+        <select id="ep2_type" class="input py-2">
+          <option value="conserve"${type==='conserve'?' selected':''}>حفظ</option>
+          <option value="revision"${type==='revision'?' selected':''}>مراجعة</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">المقدار اليومي (آيات)</label>
+        <input type="number" id="ep2_daily" min="1" value="${amt}" class="input py-2 num text-center">
+      </div>
+    </div>
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+      <div class="text-xs font-bold text-slate-600 mb-2">المدى القرآني</div>
+      <div class="grid grid-cols-2 gap-2 mb-2">
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="ep2_fromS" onchange="_cpUpdateAyahMax('ep2_fromA','ep2_fromS')" class="input py-2 text-sm">${surOptsFrom}</select></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="ep2_fromA" min="1" value="${esc(String(first.From_Ayah||1))}" class="input py-2 text-sm text-center num"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="ep2_toS" onchange="_cpUpdateAyahMax('ep2_toA','ep2_toS')" class="input py-2 text-sm">${surOptsTo}</select></div>
+        <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="ep2_toA" min="1" value="${esc(String(last.To_Ayah||1))}" class="input py-2 text-sm text-center num"></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-2 pt-1">
+      <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
+      <button onclick="doEditManualPlan()" class="btn-v4 btn-v4-primary">حفظ وإعادة التوليد</button>
+    </div>
+  </div>`);
+}
+async function doEditManualPlan(){
+  const sid = _mp.studentId;
+  const type = $('ep2_type')?.value;
+  const daily = Number($('ep2_daily')?.value)||0;
+  const fromSurah = $('ep2_fromS')?.value;
+  const fromAyah  = Number($('ep2_fromA')?.value)||1;
+  const toSurah   = $('ep2_toS')?.value;
+  const toAyah    = Number($('ep2_toA')?.value)||1;
+  if(!fromSurah||!toSurah) return toast('اختر نطاق القرآن','warn');
+  if(daily<1) return toast('أدخل مقداراً يومياً صحيحاً','warn');
+  const cfg = _tData?.planConfig || {};
+  const startDate = cfg.termStart||'', endDate = cfg.termEnd||'';
+  const workDays = cfg.workDays?.length ? cfg.workDays : [];
+  if(!startDate||!endDate) return toast('عيّن بداية ونهاية الفصل في الإعدادات → أيام الحلقة','warn');
+  if(!workDays.length) return toast('عيّن أيام الحلقة في الإعدادات → أيام الحلقة','warn');
+  const payload = { studentId:sid, type, startDate, endDate, ranges:[{fromSurah,fromAyah,toSurah,toAyah}], workDays, dailyAmount:daily, replaceExisting:true };
+  const r = await guard(DS.planGenerate(payload),'إعادة توليد الخطة…');
+  if(!r||!r.success) return toast((r&&r.message)||'فشل التوليد','error');
+  closeModal();
+  toast(`تم توليد ${r.created} يوم${r.replaced?` (استُبدل ${r.replaced})`:''}`);
+  await refreshTeacherStudents();
+  _mp.openIds.add(String(sid));
+  renderManualPlanTab($('fuSubBody'));
 }
 async function confirmClearManualPlans(){
   const ok = await confirmModal({title:'مسح',message:'حذف <b>جميع أوراد المتابعة اليدوية</b> لهذا الطالب؟',danger:true});
