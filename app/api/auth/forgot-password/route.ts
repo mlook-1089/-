@@ -46,13 +46,17 @@ export async function POST(req: NextRequest) {
     let cookies: CookieMap = {};
     let xsrf = '';
 
-    const base = { 'Origin': NAZEM_ORIGIN, 'Referer': NAZEM_ORIGIN + '/', 'Accept': 'application/json' };
+    // x-requested-with is required by Nazem's backend to recognise XHR calls
+    const base = {
+      'Origin': NAZEM_ORIGIN, 'Referer': NAZEM_ORIGIN + '/', 'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest'
+    };
 
-    // 1. CSRF cookie
+    // 1. CSRF cookie (returns 204, sets XSRF-TOKEN cookie)
     const csrfRes = await fetch(NAZEM_API + '/api/csrf-cookie', { headers: base, redirect: 'manual' });
     ({ cookies, xsrf } = extractCookies(csrfRes, cookies));
 
-    // 2. Login with identity as username+password (Nazem convention for students)
+    // 2. Login with identity as username+password (Nazem student convention)
     const loginRes = await fetch(NAZEM_API + '/api/login', {
       method: 'POST',
       headers: {
@@ -73,9 +77,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Fetch student name from Nazem
+    // 3. Fetch student name from Nazem (/api/user returns flat object with full_name)
     const profileRes = await fetch(NAZEM_API + '/api/user', {
-      headers: { ...base, 'Cookie': cookieHeader(cookies) }
+      headers: { ...base, 'Cookie': cookieHeader(cookies), ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}) }
     });
 
     if (profileRes.status !== 200) {
@@ -83,7 +87,8 @@ export async function POST(req: NextRequest) {
     }
 
     const profile = await profileRes.json().catch(() => null);
-    const nazemName: string = profile?.data?.name || profile?.name || '';
+    // Response is a flat object: { id, full_name, first_name, last_name, ... }
+    const nazemName: string = profile?.full_name || profile?.name || '';
     if (!nazemName) {
       return NextResponse.json({ success: false, message: 'الاسم غير موجود في ناظم — تواصل مع المعلم' }, { status: 502 });
     }
