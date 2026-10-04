@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { newsComments, users, pointLogs, pointItems, studentsData } from '@/db/schema';
+import { newsComments, news, users, pointLogs, pointItems, studentsData } from '@/db/schema';
 import { eq, asc, inArray } from 'drizzle-orm';
 import { requireSession, requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, today } from '@/lib/utils';
 import { addToStudent, recomputeGroups } from '@/lib/triggers';
 import { tryAwardBadges } from '@/lib/badges';
+import { notifyUsers } from '@/lib/push';
 
 export async function GET(req: NextRequest) {
   try {
@@ -39,6 +40,23 @@ export async function POST(req: NextRequest) {
     const userName = userRow[0]?.name || s.id;
     const id = genId('C');
     await db.insert(newsComments).values({ id, newsId, userId: s.id, userName, body: body.trim() });
+
+    // تنبيه جميع المعلمين بمشاركة الطالب الجديدة (دفاعي — لا يُفشل الطلب)
+    try {
+      if (s.role === 'Student') {
+        const [post] = await db.select({ title: news.title }).from(news).where(eq(news.id, newsId));
+        const teachers = await db.select({ id: users.id }).from(users).where(eq(users.role, 'Teacher'));
+        const teacherIds = teachers.map(t => t.id);
+        if (teacherIds.length) {
+          await notifyUsers(
+            teacherIds,
+            { title: 'مشاركة جديدة', body: userName + (post?.title ? ' · ' + post.title : ''), url: '/', tag: 'contribution:' + newsId },
+            'staff'
+          );
+        }
+      }
+    } catch {}
+
     return NextResponse.json({ success: true, comment: { id, newsId, userId: s.id, userName, body: body.trim(), date: new Date() } });
   } catch (e: any) { return errorResponse(e); }
 }

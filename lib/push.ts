@@ -72,7 +72,7 @@ async function loadPolicy(): Promise<PushPolicy> {
  * تحذف الاشتراكات المنتهية (404/410) تلقائياً.
  * `kind` يتحكّم في تطبيق سياسة الإشعارات: 'news' يحترم push_news_enabled، 'absence' يحترم push_absence_enabled.
  */
-export async function notifyUsers(userIds: string[], payload: PushPayload, kind?: 'news' | 'absence' | 'other'): Promise<void> {
+export async function notifyUsers(userIds: string[], payload: PushPayload, kind?: 'news' | 'absence' | 'other' | 'staff'): Promise<void> {
   try {
     if (!ensureVapid()) return; // no-op عند غياب المفاتيح
     const ids = (userIds || []).filter(Boolean);
@@ -85,8 +85,9 @@ export async function notifyUsers(userIds: string[], payload: PushPayload, kind?
     if (kind === 'absence' && !policy.absence) return;
 
     // فلتر الجمهور: اجلب أدوار المستخدمين وارشح
+    // 'staff' موجّه للمعلمين/المشرفين — لا يخضع لجمهور الطلاب/الأولياء
     let allowedIds = ids;
-    if (policy.audience !== 'all') {
+    if (policy.audience !== 'all' && kind !== 'staff') {
       const uRows = await db.select({ id: users.id, role: users.role }).from(users).where(inArray(users.id, ids));
       const roleMap = new Map<string, string>();
       uRows.forEach(u => { roleMap.set(u.id, u.role); });
