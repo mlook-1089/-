@@ -16,7 +16,7 @@ export async function recomputeGroups(groupIds: (string | null | undefined)[]) {
   }).where(inArray(groups.id, ids));
 }
 
-async function addToStudent(studentId: string, delta: number) {
+export async function addToStudent(studentId: string, delta: number) {
   if (!delta) return null;
   const [row] = await db.update(studentsData)
     .set({ totalPoints: sql`${studentsData.totalPoints} + ${delta}` })

@@ -232,7 +232,7 @@ function _ptNews(){
       </div>
       ${n.Body ? `<p style="font-size:14px;line-height:1.75;color:var(--ink2);margin-top:8px;white-space:pre-line;overflow-wrap:anywhere">${esc(n.Body)}</p>` : ''}
       ${vid ? (typeof ytEmbedHtml === 'function' ? ytEmbedHtml(n.Video_URL) : '') : ''}
-      ${vid ? `<button type="button" class="u-btn u-btn-s sm" style="margin-top:10px" onclick="_ptComments(${jsArg(id)})">${svg('chat', 'w-4 h-4')} التعليقات</button><div id="ptc_${esc(id)}" class="hidden"></div>` : ''}
+      ${vid && currentUser && currentUser.Role === 'Student' ? `<button type="button" class="u-btn u-btn-s sm" style="margin-top:10px" onclick="_ptComments(${jsArg(id)})">${svg('chat', 'w-4 h-4')} مشاركاتي</button><div id="ptc_${esc(id)}" class="hidden"></div>` : ''}
     </div>`;
   }).join('') : `<div class="u-card">${_ptEmpty('news', 'لا توجد إعلانات جديدة')}</div>`;
   const upHtml = `<div class="u-card">${_ptCardH('الفعاليات القادمة')}
@@ -265,22 +265,27 @@ function _ptCal(){
     <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center">${dow.map(x => `<div class="u-muted" style="font-weight:700;padding-bottom:4px">${x}</div>`).join('')}${cells}</div>`;
 }
 
-/* ---------- تعليقات الإعلانات المرئية ---------- */
+/* ---------- مشاركات الطالب على المقاطع (تظهر للمعلمين فقط؛ الطالب يرى مشاركاته هو) ---------- */
 async function _ptComments(id, force){
   const w = $('ptc_' + id); if(!w) return;
   if(!force && !w.classList.contains('hidden')){ w.classList.add('hidden'); return; }
-  const r = await guard(DS.getNewsComments(id), 'تحميل التعليقات…'); if(!r) return;
+  const r = await guard(DS.getNewsComments(id), 'تحميل مشاركاتي…'); if(!r) return;
   const cs = r.comments || [];
   w.innerHTML = `<div class="u-divider"></div>
-    ${cs.length ? `<div class="u-list">${cs.map(c => `<div class="u-item" style="align-items:flex-start"><div class="u-avatar" style="width:32px;height:32px;border-radius:10px;font-size:13px">${esc(String(c.userName || '?').trim().charAt(0))}</div><div class="u-grow"><div class="u-between"><span class="u-name" style="font-size:13px">${esc(c.userName)}</span><span class="u-muted" style="font-size:11px">${esc(_ptDay(ymd(new Date(c.date))))}</span></div><div style="font-size:14px;color:var(--ink2);overflow-wrap:anywhere">${esc(c.body)}</div></div></div>`).join('')}</div>` : `<div class="u-muted text-center" style="padding:6px 0 10px">لا تعليقات بعد</div>`}
-    <div class="u-row" style="margin-top:8px"><input id="ptci_${esc(id)}" class="u-input u-grow" style="height:42px" placeholder="أضف تعليقاً…" onkeydown="if(event.key==='Enter')_ptSendComment(${jsArg(id)})"><button type="button" class="u-btn u-btn-p sm" style="height:42px" onclick="_ptSendComment(${jsArg(id)})">إرسال</button></div>`;
+    <div class="u-muted" style="font-size:12px;margin-bottom:6px">مشاركتك تصل المعلم ولا تظهر لبقية الطلاب. يقيّمها المعلم ويمنحك نقاطاً.</div>
+    ${cs.length ? `<div class="u-list">${cs.map(c => {
+      const pts = Number(c.points) || 0;
+      const pill = pts ? `<span class="u-pill ok" style="font-size:11px">${pts > 0 ? '+' : ''}${pts} نقطة</span>` : `<span class="u-pill mute" style="font-size:11px">بانتظار التقييم</span>`;
+      return `<div class="u-item" style="align-items:flex-start"><div class="u-avatar" style="width:32px;height:32px;border-radius:10px;font-size:13px">${esc(String(c.userName || '?').trim().charAt(0))}</div><div class="u-grow"><div class="u-between"><span class="u-name" style="font-size:13px">${esc(c.userName)}</span>${pill}</div><div style="font-size:14px;color:var(--ink2);overflow-wrap:anywhere">${esc(c.body)}</div><div class="u-muted" style="font-size:11px;margin-top:2px">${esc(_ptDay(ymd(new Date(c.date))))}</div></div></div>`;
+    }).join('')}</div>` : `<div class="u-muted text-center" style="padding:6px 0 10px">لم تُشارك بعد</div>`}
+    <div class="u-row" style="margin-top:8px"><input id="ptci_${esc(id)}" class="u-input u-grow" style="height:42px" placeholder="اكتب مشاركتك…" onkeydown="if(event.key==='Enter')_ptSendComment(${jsArg(id)})"><button type="button" class="u-btn u-btn-p sm" style="height:42px" onclick="_ptSendComment(${jsArg(id)})">مشاركة</button></div>`;
   w.classList.remove('hidden');
 }
 async function _ptSendComment(id){
   const inp = $('ptci_' + id); const body = inp && inp.value.trim();
-  if(!body) return toast('اكتب تعليقاً', 'warn');
+  if(!body) return toast('اكتب مشاركتك', 'warn');
   const r = await guard(DS.addNewsComment(id, body), 'إرسال…');
   if(!r || !r.success) return;
-  toast('تم');
+  toast('وصلت مشاركتك للمعلم');
   await _ptComments(id, true);
 }
