@@ -41,6 +41,9 @@ export const plans = pgTable('plans', {
   fromAyah: text('from_ayah').default(''),
   toSurah: text('to_surah').default(''),
   toAyah: text('to_ayah').default(''),
+  // ما تم تسميعه فعلاً عند «جزئي» — nullable حتى لا نُفقد المدى المطلوب الأصلي (toSurah/toAyah).
+  actualToSurah: text('actual_to_surah'),
+  actualToAyah: text('actual_to_ayah'),
   amount: text('amount').default(''),
   type: text('type').default('conserve'), // conserve | revision | mastery
   status: text('status').default('Pending'), // Pending | Done | Partial | Missed
