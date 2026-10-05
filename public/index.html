@@ -584,6 +584,7 @@ const DS = {
   nazemCreateStudents(payload){return this.c('apiNazemCreateStudents',payload)},
   dayData(d){return this.c('apiDayData',d)},
   deleteManualPlans(sid,type){return this.c('apiDeleteManualPlans',sid,type)},
+  resetPendingPlans(){return this.c('apiResetPendingPlans')},
   forgotPassword(identity){return this.c('apiAuthForgotPassword',identity)}
 };
 
