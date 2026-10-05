@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { plans, planDefinitions } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { requireRole, AuthError, errorResponse } from '@/lib/auth';
-import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
+import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, dowRiyadh, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 import { revokeRefs } from '@/lib/triggers';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -67,7 +67,10 @@ export async function POST(req: NextRequest) {
     const start = new Date(startDate + 'T00:00:00Z');
     const end = new Date(endDate + 'T00:00:00Z');
     for (let d = new Date(start); d.getTime() <= end.getTime(); d.setUTCDate(d.getUTCDate() + 1)) {
-      if (wd.has(d.getUTCDay())) dates.push(d.toISOString().slice(0, 10));
+      // تاريخ YYYY-MM-DD نقتصّه من UTC (آمن)، لكن يوم الأسبوع يُحسب بتوقيت الرياض
+      // لتفادي الانزياح قرب منتصف الليل في منطقة TZ=+03:00.
+      const ymd = d.toISOString().slice(0, 10);
+      if (wd.has(dowRiyadh(ymd))) dates.push(ymd);
     }
     if (dates.length === 0) return err('لا توجد أيام حلقة ضمن المدى');
 
