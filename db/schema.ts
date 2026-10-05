@@ -54,11 +54,32 @@ export const plans = pgTable('plans', {
   hearing: integer('hearing'),
   repetition: integer('repetition'),
   link: integer('link_val'),
+  // يربط الورد اليومي بتعريف الخطة الأم (للنطاقات، الكمية اليومية، المدى الزمني)
+  planDefId: text('plan_def_id').references((): any => planDefinitions.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 }, (t) => ({
   studentDateIdx: index('plans_student_date_idx').on(t.studentId, t.date),
   dateIdx: index('plans_date_idx').on(t.date),
-  nazemItemIdx: index('plans_nazem_item_idx').on(t.nazemItemDayId)
+  nazemItemIdx: index('plans_nazem_item_idx').on(t.nazemItemDayId),
+  planDefIdx: index('plans_plan_def_idx').on(t.planDefId)
+}));
+
+// تعريف خطة فصلية: المصدر الحقيقي لحقول «المولِّد» (النطاقات، الكمية اليومية،
+// الاتجاه، أيام الحلقة، تاريخا بدء/نهاية الفصل). بدونه تضطر الواجهة لاستنتاج هذه
+// الحقول من أيام الورد — ويفشل الاستنتاج إذا غطّت الكمية اليومية مجالاً أصغر منها.
+export const planDefinitions = pgTable('plan_definitions', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),                // 'conserve' | 'revision'
+  ranges: jsonb('ranges').notNull(),           // [{fromSurah, fromAyah, toSurah, toAyah}, ...]
+  dailyPages: text('daily_pages').notNull(),   // كسر صفحة كنص: '0.25' | '0.5' | '1' | '1.5' | '2'
+  workDays: text('work_days').notNull(),       // '0,1,2,3,4'
+  termStart: date('term_start').notNull(),
+  termEnd: date('term_end').notNull(),
+  direction: text('direction').default('asc'), // asc | desc
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  studentTypeIdx: index('plandef_student_type_idx').on(t.studentId, t.type)
 }));
 
 export const pointItems = pgTable('point_items', {
