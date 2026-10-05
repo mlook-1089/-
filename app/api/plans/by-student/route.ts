@@ -48,6 +48,8 @@ export async function GET(req: NextRequest) {
         From_Ayah: p.fromAyah,
         To_Surah: p.toSurah,
         To_Ayah: p.toAyah,
+        Actual_To_Surah: p.actualToSurah,
+        Actual_To_Ayah: p.actualToAyah,
         Amount: p.amount,
         Daily_Target: p.dailyTarget,
         Accomplishment_Status: p.status,

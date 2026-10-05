@@ -43,6 +43,9 @@ export async function PATCH(req: NextRequest) {
     if (upd.From_Ayah !== undefined) patch.fromAyah = upd.From_Ayah;
     if (upd.To_Surah !== undefined) patch.toSurah = upd.To_Surah;
     if (upd.To_Ayah !== undefined) patch.toAyah = upd.To_Ayah;
+    // المدى المطلوب (to_surah/to_ayah) ثابت. actualTo* يخزّن ما بلغه الطالب فعلاً (للجزئي).
+    if (upd.Actual_To_Surah !== undefined) patch.actualToSurah = upd.Actual_To_Surah === '' ? null : upd.Actual_To_Surah;
+    if (upd.Actual_To_Ayah !== undefined) patch.actualToAyah = upd.Actual_To_Ayah === '' ? null : upd.Actual_To_Ayah;
     if (upd.Amount !== undefined) patch.amount = upd.Amount;
     if (upd.Type !== undefined) patch.type = normType(upd.Type);
     if (upd.Date !== undefined) patch.date = upd.Date;

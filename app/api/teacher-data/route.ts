@@ -42,7 +42,9 @@ export async function GET() {
       plans: pl.map(p => ({
         Plan_ID: p.id, Student_ID: p.studentId, Date: String(p.date),
         Daily_Target: p.dailyTarget, From_Surah: p.fromSurah, From_Ayah: p.fromAyah,
-        To_Surah: p.toSurah, To_Ayah: p.toAyah, Amount: p.amount, Type: p.type,
+        To_Surah: p.toSurah, To_Ayah: p.toAyah,
+        Actual_To_Surah: p.actualToSurah, Actual_To_Ayah: p.actualToAyah,
+        Amount: p.amount, Type: p.type,
         Accomplishment_Status: p.status, Source: p.source, Locked: p.locked ? 'TRUE' : '',
         Nazem_Item_Day_ID: p.nazemItemDayId, Mistakes: p.mistakes, Hearing: p.hearing,
         Repetition: p.repetition, Link: p.link
