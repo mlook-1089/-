@@ -1,14 +1,17 @@
 // Service Worker — إشعارات Web Push + غلاف التطبيق للعمل دون اتصال (PWA) لمنصة حلقة ابن كثير
 
 // غيّر رقم الإصدار عند تعديل قائمة الملفات المخزّنة مسبقاً
-const CACHE_NAME = 'ibk-shell-v7';
+const CACHE_NAME = 'ibk-shell-v8';
 const PRECACHE_URLS = [
   '/',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png',
-  '/icons/apple-touch-icon-180.png'
+  '/icons/apple-touch-icon-180.png',
+  '/icons/brand-mark.png',
+  '/icons/brand-logo.png',
+  '/icons/favicon-32.png'
 ];
 
 self.addEventListener('install', (event) => {
