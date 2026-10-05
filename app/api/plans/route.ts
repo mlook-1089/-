@@ -49,6 +49,9 @@ export async function PATCH(req: NextRequest) {
     if (upd.Amount !== undefined) patch.amount = upd.Amount;
     if (upd.Type !== undefined) patch.type = normType(upd.Type);
     if (upd.Date !== undefined) patch.date = upd.Date;
+    if (upd.Mistakes !== undefined) patch.mistakes = Number(upd.Mistakes) || 0;
+    if (upd.Hearing !== undefined) patch.hearing = Number(upd.Hearing) || 0;
+    if (upd.Repetition !== undefined) patch.repetition = Number(upd.Repetition) || 0;
     if (upd.Accomplishment_Status !== undefined) {
       if (!['Pending', 'Done', 'Partial', 'Missed'].includes(upd.Accomplishment_Status)) return NextResponse.json({ success: false, message: 'حالة غير صالحة' }, { status: 400 });
       patch.status = upd.Accomplishment_Status;
