@@ -99,9 +99,11 @@ export async function POST(req: NextRequest) {
     const daysOut: { date: string; target: string; fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; amount: number }[] = [];
     let dateIdx = 0;
     const rows: any[] = []; // إدخال جماعي في النهاية بدل استعلام لكل يوم
+    let processedRanges = 0; // لرصد نطاقات نفدت قبل أن تُستهلك
 
     for (const rng of rangesArr) {
       if (dateIdx >= dates.length) break;
+      processedRanges++;
       const startOrd = ayahOrdinal(rng.fromSurah, rng.fromAyah);
       const endOrd = ayahOrdinal(rng.toSurah, rng.toAyah);
       if (!startOrd || !endOrd) continue;
@@ -175,6 +177,18 @@ export async function POST(req: NextRequest) {
       for (let i = 0; i < rows.length; i += 200) await tx.insert(plans).values(rows.slice(i, i + 200));
     });
 
-    return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, planDefId, days: daysOut });
+    // تحذيرات معلوماتية (لا تمنع النجاح): خطة أقصر من المطلوب، أو نطاقات نفدت الأيام قبل معالجتها
+    const expectedDays = dates.length;
+    const droppedRanges = rangesArr.length - processedRanges;
+    const warnings: string[] = [];
+    if (daysOut.length < expectedDays) {
+      warnings.push(`تم إنشاء ${daysOut.length} يوم من أصل ${expectedDays} يوم مطلوب — المدى القرآني لا يكفي لتغطية جميع الأيام`);
+    }
+    if (droppedRanges > 0) {
+      warnings.push(`${droppedRanges} نطاق(ات) لم تُعالَج — نفدت الأيام قبل استهلاكها`);
+    }
+    const warning = warnings.length ? warnings.join('؛ ') : undefined;
+
+    return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, planDefId, days: daysOut, ...(warning ? { warning } : {}) });
   } catch (e: any) { return errorResponse(e); }
 }
