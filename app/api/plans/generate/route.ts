@@ -4,6 +4,7 @@ import { plans, planDefinitions } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
+import { revokeRefs } from '@/lib/triggers';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -138,6 +139,17 @@ export async function POST(req: NextRequest) {
     let replacedCount = 0;
     await db.transaction(async (tx) => {
       if (replaceExisting === true) {
+        // قبل الحذف: اسحب نقاط الأيام المُنجزة سابقاً — لولا هذا لبقيت سجلات نقاط يتيمة
+        // لا يمكن مطابقتها مع معرّفات الخطة الجديدة بعد إعادة التوليد.
+        const existing = await tx.select({ id: plans.id, status: plans.status }).from(plans).where(and(
+          eq(plans.studentId, studentId),
+          eq(plans.type, type),
+          eq(plans.source, 'Manual'),
+          gte(plans.date, startDate),
+          lte(plans.date, endDate)
+        ));
+        const doneIds = existing.filter(r => r.status !== 'Pending').map(r => r.id);
+        if (doneIds.length) await revokeRefs(doneIds.map(id => 'plan:' + id));
         const del = await tx.delete(plans).where(and(
           eq(plans.studentId, studentId),
           eq(plans.type, type),
@@ -145,7 +157,7 @@ export async function POST(req: NextRequest) {
           gte(plans.date, startDate),
           lte(plans.date, endDate)
         )).returning({ id: plans.id });
-        replacedCount = del.length; // نقاط الأيام المُنجزة تبقى
+        replacedCount = del.length;
       }
       // أنشئ تعريف الخطة ضمن المعاملة كي نربط كل يوم به عبر plan_def_id
       await tx.insert(planDefinitions).values({
