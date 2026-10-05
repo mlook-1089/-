@@ -508,6 +508,7 @@ const DS = {
       apiAttendanceHistory:     () => ['GET','/api/attendance/history?studentId='+encodeURIComponent(a[0])+(a[1]?'&from='+encodeURIComponent(a[1]):'')+(a[2]?'&to='+encodeURIComponent(a[2]):'')],
       apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}],
       apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}],
+      apiResetPendingPlans:     () => ['POST','/api/admin/reset-pending-plans',{confirm:'RESET_PENDING_PLANS'}],
       apiAuthForgotPassword:    () => ['POST','/api/auth/forgot-password',{identity:a[0]}]
     };
     const spec = M[fn] ? M[fn]() : null;
@@ -2963,7 +2964,25 @@ function renderResetTab(body){
     body.innerHTML=`<div class="u-card u-empty">${svg('lock','w-10 h-10 mx-auto')}<p style="margin-top:8px;font-weight:800;color:var(--ink)">هذه الشاشة مقصورة على المشرف العام</p></div>`;
     return;
   }
-  body.innerHTML=`<div class="fade-in" style="max-width:560px;margin:0 auto">
+  body.innerHTML=`<div class="fade-in" style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+    <div class="u-card" style="border:1.5px solid var(--warn)">
+      <div class="u-row" style="align-items:flex-start;gap:12px;margin-bottom:10px">
+        <div style="color:var(--warn);flex-shrink:0">${svg('repeat','w-10 h-10')}</div>
+        <div>
+          <h3 style="font-size:18px;font-weight:800;color:var(--warn);margin-bottom:4px">حذف الأوراد غير المسمَّعة</h3>
+          <p style="font-size:13px;font-weight:600;color:var(--ink2);line-height:1.65">يحذف كل الأوراد التي لم تُسمَّع بعد (<b>Pending</b>) من كل الطلاب، لإعادة بناء الخطط من جديد. <b style="color:var(--ok)">النقاط وسجلاتها والأوراد المسمَّعة لا تُمَس.</b></p>
+        </div>
+      </div>
+      <div class="u-note" style="margin-bottom:14px">
+        <div>✅ يبقى: النقاط ومجاميع الطلاب والمجموعات</div>
+        <div>✅ يبقى: سجل كل نقطة (مَن منحها ومتى)</div>
+        <div>✅ يبقى: الأوراد المسمَّعة (Done/Partial/Missed) بتفاصيلها</div>
+        <div>✅ يبقى: الحضور والشارات والأخبار</div>
+        <div>❌ يُحذف: الأوراد التي لم يُسجَّل تسميعها بعد</div>
+      </div>
+      <button onclick="doResetPendingPlans()" class="u-btn w" style="background:var(--warn);color:#fff;height:44px">حذف الأوراد غير المسمَّعة</button>
+    </div>
+
     <div class="u-card" style="border:1.5px solid var(--bad)">
       <div class="u-row" style="align-items:flex-start;gap:12px;margin-bottom:10px">
         <div style="color:var(--bad);flex-shrink:0">${svg('warn','w-10 h-10')}</div>
@@ -2985,6 +3004,16 @@ function renderResetTab(body){
       <button onclick="doResetAllData()" class="u-btn w" style="background:var(--bad);color:#fff;height:48px">تصفير جميع البيانات نهائياً</button>
     </div>
   </div>`;
+}
+async function doResetPendingPlans(){
+  const ok=await confirmModal({title:'حذف الأوراد غير المسمَّعة',message:'سيتم حذف كل الأوراد التي حالتها <b>Pending</b> من كل الطلاب.<br><br>النقاط وسجلاتها والأوراد المسمَّعة <b style="color:var(--ok)">لن تُمَس</b>.<br><br>هل تريد المتابعة؟',confirmText:'نعم، احذف',danger:true});
+  if(!ok)return;
+  const r=await guard(DS.resetPendingPlans(),'جارٍ الحذف…');
+  if(!r||!r.success)return toast((r&&r.message)||'فشل الحذف','error');
+  const s=r.stats||{};
+  toast(`حُذف ${s.deleted||0} ورد — المتبقي ${s.totalAfter||0}`,'success');
+  await refreshTeacherStudents();
+  renderTeacherTab();
 }
 async function doResetAllData(){
   const txt=$('reset_confirm_txt')?.value.trim();
@@ -4142,6 +4171,7 @@ window.logout = async function(){
     addNewsComment(newsId,body){ return api('POST','/api/news-comments',{ newsId, body }); },
     changeUserId(oldId,newId){ return api('POST','/api/users/change-id',{ oldId, newId }); },
     resetAllData(){ return api('POST','/api/admin/reset',{ confirm:'DELETE_ALL_DATA' }); },
+    resetPendingPlans(){ return api('POST','/api/admin/reset-pending-plans',{ confirm:'RESET_PENDING_PLANS' }); },
     addEvent(title,description,date,type){ return api('POST','/api/events',{ title, description, date, type }); },
     deleteEvent(id){ return api('DELETE','/api/events',{ id }); },
     saveAttendance(studentId,date,status,note){ return api('POST','/api/attendance',{ studentId, date, status, note }); },
