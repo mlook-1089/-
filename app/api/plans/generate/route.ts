@@ -83,19 +83,6 @@ export async function POST(req: NextRequest) {
       ? Math.max(1, Math.floor(Number(dailyAmount)))
       : Math.ceil(totalAyat / dates.length);
 
-    // Delete existing if requested
-    let replacedCount = 0;
-    if (replaceExisting === true) {
-      const del = await db.delete(plans).where(and(
-        eq(plans.studentId, studentId),
-        eq(plans.type, type),
-        eq(plans.source, 'Manual'),
-        gte(plans.date, startDate),
-        lte(plans.date, endDate)
-      )).returning({ id: plans.id });
-      replacedCount = del.length; // نقاط الأيام المُنجزة تبقى
-    }
-
     // Determine global direction (first range decides it; useful for storing on the definition)
     let planDirection: 'asc' | 'desc' = 'asc';
     {
@@ -105,22 +92,9 @@ export async function POST(req: NextRequest) {
       if (s0 && e0 && e0 < s0) planDirection = 'desc';
     }
 
-    // أنشئ تعريف الخطة أولاً كي نربط كل يوم به عبر plan_def_id
     const planDefId = genId('PD');
-    await db.insert(planDefinitions).values({
-      id: planDefId,
-      studentId,
-      type,
-      ranges: rangesArr as any,
-      // dailyPages يُمرَّر كنص من المولِّد الواجهة (كسر صفحة). ندعم dailyAmount (آيات) أيضاً كاحتياط.
-      dailyPages: String((body && (body.dailyPages ?? body.daily_pages)) ?? (dailyAmount ?? daily)),
-      workDays: Array.isArray(workDays) ? workDays.map((n: any) => Number(n)).join(',') : '',
-      termStart: startDate,
-      termEnd: endDate,
-      direction: planDirection
-    });
 
-    // Generate plan entries across ranges
+    // Generate plan entries across ranges (حساب نقي قبل أي عملية قاعدة بيانات)
     const daysOut: { date: string; target: string; fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; amount: number }[] = [];
     let dateIdx = 0;
     const rows: any[] = []; // إدخال جماعي في النهاية بدل استعلام لكل يوم
@@ -160,7 +134,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    for (let i = 0; i < rows.length; i += 200) await db.insert(plans).values(rows.slice(i, i + 200));
+    // Delete existing + insert atomically — تفادياً لفقدان البيانات إن فشل INSERT في المنتصف بعد DELETE
+    let replacedCount = 0;
+    await db.transaction(async (tx) => {
+      if (replaceExisting === true) {
+        const del = await tx.delete(plans).where(and(
+          eq(plans.studentId, studentId),
+          eq(plans.type, type),
+          eq(plans.source, 'Manual'),
+          gte(plans.date, startDate),
+          lte(plans.date, endDate)
+        )).returning({ id: plans.id });
+        replacedCount = del.length; // نقاط الأيام المُنجزة تبقى
+      }
+      // أنشئ تعريف الخطة ضمن المعاملة كي نربط كل يوم به عبر plan_def_id
+      await tx.insert(planDefinitions).values({
+        id: planDefId,
+        studentId,
+        type,
+        ranges: rangesArr as any,
+        // dailyPages يُمرَّر كنص من المولِّد الواجهة (كسر صفحة). ندعم dailyAmount (آيات) أيضاً كاحتياط.
+        dailyPages: String((body && (body.dailyPages ?? body.daily_pages)) ?? (dailyAmount ?? daily)),
+        workDays: Array.isArray(workDays) ? workDays.map((n: any) => Number(n)).join(',') : '',
+        termStart: startDate,
+        termEnd: endDate,
+        direction: planDirection
+      });
+      for (let i = 0; i < rows.length; i += 200) await tx.insert(plans).values(rows.slice(i, i + 200));
+    });
 
     return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, planDefId, days: daysOut });
   } catch (e: any) { return errorResponse(e); }
