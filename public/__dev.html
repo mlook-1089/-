@@ -1,0 +1,6 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><script>
+(navigator.serviceWorker?navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))):Promise.resolve()).then(()=>fetch('/index.html',{cache:'no-store'})).then(r=>r.text()).then(h=>{
+  h=h.replace('</body>','<script src="/__mock_dev.js"><\/script><script>window.addEventListener("load",()=>setTimeout(__autoMock,50))<\/script></body>');
+  document.open(); document.write(h); document.close();
+});
+</script></body></html>

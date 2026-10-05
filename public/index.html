@@ -275,7 +275,7 @@ table.tbl-v4 tr:last-child td { border-bottom:none; }
 .modal-v4 { background:#fff; width:100%; max-width:480px; border-radius:1.25rem 1.25rem 0 0; padding:1.15rem; max-height:92vh; overflow-y:auto; box-shadow:0 20px 25px -5px rgba(0,0,0,.1); }
 @media (min-width:768px){ .modal-bg-v4 { align-items:center; padding:1rem; } .modal-v4 { border-radius:1.25rem; padding:1.5rem; } }
 </style>
-<link rel="stylesheet" href="/ui/app.css?v=2">
+<link rel="stylesheet" href="/ui/app.css?v=3">
 </head>
 <body class="text-gray-800 antialiased overflow-hidden flex h-screen">
 
@@ -755,7 +755,7 @@ async function maybeSuggestPush(){
       <div class="font-extrabold text-sm">فعّل الإشعارات</div>
       <div class="text-[11px] font-bold text-white/80 mt-0.5">استقبل الإعلانات وتنبيهات الغياب فور صدورها</div>
     </div>
-    <button onclick="enablePush().then(()=>document.getElementById('pushSuggestBanner')?.remove());try{localStorage.setItem('${key}','y')}catch(e){}" class="btn-v4 btn-v4-primary text-xs" style="background:#fff;color:#013856">فعّل</button>
+    <button onclick="enablePush().then(()=>document.getElementById('pushSuggestBanner')?.remove());try{localStorage.setItem('${key}','y')}catch(e){}" class="btn-v4 btn-v4-primary text-xs" style="background:var(--card);color:var(--brand-ink)">فعّل</button>
     <button onclick="document.getElementById('pushSuggestBanner')?.remove();try{localStorage.setItem('${key}','y')}catch(e){}" class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20">✕</button>`;
   document.body.appendChild(bn);
 }
@@ -1814,7 +1814,7 @@ async function renderManualPlanTab(body){
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">الطلاب</div><div class="val" style="font-size:1rem">${filtered.length}</div></div>
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">مع خطة</div><div class="val u" style="font-size:1rem">${withPlan}</div></div>
         <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">✓ مكتمل</div><div class="val u" style="font-size:1rem">${doneItems}/${totalItems}</div></div>
-        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">التقدّم</div><div class="val" style="font-size:1rem;color:#013856">${overallPct}%</div></div>
+        <div class="stat-mini" style="padding:.5rem"><div class="lbl" style="font-size:.65rem">التقدّم</div><div class="val" style="font-size:1rem;color:var(--brand-ink)">${overallPct}%</div></div>
       </div>
       <button onclick="openBulkPointsModal()" class="btn-v4 btn-v4-primary text-xs w-full mt-2">${svg('coin','w-3 h-3')} نقاط جماعية لجميع الطلاب</button>
     </div>
@@ -2856,27 +2856,27 @@ function _apNoPlanCard(s){
 
 /* ---------- أيام الحلقة وتواريخ الفصل ---------- */
 async function renderPlanDaysTab(body){
-  body.innerHTML='<div class="p-8 text-center text-gray-400 font-bold">جارٍ التحميل…</div>';
+  body.innerHTML='<div class="u-empty">جارٍ التحميل…</div>';
   const r = await DS.getSettings(['plan_work_days','plan_term_start','plan_term_end']);
   const vals = r?.values || {};
   const savedDays = vals.plan_work_days ? vals.plan_work_days.split(',').map(Number) : [0,1,2,3,4];
   const savedStart = vals.plan_term_start || '';
   const savedEnd = vals.plan_term_end || '';
   const dayLabels=['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-  const dayBoxes=dayLabels.map((d,i)=>`<label class="cursor-pointer"><input type="checkbox" data-day="${i}" ${savedDays.includes(i)?'checked':''} class="peer sr-only"><div class="py-2 rounded-lg border border-slate-200 bg-white peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand text-[11px] font-bold text-center transition">${d}</div></label>`).join('');
-  body.innerHTML=`<div class="fade-in max-w-lg mx-auto space-y-5">
-    <div class="bg-white rounded-2xl shadow-saas border border-gray-100 p-6 space-y-4">
-      <h3 class="font-extrabold text-brand-900 text-lg">إعدادات الفصل الدراسي</h3>
-      <p class="text-xs text-gray-500 font-bold leading-relaxed">تُطبّق هذه الإعدادات على جميع الخطط التي تنشئها. يمكنك تغييرها في بداية كل فصل.</p>
-      <div class="grid grid-cols-2 gap-3">
-        <div><label class="block text-xs font-bold text-gray-600 mb-1">بداية الفصل</label><input type="date" id="pd_start" value="${esc(savedStart)}" class="input py-2 num"></div>
-        <div><label class="block text-xs font-bold text-gray-600 mb-1">نهاية الفصل</label><input type="date" id="pd_end" value="${esc(savedEnd)}" class="input py-2 num"></div>
+  const dayBoxes=dayLabels.map((d,i)=>`<label class="cursor-pointer"><input type="checkbox" data-day="${i}" ${savedDays.includes(i)?'checked':''} class="peer sr-only"><div style="padding:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:800;text-align:center;color:var(--ink2);transition:background .15s,color .15s" class="peer-checked:bg-brand peer-checked:text-white peer-checked:border-brand">${d}</div></label>`).join('');
+  body.innerHTML=`<div class="fade-in" style="max-width:520px;margin:0 auto">
+    <div class="u-card">
+      <h3 style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:4px">إعدادات الفصل الدراسي</h3>
+      <p class="u-muted" style="line-height:1.65;margin-bottom:14px">تُطبّق هذه الإعدادات على جميع الخطط التي تنشئها. يمكنك تغييرها في بداية كل فصل.</p>
+      <div class="u-grid2">
+        <div class="u-field" style="margin-bottom:0"><label for="pd_start">بداية الفصل</label><input type="date" id="pd_start" value="${esc(savedStart)}" class="u-input num"></div>
+        <div class="u-field" style="margin-bottom:0"><label for="pd_end">نهاية الفصل</label><input type="date" id="pd_end" value="${esc(savedEnd)}" class="u-input num"></div>
       </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2">أيام الحلقة في الأسبوع</label>
-        <div class="grid grid-cols-7 gap-1" id="pd_days">${dayBoxes}</div>
+      <div class="u-field">
+        <label>أيام الحلقة في الأسبوع</label>
+        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px" id="pd_days">${dayBoxes}</div>
       </div>
-      <button onclick="doSavePlanDays()" class="btn bg-brand-900 text-white w-full py-3 font-extrabold">${svg('cloud','w-4 h-4')} حفظ إعدادات الفصل</button>
+      <button onclick="doSavePlanDays()" class="u-btn u-btn-p w">${svg('cloud','w-4 h-4')} حفظ إعدادات الفصل</button>
     </div>
   </div>`;
 }
@@ -2960,29 +2960,29 @@ async function doRegenerateAllPlans(){
 /* ---------- تصفير البيانات (للمشرف فقط) ---------- */
 function renderResetTab(body){
   if(!currentUser||!currentUser.isAdmin){
-    body.innerHTML=`<div class="bg-white p-8 rounded-2xl text-center"><div class="text-gray-300 mb-2">${svg('lock','w-10 h-10 mx-auto')}</div><p class="text-gray-700 font-extrabold">هذه الشاشة مقصورة على المشرف العام</p></div>`;
+    body.innerHTML=`<div class="u-card u-empty">${svg('lock','w-10 h-10 mx-auto')}<p style="margin-top:8px;font-weight:800;color:var(--ink)">هذه الشاشة مقصورة على المشرف العام</p></div>`;
     return;
   }
-  body.innerHTML=`<div class="fade-in max-w-xl mx-auto space-y-6">
-    <div class="bg-red-50 border-2 border-red-300 rounded-2xl p-6">
-      <div class="flex items-start gap-4 mb-4">
-        <div>${svg('warn','w-10 h-10 text-red-600')}</div>
+  body.innerHTML=`<div class="fade-in" style="max-width:560px;margin:0 auto">
+    <div class="u-card" style="border:1.5px solid var(--bad)">
+      <div class="u-row" style="align-items:flex-start;gap:12px;margin-bottom:10px">
+        <div style="color:var(--bad);flex-shrink:0">${svg('warn','w-10 h-10')}</div>
         <div>
-          <h3 class="text-xl font-extrabold text-red-800 mb-1">تصفير جميع البيانات</h3>
-          <p class="text-sm font-bold text-red-700 leading-relaxed">هذا الإجراء <b>لا يمكن التراجع عنه</b>. سيتم حذف جميع بيانات الطلاب والخطط والنقاط والحضور والأخبار والأحداث. تبقى حسابات تسجيل الدخول سليمة.</p>
+          <h3 style="font-size:18px;font-weight:800;color:var(--bad);margin-bottom:4px">تصفير جميع البيانات</h3>
+          <p style="font-size:13px;font-weight:600;color:var(--ink2);line-height:1.65">هذا الإجراء <b style="color:var(--bad)">لا يمكن التراجع عنه</b>. سيتم حذف جميع بيانات الطلاب والخطط والنقاط والحضور والأخبار والأحداث. تبقى حسابات تسجيل الدخول سليمة.</p>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-4 border border-red-200 space-y-2 text-sm font-bold text-red-800 mb-5">
+      <div class="u-note bad" style="margin-bottom:14px">
         <div>• يُحذف: الطلاب، المجموعات، الخطط، النقاط، الحضور، الأخبار، الأحداث</div>
         <div>• يُحذف: جميع التعليقات والشارات والاشتراكات</div>
         <div>• يبقى: حسابات تسجيل الدخول (المعلم وولي الأمر والطالب)</div>
         <div>• يبقى: إعدادات النقاط والمظهر</div>
       </div>
-      <div class="mb-4">
-        <label class="block text-sm font-bold text-red-700 mb-1">اكتب "تأكيد الحذف" للمتابعة:</label>
-        <input type="text" id="reset_confirm_txt" placeholder="تأكيد الحذف" class="input py-2 border-red-300">
+      <div class="u-field">
+        <label for="reset_confirm_txt" style="color:var(--bad)">اكتب "تأكيد الحذف" للمتابعة:</label>
+        <input type="text" id="reset_confirm_txt" placeholder="تأكيد الحذف" class="u-input" style="border-color:var(--bad)">
       </div>
-      <button onclick="doResetAllData()" class="btn-v4 w-full py-3 text-sm font-extrabold" style="background:#dc2626;color:white;border:none">تصفير جميع البيانات نهائياً</button>
+      <button onclick="doResetAllData()" class="u-btn w" style="background:var(--bad);color:#fff;height:48px">تصفير جميع البيانات نهائياً</button>
     </div>
   </div>`;
 }
@@ -3637,20 +3637,20 @@ function renderCalendarInto(id,events,editable){
   const act=ds=>editable?`openDayManage('${ds}')`:`showDayEvents('${ds}')`;
   for(let day=1;day<=days;day++){
     const dobj=new Date(y,m,day),ds=ymd(dobj),has=evMap[ds],isT=ds===t;
-    const bg=isT?'background:var(--brand-900,#013856);color:#fff':has?'background:#eef6fb':'background:#fff';
-    cells+=`<button type="button" onclick="${act(ds)}" style="${bg};border:1px solid #eef0f3;border-radius:12px;padding:5px 2px 4px;font-family:inherit;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;min-height:52px">
-      <span class="num" style="font-size:14px;font-weight:800;line-height:1.1;${isT?'':'color:#1f2937'}">${day}</span>
-      <span style="font-size:9px;font-weight:700;opacity:.6;line-height:1.1">${hijriDay(dobj)}</span>
-      ${has?`<span style="position:absolute;bottom:4px;display:flex;gap:2px">${has.slice(0,3).map(()=>`<span style="width:5px;height:5px;border-radius:50%;background:${isT?'#f4c84a':'var(--gold-500,#c99a2e)'}"></span>`).join('')}</span>`:''}
+    const bg=isT?'background:var(--brand);color:var(--on-brand)':has?'background:var(--brand-soft)':'background:var(--card)';
+    cells+=`<button type="button" onclick="${act(ds)}" aria-label="${esc(ds)}" style="${bg};border:1px solid var(--line);border-radius:12px;padding:5px 2px 4px;font-family:inherit;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;min-height:52px">
+      <span class="num" style="font-size:14px;font-weight:800;line-height:1.1;${isT?'':'color:var(--ink)'}">${day}</span>
+      <span style="font-size:9px;font-weight:700;opacity:.65;line-height:1.1">${hijriDay(dobj)}</span>
+      ${has?`<span style="position:absolute;bottom:4px;display:flex;gap:2px">${has.slice(0,3).map(()=>`<span style="width:5px;height:5px;border-radius:50%;background:${isT?'var(--gold-bright)':'var(--gold)'}"></span>`).join('')}</span>`:''}
     </button>`;
   }
-  const navBtn=(delta,glyph)=>`<button type="button" onclick="_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+(${delta}),1);renderCalendarInto('${id}',_calEvents,${editable})" style="width:38px;height:38px;border-radius:10px;background:#f3f4f6;border:0;font-weight:800;font-size:18px;color:#4b5563;cursor:pointer">${glyph}</button>`;
+  const navBtn=(delta,glyph,label)=>`<button type="button" aria-label="${esc(label)}" onclick="_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+(${delta}),1);renderCalendarInto('${id}',_calEvents,${editable})" style="width:44px;height:44px;border-radius:12px;background:var(--muted-bg);color:var(--ink2);border:0;font-weight:800;font-size:18px;cursor:pointer">${glyph}</button>`;
   c.innerHTML=`<div class="flex items-center justify-between mb-3">
-      ${navBtn(-1,'&#8250;')}
+      ${navBtn(-1,'&#8250;','الشهر السابق')}
       <div class="text-center"><div class="font-extrabold text-brand-900 text-base">${esc(gMonth)}</div><div class="text-[11px] font-bold text-gold-600">${esc(hRange)}</div></div>
-      ${navBtn(1,'&#8249;')}
+      ${navBtn(1,'&#8249;','الشهر التالي')}
     </div>
-    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:4px">${dow.map(d=>`<div class="text-center" style="font-size:11px;font-weight:800;color:#9ca3af;padding-bottom:2px">${d}</div>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:4px">${dow.map(d=>`<div class="text-center" style="font-size:11px;font-weight:800;color:var(--ink3);padding-bottom:2px">${d}</div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">${cells}</div>`;
 }
 /* عرض اليوم للطالب/الولي — قراءة فقط */
@@ -3678,34 +3678,43 @@ async function doDeleteEvent(id){const r=await guard(DS.deleteEvent(id),'حذف�
 const TRIGGER_OPTS=[['none','بدون ربط'],['on_done','عند إتمام الحفظ'],['on_partial','عند حفظ جزئي'],['on_review_done','عند إتمام المراجعة'],['on_attend_present','عند تسجيل حاضر'],['on_attend_late','عند تسجيل متأخر']];
 function triggerLabel(t){const f=TRIGGER_OPTS.find(x=>x[0]===t);return f?f[1]:t}
 function renderItemsTab(body){
-  const rows=_tData.items.map(i=>`<div class="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-4 hover:shadow-sm transition mb-3">
-    <div class="w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-lg ${Number(i.Point_Value)>=0?'bg-green-50 text-success':'bg-red-50 text-danger'}">${Number(i.Point_Value)>=0?'+':''}${esc(i.Point_Value)}</div>
-    <div class="flex-1 min-w-0"><div class="font-extrabold text-gray-900 text-base">${esc(i.Description)}</div><div class="text-xs font-bold text-gray-500 mt-1 bg-surface inline-block px-2 py-1 rounded">${esc(triggerLabel(i.Trigger||'none'))}</div></div>
-    <div class="flex flex-col gap-2 shrink-0"><button onclick="openEditItem(${jsArg(i.Item_ID)})" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 hover:bg-brand-50 hover:text-brand-700 flex items-center justify-center transition">${svg('edit','w-4 h-4')}</button><button onclick="confirmDeleteItem(${jsArg(i.Item_ID)},${jsArg(i.Description)})" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 hover:bg-red-50 hover:text-danger flex items-center justify-center transition">${svg('trash','w-4 h-4')}</button></div>
-  </div>`).join('')||'<div class="bg-surface border border-gray-100 rounded-xl p-8 text-center"><p class="text-gray-400 font-bold">لا يوجد بنود نقاط حالياً</p></div>';
-  body.innerHTML=`<div class="grid md:grid-cols-2 gap-6 fade-in">
-    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50 h-fit"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('plus','w-5 h-5 text-gold-500')} إضافة بند جديد</h3>
-      <div class="space-y-4">
-        <div><label class="block text-sm font-bold text-gray-700 mb-2">وصف البند</label><input id="it_desc" class="input"></div>
-        <div><label class="block text-sm font-bold text-gray-700 mb-2">قيمة النقاط (+ أو -)</label><input id="it_val" type="number" class="input" placeholder="مثال: 5 أو -3"></div>
-        <div><label class="block text-sm font-bold text-gray-700 mb-2">الربط التلقائي بنظام المتابعة</label><select id="it_trig" class="input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('')}</select></div>
-        <p class="text-xs font-bold text-brand-700 bg-brand-50 p-3 rounded-xl border border-brand-100 leading-relaxed mt-2">عند اختيار "ربط تلقائي"، سيتم منح (أو خصم) هذه النقاط للطالب آلياً عند تسجيل الحدث المرتبط في شاشة المتابعة (مرة واحدة يومياً).</p>
-        <button onclick="doAddItem()" class="w-full bg-brand-900 text-white font-bold py-3 rounded-xl shadow-md hover:bg-brand-800 transition mt-4">حفظ البند</button>
+  const rows=_tData.items.map(i=>{
+    const pos = Number(i.Point_Value)>=0;
+    return `<div class="u-plan u-row" style="gap:12px;margin-bottom:8px">
+      <div class="u-avatar" style="width:48px;height:48px;border-radius:14px;font-size:16px;background:${pos?'var(--ok-soft)':'var(--bad-soft)'};color:${pos?'var(--ok)':'var(--bad)'}">${pos?'+':''}${esc(i.Point_Value)}</div>
+      <div class="u-grow"><div class="u-name">${esc(i.Description)}</div><div><span class="u-pill mute" style="margin-top:4px">${esc(triggerLabel(i.Trigger||'none'))}</span></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <button type="button" aria-label="تعديل" onclick="openEditItem(${jsArg(i.Item_ID)})" class="u-icon-btn" style="width:36px;height:36px">${svg('edit','w-4 h-4')}</button>
+        <button type="button" aria-label="حذف" onclick="confirmDeleteItem(${jsArg(i.Item_ID)},${jsArg(i.Description)})" class="u-icon-btn" style="width:36px;height:36px;color:var(--bad)">${svg('trash','w-4 h-4')}</button>
       </div>
+    </div>`;
+  }).join('')||'<div class="u-empty">لا يوجد بنود نقاط حالياً</div>';
+  body.innerHTML=`<div class="fade-in md:grid md:grid-cols-2 md:gap-4" style="max-width:900px;margin:0 auto">
+    <div class="u-card">
+      <div class="u-card-h"><h3>${svg('plus','w-5 h-5 text-gold-500')} إضافة بند جديد</h3></div>
+      <div class="u-field"><label for="it_desc">وصف البند</label><input id="it_desc" class="u-input"></div>
+      <div class="u-field"><label for="it_val">قيمة النقاط (+ أو -)</label><input id="it_val" type="number" class="u-input num" placeholder="مثال: 5 أو -3"></div>
+      <div class="u-field"><label for="it_trig">الربط التلقائي بنظام المتابعة</label><select id="it_trig" class="u-input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('')}</select></div>
+      <div class="u-note brand">عند اختيار "ربط تلقائي"، سيتم منح (أو خصم) هذه النقاط للطالب آلياً عند تسجيل الحدث المرتبط في شاشة المتابعة (مرة واحدة يومياً).</div>
+      <button onclick="doAddItem()" class="u-btn u-btn-p w">حفظ البند</button>
     </div>
-    <div class="bg-white p-6 rounded-2xl shadow-saas border border-gray-50"><h3 class="text-lg font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('history','w-5 h-5 text-gold-500')} بنود النقاط الحالية</h3><div class="max-h-[550px] overflow-y-auto pr-2">${rows}</div></div></div>`;
+    <div class="u-card">
+      <div class="u-card-h"><h3>${svg('history','w-5 h-5 text-gold-500')} بنود النقاط الحالية</h3></div>
+      <div style="max-height:60vh;overflow-y:auto">${rows}</div>
+    </div>
+  </div>`;
 }
 async function doAddItem(){const d=$('it_desc').value.trim(),v=$('it_val').value,tr=$('it_trig').value;if(!d||v==='')return toast('أكمل البيانات','warn');const r=await guard(DS.addPointItem(d,v,tr),'إضافة…');if(!r||!r.success)return;_tData.items.push(r.item);toast('تمت الإضافة');renderItemsTab($('settingsSubBody'))}
 function openEditItem(id){const it=_tData.items.find(x=>String(x.Item_ID)===String(id));if(!it)return;
-  openModal('تعديل البند',`<div class="space-y-4">
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">الوصف</label><input id="ei_desc" value="${esc(it.Description)}" class="input"></div>
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">القيمة</label><input id="ei_val" type="number" value="${esc(it.Point_Value)}" class="input"></div>
-    <div><label class="block text-sm font-bold text-gray-700 mb-2">الربط التلقائي</label><select id="ei_trig" class="input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}" ${(it.Trigger||'none')===t[0]?'selected':''}>${t[1]}</option>`).join('')}</select></div>
-    <div class="flex gap-3 pt-2"><button onclick="saveEditItem(${jsArg(id)})" class="btn bg-brand-900 text-white flex-1 shadow-md">تحديث التغييرات</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>
-  </div>`);
+  openModal('تعديل البند',`
+    <div class="u-field"><label for="ei_desc">الوصف</label><input id="ei_desc" value="${esc(it.Description)}" class="u-input"></div>
+    <div class="u-field"><label for="ei_val">القيمة</label><input id="ei_val" type="number" value="${esc(it.Point_Value)}" class="u-input num"></div>
+    <div class="u-field"><label for="ei_trig">الربط التلقائي</label><select id="ei_trig" class="u-input">${TRIGGER_OPTS.map(t=>`<option value="${t[0]}" ${(it.Trigger||'none')===t[0]?'selected':''}>${t[1]}</option>`).join('')}</select></div>
+    <div class="u-grid2" style="margin-bottom:0"><button onclick="closeModal()" class="u-btn u-btn-g">إلغاء</button><button onclick="saveEditItem(${jsArg(id)})" class="u-btn u-btn-p">تحديث التغييرات</button></div>
+  `);
 }
 async function saveEditItem(id){const upd={Description:$('ei_desc').value.trim(),Point_Value:Number($('ei_val').value)||0,Trigger:$('ei_trig').value};const r=await guard(DS.updatePointItem(id,upd),'حفظ…');if(!r||!r.success)return;const it=_tData.items.find(x=>String(x.Item_ID)===String(id));if(it)Object.assign(it,upd);closeModal();toast('تم التحديث');renderItemsTab($('settingsSubBody'))}
-function confirmDeleteItem(id,d){openModal('حذف بند',`<p class="text-gray-700 font-bold mb-6">هل أنت متأكد من حذف البند «${esc(d)}»؟</p><div class="flex gap-3"><button onclick="doDeleteItem(${jsArg(id)})" class="btn bg-danger text-white flex-1 shadow-md">نعم، احذف</button><button onclick="closeModal()" class="btn bg-gray-100 text-gray-700 flex-1">إلغاء</button></div>`)}
+function confirmDeleteItem(id,d){openModal('حذف بند',`<p style="color:var(--ink2);font-weight:600;margin-bottom:18px">هل أنت متأكد من حذف البند «${esc(d)}»؟</p><div class="u-grid2" style="margin-bottom:0"><button onclick="closeModal()" class="u-btn u-btn-g">إلغاء</button><button onclick="doDeleteItem(${jsArg(id)})" class="u-btn" style="background:var(--bad);color:#fff">نعم، احذف</button></div>`)}
 async function doDeleteItem(id){const r=await guard(DS.deletePointItem(id),'حذف…');if(!r)return;closeModal();_tData.items=_tData.items.filter(i=>String(i.Item_ID)!==String(id));toast('تم الحذف');renderItemsTab($('settingsSubBody'))}
 
 /* Manage Groups — نسخة v3.3 مع إدارة أعضاء ونقاط جماعية */
@@ -3983,7 +3992,7 @@ async function renderStudent(){
     <div class="grid lg:grid-cols-3 gap-6">
       <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 lg:col-span-1 h-fit">
         <h3 class="text-xl font-extrabold text-brand-900 mb-6 flex items-center gap-2">${svg('book','w-6 h-6 text-gold-500')} خطة اليوم</h3>
-        ${tps.length?`<div class="flex flex-col items-center text-center"><div class="relative mb-6"><svg class="w-32 h-32 -rotate-90" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#f1f5f9" stroke-width="12"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rc}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52-(pct/100)*2*Math.PI*52}"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-extrabold text-gray-900">${pct}%</span></div></div><div><p class="text-sm font-bold text-gray-500 mb-2">المطلوب إنجازه</p>${todayPlansList(tps)}</div></div>`:'<div class="bg-surface p-8 rounded-2xl border border-gray-100 text-center"><p class="text-gray-400 font-bold">لا توجد خطة مسجلة لك هذا اليوم. خذ قسطاً من الراحة!</p></div>'}
+        ${tps.length?`<div class="flex flex-col items-center text-center"><div class="relative mb-6"><svg class="w-32 h-32 -rotate-90" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--muted-bg)" stroke-width="12"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rc}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52-(pct/100)*2*Math.PI*52}"/></svg><div class="absolute inset-0 flex flex-col items-center justify-center"><span class="text-2xl font-extrabold text-gray-900">${pct}%</span></div></div><div><p class="text-sm font-bold text-gray-500 mb-2">المطلوب إنجازه</p>${todayPlansList(tps)}</div></div>`:'<div class="bg-surface p-8 rounded-2xl border border-gray-100 text-center"><p class="text-gray-400 font-bold">لا توجد خطة مسجلة لك هذا اليوم. خذ قسطاً من الراحة!</p></div>'}
       </div>
       
       <div class="bg-white p-6 rounded-3xl shadow-saas border border-gray-50 lg:col-span-2">

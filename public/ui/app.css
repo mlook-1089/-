@@ -23,7 +23,7 @@
 }
 html.dark{
   --bg:#0B1220; --card:#131C2E; --card2:#172236; --muted-bg:#1C2840;
-  --ink:#E8EDF5; --ink2:#A5B0C2; --ink3:#6F7B90; --line:#243049; --line2:#2E3B57;
+  --ink:#E8EDF5; --ink2:#A5B0C2; --ink3:#9AA6BA; --line:#243049; --line2:#2E3B57;
   --brand:#1E5A86; --brand-2:#2A6DA0; --brand-ink:#8CC0E8; --brand-soft:#16304A; --on-brand:#FFFFFF;
   --gold:#E3C170; --gold-soft:#2E2715; --gold-bright:#E3C170;
   --ok:#4CC38A; --ok-soft:#133226;
@@ -289,3 +289,99 @@ html.dark .islamic-pattern-bg{ filter:brightness(.8); }
 /* مكوّنات تعرّف display — نحترم معها صنف hidden */
 .u-icon-btn.hidden, .u-btn.hidden, .u-card.hidden, .u-item.hidden, .u-pill.hidden, .dot.hidden{ display:none !important; }
 @media (min-width:768px){ #portal > .u-page, #portal > div > .u-page{ max-width:880px; margin-inline:auto; } }
+
+/* =====================================================================
+   v6 extras (Wave 3) — tokens جديدة، focus-visible، إصلاحات دارك
+   ===================================================================== */
+
+/* صناديق المعلومات الملوّنة (brand/warn/ok/bad/info) — بديل عن inline style="background:var(--…-soft)" */
+.u-note{ border-radius:14px; padding:10px 14px; font-size:12.5px; font-weight:600; line-height:1.6; margin-bottom:12px; border:1px solid transparent; }
+.u-note.brand{ background:var(--brand-soft); color:var(--brand-ink); }
+.u-note.warn{  background:var(--warn-soft);  color:var(--warn);     }
+.u-note.ok{    background:var(--ok-soft);    color:var(--ok);       }
+.u-note.bad{   background:var(--bad-soft);   color:var(--bad);      }
+.u-note.info{  background:var(--info-soft);  color:var(--info);     }
+.u-note.gold{  background:var(--gold-soft);  color:var(--gold);     }
+.u-note strong, .u-note b{ color:inherit; font-weight:800; }
+
+/* رقم مع تسمية داخل pill — يبرز الأرقام مع نفس خلفية pill */
+.u-pill .u-num, .u-pill .num{ font-variant-numeric:tabular-nums; font-weight:800; }
+
+/* زرّ hover لطيف — تأثير على كل الأزرار الأساسية */
+@media (hover:hover){
+  .u-btn-p:hover{ background:var(--brand-2); }
+  .u-btn-s:hover{ filter:brightness(.97); }
+  .u-btn-g:hover{ background:var(--muted-bg); }
+  .u-btn-ok:hover{ filter:brightness(1.06); }
+  .u-icon-btn:hover{ background:var(--muted-bg); color:var(--ink); }
+  .u-chip:hover{ background:var(--muted-bg); }
+}
+
+/* Focus-visible عام — لم يكن موجوداً على u-btn/u-chip/u-icon-btn (فشل WCAG 2.4.7) */
+.u-btn:focus-visible, .u-icon-btn:focus-visible, .u-chip:focus-visible, .u-input:focus-visible,
+.u-seg > button:focus-visible, .nav-item:focus-visible, .u-nav > button:focus-visible,
+.u-sheet .u-menu > button:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible{
+  outline:2px solid var(--brand-ink); outline-offset:2px; border-radius:12px;
+}
+
+/* الاسم العربي الكامل — لا نكسر الكلمات في منتصفها (fix للـ word-break:break-word) */
+.name-full{ white-space:normal !important; overflow-wrap:normal !important; word-break:keep-all !important; line-break:anywhere; }
+
+/* u-hero — نصوص ثانوية بلون صريح بدل opacity:.78 (تباين أعلى في الدارك) */
+.u-hero .l{ opacity:1; color:rgba(255,255,255,.82); }
+.u-hero .meta{ opacity:1; color:rgba(255,255,255,.86); }
+
+/* إصلاحات الوضع الليلي للعناصر التي تجاوزت remap */
+html.dark .status-btn.on-done{ background:var(--ok-soft) !important; color:var(--ok) !important; }
+html.dark .status-btn.on-partial{ background:var(--warn-soft) !important; color:var(--warn) !important; }
+html.dark .status-btn.on-missed{ background:var(--bad-soft) !important; color:var(--bad) !important; }
+
+/* Gradients ثابتة في Legacy — تحويلها لألوان توكن في الدارك */
+html.dark .bg-gradient-to-br.from-gold-50, html.dark .bg-gradient-to-r.from-gold-50,
+html.dark .bg-gradient-to-br.from-yellow-50, html.dark .bg-gradient-to-r.from-yellow-50{
+  background-image:none !important; background-color:var(--gold-soft) !important;
+}
+html.dark .bg-gradient-to-l.from-success, html.dark .bg-gradient-to-r.from-success,
+html.dark .bg-gradient-to-br.from-success{
+  background-image:none !important; background-color:var(--ok) !important;
+}
+html.dark .bg-gradient-to-br.from-brand, html.dark .bg-gradient-to-l.from-brand,
+html.dark .bg-gradient-to-r.from-brand{
+  background-image:none !important; background-color:var(--brand) !important;
+}
+
+/* صندوق التوست — تمييز صريح للشدّة (نجاح/تحذير/خطأ) */
+#toast #toastBox{ background:var(--brand); color:var(--on-brand); }
+#toast[data-sev="ok"]  #toastBox{ background:var(--ok);   }
+#toast[data-sev="warn"] #toastBox{ background:var(--warn); color:#fff; }
+#toast[data-sev="error"] #toastBox{ background:var(--bad); color:#fff; }
+
+/* name-full في الدارك — تحسين قراءة الأسماء الملوّنة */
+.text-brand{ color:var(--brand-ink) !important; }
+
+/* زر إغلاق Modal — رفع touch target إلى 44px و aria */
+#modal > div > div:first-child > button[onclick="closeModal()"]{ width:44px !important; height:44px !important; }
+
+/* دعم scroll-mask لأشرطة chips — تلميح بصري على الجوال أن هناك المزيد */
+.u-chips{ -webkit-mask-image:linear-gradient(to left, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+          mask-image:linear-gradient(to left, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%); }
+
+/* إحصائيات Legacy بالداكن — attendance stats text-green-800 على خلفية خضراء — بدّل اللون */
+.text-green-800, .text-red-800, .text-orange-800, .text-gold-800, .text-blue-800{ font-weight:800; }
+
+/* زر × في Modal — aria */
+#modal > div > div:first-child > button[onclick="closeModal()"]::before{ content:""; }
+
+/* Modal body يأخذ ارتفاع صفحة كامل عند الفتح على موبايل مع عناصر ثقيلة */
+@media (max-width:767px){
+  #modalBody{ -webkit-overflow-scrolling:touch; }
+}
+
+/* معلومات الفصل الصغيرة في نماذج المتابعة — نسق موحّد مع u-note */
+.u-plan > .u-muted:first-child{ margin-top:0; }
+
+/* صفحة Overview + Nazem: عرض البطاقات متسق */
+@media (max-width:767px){
+  .card-v4, .u-card{ padding:14px !important; }
+}
