@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { plans } from '@/db/schema';
+import { plans, planDefinitions } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
@@ -96,6 +96,30 @@ export async function POST(req: NextRequest) {
       replacedCount = del.length; // نقاط الأيام المُنجزة تبقى
     }
 
+    // Determine global direction (first range decides it; useful for storing on the definition)
+    let planDirection: 'asc' | 'desc' = 'asc';
+    {
+      const first = rangesArr[0];
+      const s0 = ayahOrdinal(first.fromSurah, first.fromAyah);
+      const e0 = ayahOrdinal(first.toSurah, first.toAyah);
+      if (s0 && e0 && e0 < s0) planDirection = 'desc';
+    }
+
+    // أنشئ تعريف الخطة أولاً كي نربط كل يوم به عبر plan_def_id
+    const planDefId = genId('PD');
+    await db.insert(planDefinitions).values({
+      id: planDefId,
+      studentId,
+      type,
+      ranges: rangesArr as any,
+      // dailyPages يُمرَّر كنص من المولِّد الواجهة (كسر صفحة). ندعم dailyAmount (آيات) أيضاً كاحتياط.
+      dailyPages: String((body && (body.dailyPages ?? body.daily_pages)) ?? (dailyAmount ?? daily)),
+      workDays: Array.isArray(workDays) ? workDays.map((n: any) => Number(n)).join(',') : '',
+      termStart: startDate,
+      termEnd: endDate,
+      direction: planDirection
+    });
+
     // Generate plan entries across ranges
     const daysOut: { date: string; target: string; fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; amount: number }[] = [];
     let dateIdx = 0;
@@ -129,7 +153,8 @@ export async function POST(req: NextRequest) {
         rows.push({
           id: genId('P'), studentId, date: dates[dateIdx], dailyTarget,
           fromSurah: s.surah, fromAyah: String(s.ayah), toSurah: e.surah, toAyah: String(e.ayah),
-          amount, type, status: 'Pending', source: 'Manual', locked: false
+          amount, type, status: 'Pending', source: 'Manual', locked: false,
+          planDefId
         });
         daysOut.push({ date: dates[dateIdx], target: dailyTarget, fromSurah: s.surah, fromAyah: s.ayah, toSurah: e.surah, toAyah: e.ayah, amount: dayHigh - dayLow + 1 });
       }
@@ -137,6 +162,6 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < rows.length; i += 200) await db.insert(plans).values(rows.slice(i, i + 200));
 
-    return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, days: daysOut });
+    return NextResponse.json({ success: true, created: daysOut.length, replaced: replacedCount, planDefId, days: daysOut });
   } catch (e: any) { return errorResponse(e); }
 }
