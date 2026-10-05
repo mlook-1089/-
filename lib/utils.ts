@@ -15,6 +15,13 @@ export function today() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
   return parts; // yyyy-MM-dd
 }
+/** يوم الأسبوع (0=أحد..6=سبت) حسب توقيت الرياض لتاريخ YYYY-MM-DD. */
+export function dowRiyadh(dateStr: string): number {
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' })
+    .format(new Date(dateStr + 'T12:00:00Z'));
+  const map: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return map[weekday] ?? 0;
+}
 export function normAr(s: string) {
   if (!s) return '';
   return String(s).toLowerCase()
