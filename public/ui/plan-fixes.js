@@ -475,3 +475,170 @@ function _fuPrefillPlan(edit){
   });
   if($('cp_unit')) $('cp_unit').value = bestKey;
 }
+
+
+/* =====================================================================
+   المرحلة ٣ — عرض كل المقادير بالوجه (صفحة مصحف المدينة ١٥ سطر)
+   بدل عرض عدد الآيات في كل مكان
+   ===================================================================== */
+
+/* عدد الصفحات (الأوجه) التي يُغطّيها مدى آيات معيّن.
+   يرجع عدد عشري دقيق (0.25، 0.5، 1، 1.5، 2…) بناءً على PAGE_FIRST/PAGE_LAST
+   المستمدّة من مصحف المدينة طبعة مجمع الملك فهد. */
+function _fuPagesSpanned(fromSurah, fromAyah, toSurah, toAyah){
+  const sOrd = qAyahOrdinal(String(fromSurah||''), Number(fromAyah)||1);
+  const eOrd = qAyahOrdinal(String(toSurah||''),   Number(toAyah)||1);
+  if(!sOrd || !eOrd) return null;
+  const lo = Math.min(sOrd, eOrd);
+  const hi = Math.max(sOrd, eOrd);
+  const loPage = qPageOf(lo);
+  const hiPage = qPageOf(hi);
+
+  if(loPage === hiPage){
+    const sz = qAyahsOnPage(loPage) || 1;
+    return (hi - lo + 1) / sz;
+  }
+
+  // جزء الصفحة الأولى
+  const loFirst = QP_FIRST[loPage - 1], loLast = QP_LAST[loPage - 1];
+  const loSize = (loLast - loFirst + 1) || 1;
+  const firstFrac = (loLast - lo + 1) / loSize;
+
+  // صفحات كاملة في المنتصف
+  const fullPages = Math.max(0, hiPage - loPage - 1);
+
+  // جزء الصفحة الأخيرة
+  const hiFirst = QP_FIRST[hiPage - 1], hiLast = QP_LAST[hiPage - 1];
+  const hiSize = (hiLast - hiFirst + 1) || 1;
+  const lastFrac = (hi - hiFirst + 1) / hiSize;
+
+  return firstFrac + fullPages + lastFrac;
+}
+
+/* صياغة بالعربية الفصيحة. للأرباع المألوفة نُسمّيها، وإلا رقم مع كلمة "وجه". */
+function _fuFormatWajh(pages){
+  if(pages == null || !Number.isFinite(pages) || pages <= 0) return '';
+  // تقريب لأقرب ربع
+  const q = Math.round(pages * 4) / 4;
+  const named = {
+    0.25: 'ربع وجه',
+    0.5:  'نصف وجه',
+    0.75: 'ثلاثة أرباع وجه',
+    1:    'وجه',
+    1.25: 'وجه وربع',
+    1.5:  'وجه ونصف',
+    1.75: 'وجه وثلاثة أرباع',
+    2:    'وجهان',
+    2.5:  'وجهان ونصف',
+    3:    'ثلاثة أوجه',
+    4:    'أربعة أوجه'
+  };
+  if(named[q]) return named[q];
+  // قيم أخرى: اعرض بـ عدد أوجه عشري قصير
+  const whole = Math.floor(q);
+  const frac  = q - whole;
+  if(frac === 0) return `${whole} وجه`;
+  // كسر غريب — رقم عشري موجز
+  return `${q.toFixed(2).replace(/\.?0+$/,'')} وجه`;
+}
+
+/* ---------- بطاقة ورد اليوم: المقدار يُعرض بالوجه ---------- */
+/* نسخة من renderMpPlanItem في followup.js مع سطر واحد مُغيَّر:
+   "المقدار: N آية" → "المقدار: <ربع وجه | نصف وجه | وجه ... >"               */
+function renderMpPlanItem(p){
+  const surs = _tData?.surahs || [];
+  const status = p.Accomplishment_Status || 'Pending';
+  const isDone = status==='Done', isPartial = status==='Partial', isMissed = status==='Missed';
+  const pid = p.Plan_ID;
+  const typeTag = p.Type==='revision' ? '<span class="u-tag rev">مراجعة</span>' : '<span class="u-tag">حفظ</span>';
+  const statusPill = isDone ? '<span class="u-pill ok">مكتمل</span>'
+                   : isPartial ? '<span class="u-pill warn">جزئي</span>'
+                   : isMissed ? '<span class="u-pill bad">لم يحفظ</span>'
+                   : '<span class="u-pill mute">لم يُسمَّع</span>';
+
+  // 🔄 المقدار بالوجه بدل الآيات
+  const pages = _fuPagesSpanned(p.From_Surah, p.From_Ayah, p.To_Surah, p.To_Ayah);
+  const wajhStr = _fuFormatWajh(pages);
+
+  const smallBtn = 'style="width:34px;height:34px;border-radius:10px"';
+  const head = `<div class="u-row" style="gap:6px;margin-bottom:8px">
+      ${typeTag}${statusPill}
+      <span class="u-grow"></span>
+      <button type="button" class="u-icon-btn" ${smallBtn} title="خيارات" aria-label="خيارات" onclick="openMpPlanMenu(${jsArg(pid)},${jsArg(p.Student_ID)})">${svg('edit','w-4 h-4')}</button>
+      <button type="button" class="u-icon-btn" ${smallBtn} title="حذف الورد" aria-label="حذف الورد" onclick="doMpDeleteItem(${jsArg(pid)})">${svg('trash','w-4 h-4')}</button>
+    </div>
+    <div class="u-name" style="font-size:15px">${_fuAyahRange(p)}</div>
+    ${wajhStr?`<div class="u-muted" style="margin-top:2px">المقدار: <b>${esc(wajhStr)}</b></div>`:''}`;
+
+  const lbl = t => `<label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px">${t}</label>`;
+  const numIn = (k, v) => `<input type="number" inputmode="numeric" min="0" data-k="${k}" value="${esc(v)}" class="u-input u-num" style="height:42px;text-align:center;padding:0 6px">`;
+
+  if(isDone){
+    const cell = (t, v) => `<div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center"><div class="u-muted">${t}</div><div class="u-num" style="color:var(--ink)">${v!=null&&v!==''?esc(v):'—'}</div></div>`;
+    return `<div class="u-plan" style="background:var(--ok-soft);border-color:transparent">
+      ${head}
+      <div class="u-grid3" style="gap:8px;margin:10px 0 8px">${cell('أخطاء',p.Mistakes)}${cell('استماع',p.Hearing)}${cell('تكرار',p.Repetition)}</div>
+      <button type="button" class="u-btn sm u-btn-g w" onclick="doMpReopen(${jsArg(pid)})">${svg('repeat','w-4 h-4')} إعادة فتح</button>
+    </div>`;
+  }
+
+  const attSt = getAttendanceStatus(p.Student_ID, _mp.date) || 'Present';
+  const surahOpts = surs.map(s=>`<option value="${esc(s)}" ${s===p.To_Surah?'selected':''}>${esc(s)}</option>`).join('');
+  const bg = isMissed ? 'background:var(--bad-soft);border-color:transparent' : isPartial ? 'background:var(--warn-soft);border-color:transparent' : '';
+  return `<div class="u-plan" style="${bg}">
+    ${head}
+    <div data-mp-form="${esc(pid)}" style="margin-top:10px">
+      <input type="hidden" data-k="attendance" value="${esc(attSt)}">
+      ${lbl('وصل إلى')}
+      <div class="u-row" style="gap:8px;margin-bottom:10px">
+        <select data-k="toSurah" class="u-input u-grow" style="height:42px">${surahOpts}</select>
+        <input type="number" inputmode="numeric" min="1" data-k="toAyah" value="${esc(p.To_Ayah||'')}" class="u-input u-num" style="height:42px;width:84px;text-align:center" aria-label="الآية">
+      </div>
+      <div class="u-grid3" style="gap:8px;margin-bottom:12px">
+        <div>${lbl('أخطاء')}${numIn('mistakes', p.Mistakes!=null?p.Mistakes:0)}</div>
+        <div>${lbl('استماع')}${numIn('hearing', p.Hearing!=null?p.Hearing:1)}</div>
+        <div>${lbl('تكرار')}${numIn('repetition', p.Repetition!=null?p.Repetition:0)}</div>
+      </div>
+      <div class="u-seg" style="padding:4px;gap:4px">
+        <button type="button" style="padding:13px 0;font-size:14px;background:var(--ok);color:#fff" onclick="doMpSaveItem(${jsArg(pid)},'Done')">مكتمل</button>
+        <button type="button" class="${isPartial?'on-warn':''}" style="padding:13px 0;font-size:14px" onclick="doMpSaveItem(${jsArg(pid)},'Partial')">جزئي</button>
+        <button type="button" class="${isMissed?'on-bad':''}" style="padding:13px 0;font-size:14px" onclick="doMpSaveItem(${jsArg(pid)},'Missed')">لم يحفظ</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- بطاقة "خطط جميع الطلاب": المقدار اليومي بالوجه ---------- */
+function _apCard(r){
+  const pct = r.total ? Math.round(r.done / r.total * 100) : 0;
+  const ranges = r.ranges.map(g => `<div class="u-name" style="font-size:14.5px">من ${esc(g.fromSurah)} <span class="u-num">${esc(g.fromAyah)}</span> ← إلى ${esc(g.toSurah)} <span class="u-num">${esc(g.toAyah)}</span></div>`).join('');
+  // r.daily = متوسط آيات/يوم (موروث). نحوّله لوجه بقسمته على حجم صفحة متوسط عند أول آية في المدى.
+  // لعرض أوضح: نحسب "إجمالي الوجه ÷ أيام الخطة" بناءً على نطاقات r.ranges.
+  let totalPages = 0;
+  r.ranges.forEach(g => {
+    const p = _fuPagesSpanned(g.fromSurah, g.fromAyah, g.toSurah, g.toAyah);
+    if(p && isFinite(p)) totalPages += Math.abs(p);
+  });
+  const dailyWajh = r.total > 0 ? _fuFormatWajh(totalPages / r.total) : '';
+  return `<div class="u-card" style="padding:12px 14px">
+    <div class="u-row" style="align-items:flex-start">
+      <div class="u-avatar">${esc(String(r.name).trim().charAt(0))}</div>
+      <div class="u-grow">
+        <div class="u-name">${esc(r.name)}</div>
+        <div class="u-row" style="gap:6px;flex-wrap:wrap;margin-top:6px">
+          ${r.type === 'revision' ? '<span class="u-tag rev">مراجعة</span>' : '<span class="u-tag">حفظ</span>'}
+          ${dailyWajh ? `<span class="u-pill info"><b>${esc(dailyWajh)}</b> يومياً</span>` : ''}
+          ${r.groupName ? `<span class="u-muted">${esc(r.groupName)}</span>` : ''}
+        </div>
+      </div>
+      <button type="button" class="u-btn sm u-btn-p" onclick="openEditFullPlan(${jsArg(r.sid)},${jsArg(r.type)})">${svg('edit','w-4 h-4')} تعديل الخطة</button>
+    </div>
+    <div class="u-plan" style="margin-top:10px;display:grid;gap:4px">${ranges}</div>
+    <div class="u-between" style="margin-top:8px"><span class="u-muted">أُنجز <span class="u-num">${r.done}</span> من <span class="u-num">${r.total}</span> ورد</span><span class="u-muted u-num">${pct}%</span></div>
+    <div class="u-bar light" style="margin-top:4px"><i style="width:${pct}%"></i></div>
+  </div>`;
+}
+
+/* ---------- Toast حين إنشاء خطة: يذكر الوجه بدل عدد الأوراد ---------- */
+/* (نترك الأوراد للمعلومات، لكن نضيف تفصيل الوجه إن توفّر) — إخلاء دالّة doCreateManualPlan
+   سبق أن أنشأناها في المرحلة ٢. */
