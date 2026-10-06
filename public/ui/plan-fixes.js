@@ -321,7 +321,13 @@ function openCreateManualPlan(sid, edit){
     <div class="u-note brand" style="margin-bottom:12px;font-size:11.5px">الوجه = صفحة مصحف المدينة. تختلف الآيات لكل يوم حسب كثافة الآيات في موضع الطالب.</div>
     <div class="u-plan" style="background:var(--card2);margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">المدى القرآني</div>
-      ${_fuRangeHTML('', surOpts)}
+      <div id="cp_range_main">
+        <div class="u-between" style="margin-bottom:6px">
+          <span style="font-size:12.5px;font-weight:700;color:var(--ink2)">النطاق <span class="u-num">١</span></span>
+          <button type="button" style="border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:var(--bad);cursor:pointer" onclick="_cpRemoveMainRange()">حذف</button>
+        </div>
+        ${_fuRangeHTML('', surOpts)}
+      </div>
       <div id="cp_extra_ranges"></div>
       <button type="button" class="u-btn sm u-btn-s w" style="margin-top:10px" onclick="_cpAddRange()">${svg('plus','w-4 h-4')} نطاق تالٍ</button>
     </div>
@@ -348,8 +354,12 @@ function _fuReadPlanForm(){
     const fS = val('cp_fromS' + sfx), tS = val('cp_toS' + sfx);
     if(fS && tS) ranges.push({ fromSurah:fS, fromAyah:Number(val('cp_fromA' + sfx))||1, toSurah:tS, toAyah:Number(val('cp_toA' + sfx))||1 });
   };
+  // النطاق الرئيسي (قد يكون مُزالاً) + النطاقات الإضافية
   add('');
-  document.querySelectorAll('[id^="cp_range_"]').forEach(div => add('_' + div.id.replace('cp_range_', '')));
+  document.querySelectorAll('[id^="cp_range_"]').forEach(div => {
+    if(div.id === 'cp_range_main') return; // الرئيسي قُرئ أعلاه بـ sfx=''
+    add('_' + div.id.replace('cp_range_', ''));
+  });
   const unit = val('cp_unit') || 'full';
   const dailyPages = (MP_UNITS[unit] && Number(MP_UNITS[unit].pages)) || 1;
   return { type: val('cp_type') === 'revision' ? 'revision' : 'conserve', ranges, dailyPages, unit };
@@ -371,11 +381,16 @@ async function doCreateManualPlan(){
   if(!workDays.length)       return toast('عيّن أيام الحلقة في الإعدادات → أيام الحلقة','warn');
 
   const ranges = [];
-  const fromSurah0 = $('cp_fromS').value, toSurah0 = $('cp_toS').value;
-  const fromAyah0  = Number($('cp_fromA').value) || 1, toAyah0 = Number($('cp_toA').value) || 1;
-  if(!fromSurah0 || !toSurah0) return toast('اختر نطاق القرآن','warn');
-  ranges.push({ fromSurah:fromSurah0, fromAyah:fromAyah0, toSurah:toSurah0, toAyah:toAyah0 });
+  // النطاق الرئيسي قد يكون مُزالاً (المستخدم ضغط "حذف" عليه) — تحقّق بأمان قبل القراءة
+  const fromS_main = $('cp_fromS')?.value;
+  const toS_main   = $('cp_toS')?.value;
+  if(fromS_main && toS_main){
+    const fromA_main = Number($('cp_fromA')?.value) || 1;
+    const toA_main   = Number($('cp_toA')?.value)   || 1;
+    ranges.push({ fromSurah:fromS_main, fromAyah:fromA_main, toSurah:toS_main, toAyah:toA_main });
+  }
   document.querySelectorAll('[id^="cp_range_"]').forEach(div => {
+    if(div.id === 'cp_range_main') return; // الرئيسي قُرئ أعلاه
     const n = div.id.replace('cp_range_','');
     const fS = $(`cp_fromS_${n}`)?.value;
     const fA = Number($(`cp_fromA_${n}`)?.value) || 1;
@@ -383,6 +398,7 @@ async function doCreateManualPlan(){
     const tA = Number($(`cp_toA_${n}`)?.value) || 1;
     if(fS && tS) ranges.push({ fromSurah:fS, fromAyah:fA, toSurah:tS, toAyah:tA });
   });
+  if(!ranges.length) return toast('اختر نطاقاً قرآنياً على الأقل','warn');
 
   const dailyPages = (MP_UNITS[unit] && Number(MP_UNITS[unit].pages)) || 1;
   const replaceExisting = $('cp_replace')?.checked || false;
@@ -718,4 +734,18 @@ async function confirmDeleteStudentPlan(sid, type){
   await refreshTeacherStudents();
   if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
   else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
+}
+
+
+/* حذف النطاق الأول (الرئيسي) من نافذة إنشاء/تعديل الخطة.
+   يُسمح بالحذف فقط إن بقي نطاق واحد على الأقل (رئيسي أو إضافي). */
+function _cpRemoveMainRange(){
+  const main = $('cp_range_main');
+  if(!main) return;
+  const extras = document.querySelectorAll('[id^="cp_range_"]');
+  const otherCount = Array.from(extras).filter(d => d.id !== 'cp_range_main').length;
+  if(otherCount === 0){
+    return toast('يلزم نطاق واحد على الأقل — أضف نطاقاً تالياً أولاً','warn');
+  }
+  main.remove();
 }
