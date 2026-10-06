@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { plans, planDefinitions } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { requireRole, AuthError, errorResponse } from '@/lib/auth';
-import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, dowRiyadh, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
+import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, dowRiyadh, SURAHS, SURAH_AYAH_COUNT, PAGE_FIRST, PAGE_LAST, pageOfOrdinal } from '@/lib/utils';
 import { revokeRefs } from '@/lib/triggers';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -13,6 +13,65 @@ function err(msg: string, status = 400) {
 }
 
 interface Range { fromSurah: string; fromAyah: number; toSurah: string; toAyah: number; }
+
+/**
+ * خوارزمية "محاسبة الصفحة" للتقدّم بمقدار صفحات (كسر مسموح: 0.25، 0.5، 1، 1.5، 2…).
+ * نستهلك ما تبقى من الصفحة الحالية جزئياً، ثم صفحات كاملة، ثم جزءاً من الصفحة الأخيرة.
+ * النتيجة: لكل يوم مدى آيات يُطابق الحجم المرئي الفعلي في مصحف المدينة بغضّ النظر
+ * عن كثافة آيات ذلك الموضع (الفرق بين البقرة والجزء الثلاثين).
+ */
+function endAyahForPages(startOrd: number, dailyPages: number, maxOrd: number): number {
+  if (!(dailyPages > 0)) return startOrd;
+  let ord = startOrd;
+  let budget = dailyPages;
+  let safety = 0;
+  while (budget > 0 && ord <= maxOrd && safety++ < 2000) {
+    const page = pageOfOrdinal(ord);
+    if (page < 1 || page > 604) break;
+    const pageFirst = PAGE_FIRST[page - 1];
+    const pageLast = PAGE_LAST[page - 1];
+    const pageSize = pageLast - pageFirst + 1;
+    const positionInPage = ord - pageFirst;
+    const fractionLeftInPage = (pageSize - positionInPage) / pageSize;
+    if (budget + 1e-9 >= fractionLeftInPage) {
+      // استهلك ما تبقى من هذه الصفحة بالكامل
+      ord = pageLast + 1;
+      budget -= fractionLeftInPage;
+    } else {
+      // اقتطع جزءاً داخل الصفحة (آية واحدة على الأقل)
+      const ayatToTake = Math.max(1, Math.round(pageSize * budget));
+      ord += ayatToTake;
+      budget = 0;
+    }
+  }
+  return Math.min(Math.max(startOrd, ord - 1), maxOrd);
+}
+
+/** الاتجاه التنازلي: نبدأ من آخر آية ونرجع للخلف بمقدار صفحات. */
+function startAyahForPagesDesc(endOrd: number, dailyPages: number, minOrd: number): number {
+  if (!(dailyPages > 0)) return endOrd;
+  let ord = endOrd;
+  let budget = dailyPages;
+  let safety = 0;
+  while (budget > 0 && ord >= minOrd && safety++ < 2000) {
+    const page = pageOfOrdinal(ord);
+    if (page < 1 || page > 604) break;
+    const pageFirst = PAGE_FIRST[page - 1];
+    const pageLast = PAGE_LAST[page - 1];
+    const pageSize = pageLast - pageFirst + 1;
+    const positionFromEnd = pageLast - ord;
+    const fractionLeftInPage = (pageSize - positionFromEnd) / pageSize;
+    if (budget + 1e-9 >= fractionLeftInPage) {
+      ord = pageFirst - 1;
+      budget -= fractionLeftInPage;
+    } else {
+      const ayatToTake = Math.max(1, Math.round(pageSize * budget));
+      ord -= ayatToTake;
+      budget = 0;
+    }
+  }
+  return Math.max(Math.min(endOrd, ord + 1), minOrd);
+}
 
 function validateRange(rng: Range): string | null {
   const si = SURAHS.indexOf(String(rng.fromSurah));
@@ -32,7 +91,7 @@ export async function POST(req: NextRequest) {
     const {
       studentId, type, startDate, endDate,
       fromSurah, fromAyah, toSurah, toAyah,
-      workDays, dailyAmount, replaceExisting,
+      workDays, dailyAmount, dailyPages: dailyPagesInput, replaceExisting,
       ranges: rawRanges
     } = body || {};
 
@@ -48,6 +107,12 @@ export async function POST(req: NextRequest) {
       const da = Number(dailyAmount);
       if (!Number.isFinite(da) || da < 1) return err('قيمة dailyAmount غير صالحة');
     }
+    // dailyPages: كسر صفحة الوجه (0.25 ربع، 0.5 نصف، 1 وجه، 1.5 وجه ونصف، 2 وجهان، 3…)
+    const dailyPagesRaw = (body && (body.dailyPages ?? body.daily_pages));
+    const dailyPages: number | null =
+      (dailyPagesRaw !== undefined && dailyPagesRaw !== null && Number.isFinite(Number(dailyPagesRaw)) && Number(dailyPagesRaw) > 0)
+        ? Number(dailyPagesRaw) : null;
+    if (dailyPages != null && dailyPages > 5) return err('مقدار الصفحات اليومي كبير جداً');
 
     // Normalize ranges
     let rangesArr: Range[];
@@ -114,20 +179,37 @@ export async function POST(req: NextRequest) {
       const lowOrd = isDesc ? endOrd : startOrd;
       const highOrd = isDesc ? startOrd : endOrd;
 
-      for (let i = 0; dateIdx < dates.length; i++, dateIdx++) {
+      // المؤشّر يتقدّم يوماً بيوم. في الوضع التصاعدي يبدأ من lowOrd، وفي التنازلي من highOrd.
+      // استخدام مؤشّر بدلاً من ضرب i*daily ضروري لحالة dailyPages لأن حجم كل يوم بالآيات يختلف.
+      let cursor = isDesc ? highOrd : lowOrd;
+
+      while (dateIdx < dates.length) {
         let dayLow: number, dayHigh: number;
         if (isDesc) {
-          dayHigh = highOrd - i * daily;
-          if (dayHigh < lowOrd) break;
-          dayLow = Math.max(highOrd - (i + 1) * daily + 1, lowOrd);
+          if (cursor < lowOrd) break;
+          dayHigh = cursor;
+          if (dailyPages != null) {
+            dayLow = startAyahForPagesDesc(cursor, dailyPages, lowOrd);
+          } else {
+            dayLow = Math.max(cursor - daily + 1, lowOrd);
+          }
+          // ضمان تقدّم فعلي كيلا ندخل حلقة لا نهائية
+          if (dayLow > dayHigh) dayLow = dayHigh;
+          cursor = dayLow - 1;
         } else {
-          dayLow = lowOrd + i * daily;
-          if (dayLow > highOrd) break;
-          dayHigh = Math.min(lowOrd + (i + 1) * daily - 1, highOrd);
+          if (cursor > highOrd) break;
+          dayLow = cursor;
+          if (dailyPages != null) {
+            dayHigh = endAyahForPages(cursor, dailyPages, highOrd);
+          } else {
+            dayHigh = Math.min(cursor + daily - 1, highOrd);
+          }
+          if (dayHigh < dayLow) dayHigh = dayLow;
+          cursor = dayHigh + 1;
         }
         const s = fromOrdinal(dayLow);
         const e = fromOrdinal(dayHigh);
-        if (!s || !e) continue;
+        if (!s || !e) { dateIdx++; continue; }
         const amount = String(dayHigh - dayLow + 1);
         const dailyTarget = buildPlanTarget({ fromSurah: s.surah, fromAyah: String(s.ayah), toSurah: e.surah, toAyah: String(e.ayah), amount });
         rows.push({
@@ -137,48 +219,55 @@ export async function POST(req: NextRequest) {
           planDefId
         });
         daysOut.push({ date: dates[dateIdx], target: dailyTarget, fromSurah: s.surah, fromAyah: s.ayah, toSurah: e.surah, toAyah: e.ayah, amount: dayHigh - dayLow + 1 });
+        dateIdx++;
       }
     }
 
-    // Delete existing + insert atomically — تفادياً لفقدان البيانات إن فشل INSERT في المنتصف بعد DELETE
+    // neon-http لا يدعم transactions. ننفّذ تتابعياً مع تحقّق ذاتي بين الخطوات.
+    // المخاطرة: إن فشل INSERT بعد DELETE فإن الأوراد المحذوفة لا تعود — نقبل ذلك لأن
+    // التبديل في batch-style وبيانات الواجهة تعيد الحالة من الخادم بعد التوليد.
     let replacedCount = 0;
-    await db.transaction(async (tx) => {
-      if (replaceExisting === true) {
-        // قبل الحذف: اسحب نقاط الأيام المُنجزة سابقاً — لولا هذا لبقيت سجلات نقاط يتيمة
-        // لا يمكن مطابقتها مع معرّفات الخطة الجديدة بعد إعادة التوليد.
-        const existing = await tx.select({ id: plans.id, status: plans.status }).from(plans).where(and(
-          eq(plans.studentId, studentId),
-          eq(plans.type, type),
-          eq(plans.source, 'Manual'),
-          gte(plans.date, startDate),
-          lte(plans.date, endDate)
-        ));
-        const doneIds = existing.filter(r => r.status !== 'Pending').map(r => r.id);
-        if (doneIds.length) await revokeRefs(doneIds.map(id => 'plan:' + id));
-        const del = await tx.delete(plans).where(and(
-          eq(plans.studentId, studentId),
-          eq(plans.type, type),
-          eq(plans.source, 'Manual'),
-          gte(plans.date, startDate),
-          lte(plans.date, endDate)
-        )).returning({ id: plans.id });
-        replacedCount = del.length;
-      }
-      // أنشئ تعريف الخطة ضمن المعاملة كي نربط كل يوم به عبر plan_def_id
-      await tx.insert(planDefinitions).values({
+    if (replaceExisting === true) {
+      // قبل الحذف: اسحب نقاط الأيام المُنجزة سابقاً — لولا هذا لبقيت سجلات نقاط يتيمة
+      // لا يمكن مطابقتها مع معرّفات الخطة الجديدة بعد إعادة التوليد.
+      const existing = await db.select({ id: plans.id, status: plans.status }).from(plans).where(and(
+        eq(plans.studentId, studentId),
+        eq(plans.type, type),
+        eq(plans.source, 'Manual'),
+        gte(plans.date, startDate),
+        lte(plans.date, endDate)
+      ));
+      const doneIds = existing.filter(r => r.status !== 'Pending').map(r => r.id);
+      if (doneIds.length) await revokeRefs(doneIds.map(id => 'plan:' + id));
+      const del = await db.delete(plans).where(and(
+        eq(plans.studentId, studentId),
+        eq(plans.type, type),
+        eq(plans.source, 'Manual'),
+        gte(plans.date, startDate),
+        lte(plans.date, endDate)
+      )).returning({ id: plans.id });
+      replacedCount = del.length;
+    }
+    try {
+      // أنشئ تعريف الخطة أولاً ثم أدرج الأوراد. فشل الأوراد يترك التعريف يتيماً (سيُحذَف لاحقاً بالـ FK).
+      await db.insert(planDefinitions).values({
         id: planDefId,
         studentId,
         type,
         ranges: rangesArr as any,
-        // dailyPages يُمرَّر كنص من المولِّد الواجهة (كسر صفحة). ندعم dailyAmount (آيات) أيضاً كاحتياط.
-        dailyPages: String((body && (body.dailyPages ?? body.daily_pages)) ?? (dailyAmount ?? daily)),
+        // dailyPages المصدر الرسمي للمقدار (0.25، 0.5، 1، 1.5، 2). يُحفَظ dailyAmount في Amount لكل يوم.
+        dailyPages: String(dailyPages ?? (dailyAmount ?? daily)),
         workDays: Array.isArray(workDays) ? workDays.map((n: any) => Number(n)).join(',') : '',
         termStart: startDate,
         termEnd: endDate,
         direction: planDirection
       });
-      for (let i = 0; i < rows.length; i += 200) await tx.insert(plans).values(rows.slice(i, i + 200));
-    });
+      for (let i = 0; i < rows.length; i += 200) await db.insert(plans).values(rows.slice(i, i + 200));
+    } catch (insertErr: any) {
+      // أدرج ما استطعنا؛ بعض الأوراد قد تكون أُدخلت والتعريف موجود. حاول حذف التعريف اليتيم.
+      try { await db.delete(planDefinitions).where(eq(planDefinitions.id, planDefId)); } catch {}
+      throw insertErr;
+    }
 
     // تحذيرات معلوماتية (لا تمنع النجاح): خطة أقصر من المطلوب، أو نطاقات نفدت الأيام قبل معالجتها
     const expectedDays = dates.length;
