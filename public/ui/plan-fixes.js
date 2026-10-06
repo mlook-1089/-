@@ -328,6 +328,9 @@ function openCreateManualPlan(sid, edit){
     ${edit ? '' : `<label class="u-row" style="gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:14px;cursor:pointer">
       <input type="checkbox" id="cp_replace" style="width:18px;height:18px;accent-color:var(--brand)"> استبدال أي خطة قائمة من النوع نفسه في هذا المدى
     </label>`}
+    ${edit ? `<button type="button" class="u-btn u-btn-bad w" style="margin-bottom:10px" onclick="confirmDeleteStudentPlan(${jsArg(targetId)},${jsArg(edit.type)})">
+      ${svg('trash','w-4 h-4')} حذف هذه الخطة بالكامل
+    </button>` : ''}
     <div class="u-grid2" style="margin:0">
       <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
       ${edit
@@ -631,7 +634,10 @@ function _apCard(r){
           ${r.groupName ? `<span class="u-muted">${esc(r.groupName)}</span>` : ''}
         </div>
       </div>
-      <button type="button" class="u-btn sm u-btn-p" onclick="openEditFullPlan(${jsArg(r.sid)},${jsArg(r.type)})">${svg('edit','w-4 h-4')} تعديل الخطة</button>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button type="button" class="u-btn sm u-btn-p" onclick="openEditFullPlan(${jsArg(r.sid)},${jsArg(r.type)})">${svg('edit','w-4 h-4')} تعديل</button>
+        <button type="button" class="u-icon-btn" style="width:36px;height:36px;color:var(--bad);background:var(--bad-soft);border-color:transparent" title="حذف الخطة" aria-label="حذف الخطة" onclick="confirmDeleteStudentPlan(${jsArg(r.sid)},${jsArg(r.type)})">${svg('trash','w-4 h-4')}</button>
+      </div>
     </div>
     <div class="u-plan" style="margin-top:10px;display:grid;gap:4px">${ranges}</div>
     <div class="u-between" style="margin-top:8px"><span class="u-muted">أُنجز <span class="u-num">${r.done}</span> من <span class="u-num">${r.total}</span> ورد</span><span class="u-muted u-num">${pct}%</span></div>
@@ -642,3 +648,74 @@ function _apCard(r){
 /* ---------- Toast حين إنشاء خطة: يذكر الوجه بدل عدد الأوراد ---------- */
 /* (نترك الأوراد للمعلومات، لكن نضيف تفصيل الوجه إن توفّر) — إخلاء دالّة doCreateManualPlan
    سبق أن أنشأناها في المرحلة ٢. */
+
+
+/* =====================================================================
+   حذف خطة طالب معيّن — من "خطط الطلاب" أو من نافذة التعديل
+   ===================================================================== */
+
+async function confirmDeleteStudentPlan(sid, type){
+  if(!sid) return;
+  const { nameMap } = tMaps();
+  const name = nameMap[sid] || sid;
+  const typeLabel = type === 'revision' ? 'المراجعة' : (type === 'conserve' ? 'الحفظ' : '');
+  const typeAr = typeLabel ? `خطة ${typeLabel}` : 'جميع الخطط';
+
+  // عدّ ما سيُحذف لعرضه في التأكيد
+  const plans = (_tData.plans || []).filter(p =>
+    String(p.Student_ID) === String(sid) &&
+    p.Source === 'Manual' &&
+    (type ? p.Type === type : true)
+  );
+  const total = plans.length;
+  const done  = plans.filter(p => p.Accomplishment_Status === 'Done').length;
+  const upcoming = plans.filter(p => (p.Accomplishment_Status || 'Pending') === 'Pending').length;
+
+  if(!total){
+    return toast('لا توجد أوراد لحذفها','warn');
+  }
+
+  const warnHtml = done > 0
+    ? `<div class="u-note bad" style="margin-top:10px;margin-bottom:0;text-align:right">
+        <b>تنبيه:</b> ${done} ورد منها مُنجَزة — <b>ستُسحب نقاطها</b> من مجموع الطالب تلقائياً.
+       </div>`
+    : '';
+
+  const ok = await confirmModal({
+    title: `حذف ${typeAr}`,
+    message: `
+      <div style="text-align:right;line-height:1.75">
+        الطالب: <b>${esc(name)}</b><br>
+        سيُحذف <b class="u-num">${total}</b> ورد
+        <span class="u-muted" style="font-size:12.5px">
+          (<span class="u-num">${upcoming}</span> لم يُسمَّع · <span class="u-num">${done}</span> مُنجَز)
+        </span>.
+        ${warnHtml}
+        <div class="u-muted" style="margin-top:10px;font-size:12px">هذا الإجراء لا يمكن التراجع عنه.</div>
+      </div>`,
+    confirmText: `نعم، احذف`,
+    danger: true
+  });
+  if(!ok) return;
+
+  const r = await guard(DS.deleteManualPlans(sid, type || undefined), 'حذف الخطة…');
+  if(!r || !r.success) return toast((r && r.message) || 'فشل الحذف','error');
+
+  // حدّث الحالة المحلّية — نحذف ما طابق المعايير نفسها
+  _tData.plans = (_tData.plans || []).filter(p =>
+    !(String(p.Student_ID) === String(sid) &&
+      p.Source === 'Manual' &&
+      (type ? p.Type === type : true))
+  );
+
+  toast(`حُذف ${r.deleted || total} ورد${done ? ` · سُحبت نقاط ${done} ورد مُنجَز` : ''}`);
+
+  // أغلق نافذة التعديل إن كانت مفتوحة
+  const modal = $('modal');
+  if(modal && !modal.classList.contains('hidden')) closeModal();
+
+  // تحديث البيانات من الخادم (لجلب مجاميع نقاط صحيحة بعد السحب) + إعادة تصيير الشاشة الحالية
+  await refreshTeacherStudents();
+  if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
+  else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
+}
