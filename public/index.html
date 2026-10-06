@@ -509,7 +509,11 @@ const DS = {
       apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}],
       apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}],
       apiResetPendingPlans:     () => ['POST','/api/admin/reset-pending-plans',{confirm:'RESET_PENDING_PLANS'}],
-      apiAuthForgotPassword:    () => ['POST','/api/auth/forgot-password',{identity:a[0]}]
+      apiAuthForgotPassword:    () => ['POST','/api/auth/forgot-password',{identity:a[0]}],
+      apiCommunityList:         () => ['GET','/api/community/messages?groupId='+encodeURIComponent(a[0]||'')+(a[1]?'&since='+encodeURIComponent(a[1]):'')],
+      apiCommunityPost:         () => ['POST','/api/community/messages',{body:a[0],groupId:a[1]||undefined}],
+      apiCommunityDelete:       () => ['DELETE','/api/community/messages',{id:a[0]}],
+      apiCommunityReact:        () => ['POST','/api/community/react',{messageId:a[0],emoji:a[1]||'heart'}]
     };
     const spec = M[fn] ? M[fn]() : null;
     if(!spec) throw new Error('Unknown API: '+fn);
@@ -585,7 +589,11 @@ const DS = {
   dayData(d){return this.c('apiDayData',d)},
   deleteManualPlans(sid,type){return this.c('apiDeleteManualPlans',sid,type)},
   resetPendingPlans(){return this.c('apiResetPendingPlans')},
-  forgotPassword(identity){return this.c('apiAuthForgotPassword',identity)}
+  forgotPassword(identity){return this.c('apiAuthForgotPassword',identity)},
+  communityList(groupId,since){return this.c('apiCommunityList',groupId,since)},
+  communityPost(body,groupId){return this.c('apiCommunityPost',body,groupId)},
+  communityDelete(id){return this.c('apiCommunityDelete',id)},
+  communityReact(messageId,emoji){return this.c('apiCommunityReact',messageId,emoji)}
 };
 
 const $=id=>document.getElementById(id);
@@ -4206,5 +4214,6 @@ window.logout = async function(){
 <script src="/ui/shell.js?v=2"></script>
 <script src="/ui/settings.js?v=2"></script>
 <script src="/ui/plan-fixes.js?v=5"></script>
+<script src="/ui/community.js?v=1"></script>
 </body>
 </html>

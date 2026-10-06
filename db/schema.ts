@@ -186,3 +186,30 @@ export const nazemSession = pgTable('nazem_session', {
   xsrf: text('xsrf').default(''),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
+
+// محادثة المجموعة: مساحة علنية خاصة بكل مجموعة، معزولة بالكامل عن المجموعات الأخرى.
+// يراها طلاب المجموعة والمعلمون والمشرفون — لا يراها أولياء الأمور.
+// soft delete عبر deletedAt: الرسالة المحذوفة تظل سطراً للشفافية.
+export const communityMessages = pgTable('community_messages', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  body: text('body').notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  deletedBy: text('deleted_by'), // user id — للسجل: من حذف
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  groupCreatedIdx: index('cm_group_created_idx').on(t.groupId, t.createdAt),
+  authorIdx: index('cm_author_idx').on(t.authorId)
+}));
+
+// تفاعلات (قلب فقط للمرحلة ١). PK = (message, user, emoji) — نقرة ثانية تلغي.
+export const communityReactions = pgTable('community_reactions', {
+  messageId: text('message_id').notNull().references(() => communityMessages.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  emoji: text('emoji').notNull().default('heart'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  pk: primaryKey({ columns: [t.messageId, t.userId, t.emoji] }),
+  msgIdx: index('cr_msg_idx').on(t.messageId)
+}));
