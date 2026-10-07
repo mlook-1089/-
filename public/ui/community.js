@@ -239,10 +239,14 @@ if(typeof _ptNav === 'function'){
   };
 }
 
-/* نلفّ _ptRender لتوجيه sec='community' إلى شاشة المجتمع */
+/* نلفّ _ptRender لتوجيه sec='community' إلى شاشة المجتمع.
+   مهم: نُعيد رسم الـ nav في كل مرة — renderStudent() ينادي _ptNav() مرة قبل
+   تحميل dash، فيُفقَد تبويب "المجتمع" (لأن myGroupId لم يصل بعد). إعادة الرسم
+   هنا تضمن ظهور التبويب فور وصول البيانات. */
 if(typeof _ptRender === 'function'){
   const _origPtRender = _ptRender;
   _ptRender = function(){
+    try { if(typeof _ptNav === 'function') _ptNav(); } catch(e) {}
     if(_pt.sec === 'community' && _pt.role === 'Student'){
       const P = $('portal'); if(!P) return;
       const groupId = _pt.dash?.myGroupId;
