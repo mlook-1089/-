@@ -34,6 +34,11 @@ body { background-color: #f4f7fa; -webkit-font-smoothing: antialiased; }
 
 /* Utilities from original */
 .spinner{width:38px;height:38px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes logoPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.92);opacity:.75}}
+@keyframes logoRing{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.4);opacity:0}}
+.logo-pulse{position:relative;width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;animation:logoPulse 1.6s ease-in-out infinite}
+.logo-pulse::before{content:"";position:absolute;inset:0;border-radius:24px;border:2px solid rgba(212,175,55,.55);animation:logoRing 1.6s ease-out infinite}
+.logo-pulse img{width:100%;height:100%;object-fit:contain;border-radius:20px;background:#fff;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .fade-in{animation:fade .3s cubic-bezier(.2,.7,.3,1)}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -280,7 +285,7 @@ table.tbl-v4 tr:last-child td { border-bottom:none; }
 <body class="text-gray-800 antialiased overflow-hidden flex h-screen">
 
 <!-- Overlays -->
-<div id="loader" class="fixed inset-0 modal-bg z-[60] hidden items-center justify-center"><div class="text-center"><div class="spinner mx-auto"></div><p id="loaderMsg" class="text-white/90 font-bold text-sm mt-3 hidden"></p></div></div>
+<div id="loader" class="fixed inset-0 modal-bg z-[60] hidden items-center justify-center"><div class="text-center"><div class="logo-pulse brand-logo-slot mx-auto"><img src="/icons/brand-mark.png" alt="شعار حلقة ابن كثير"></div><p id="loaderMsg" class="text-white/90 font-bold text-sm mt-4 hidden"></p></div></div>
 <div id="toast" class="fixed top-4 left-1/2 -translate-x-1/2 z-[80] hidden"><div id="toastBox" class="px-5 py-3 rounded-2xl shadow-saas flex items-center gap-2 slide-up bg-brand-900 text-white"><span id="toastIcon"></span><span id="toastMsg" class="text-sm font-bold"></span></div></div>
 <div id="modal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 modal-bg" onclick="if(event.target===this)closeModal()"><div class="bg-white w-full max-w-lg slide-up rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"><div class="px-5 py-4 flex items-center justify-between border-b border-gray-100"><h3 id="modalTitle" class="font-bold text-brand-900 text-lg"></h3><button onclick="closeModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">&times;</button></div><div id="modalBody" class="p-5 overflow-y-auto"></div></div></div>
 <div id="searchOverlay" class="fixed inset-0 z-[75] hidden modal-bg pt-24" onclick="if(event.target===this)toggleSearch(false)"><div class="max-w-xl mx-auto px-4 slide-up"><div class="bg-white rounded-2xl shadow-2xl overflow-hidden"><input id="globalSearch" oninput="doGlobalSearch(this.value)" placeholder="ابحث عن طالب…" class="w-full px-5 py-4 border-b border-gray-100 outline-none text-lg bg-transparent font-bold"><div id="searchResults" class="max-h-[50vh] overflow-y-auto p-2"></div></div></div></div>
@@ -3488,6 +3493,7 @@ function applyBranding(v){
 
   setSlot('#sidebar', '.brand-logo-slot', '28px');
   setSlot('#loginScreen', '.brand-logo-slot', '40px');
+  setSlot('#loader', '.brand-logo-slot', '40px');
   setSlot(document.getElementById('mobBrandLogo'), '', '20px');
 
   const sbName = document.querySelector('#sidebar .brand-name-slot');
