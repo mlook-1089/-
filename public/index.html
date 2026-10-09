@@ -39,6 +39,13 @@ body { background-color: #f4f7fa; -webkit-font-smoothing: antialiased; }
 .logo-pulse{position:relative;width:88px;height:88px;display:inline-flex;align-items:center;justify-content:center;animation:logoPulse 1.6s ease-in-out infinite}
 .logo-pulse::before{content:"";position:absolute;inset:0;border-radius:24px;border:2px solid rgba(212,175,55,.55);animation:logoRing 1.6s ease-out infinite}
 .logo-pulse img{width:100%;height:100%;object-fit:contain;border-radius:20px;background:#fff;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+/* الوضع الترحيبي: خلفية بيضاء كاملة، شعار وحده بلا نص وبلا حلقة — يوهم المستخدم بأنها صفحة ترحيب */
+#loader.splash{background:#ffffff !important;backdrop-filter:none !important}
+html.dark #loader.splash{background:var(--bg) !important}
+#loader.splash #loaderMsg{display:none !important}
+#loader.splash .logo-pulse{width:140px;height:140px;animation-duration:2s}
+#loader.splash .logo-pulse::before{display:none}
+#loader.splash .logo-pulse img{box-shadow:0 20px 50px rgba(11,59,92,.12);padding:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .fade-in{animation:fade .3s cubic-bezier(.2,.7,.3,1)}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -616,6 +623,9 @@ function toggleDark(){ const on=!document.documentElement.classList.contains('da
 let currentUser=null,_tData=null,_teacherTab='overview',_settingsSub='students',_newsSub='news';
 
 function loader(on,m){$('loader').classList.toggle('hidden',!on);$('loader').classList.toggle('flex',on);const el=$('loaderMsg');if(m){el.textContent=m;el.classList.remove('hidden')}else el.classList.add('hidden')}
+/* صفحة ترحيبية بديلة عن الـ loader الداكن — تُستخدم في تدفقات الدخول فقط (شعار وحده على خلفية بيضاء) */
+function splash(on){const el=$('loader');el.classList.toggle('splash',!!on);el.classList.toggle('hidden',!on);el.classList.toggle('flex',!!on);const m=$('loaderMsg');if(m)m.classList.add('hidden');}
+async function guardSplash(pr){try{splash(true);return await pr}catch(e){splash(false);toast('خطأ: '+(e&&e.message||e),'error');return null}}
 const _LIBS={chart:'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js', xlsx:'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'};
 const _libP={};
 function ensureLib(name){
@@ -697,12 +707,15 @@ function saveSession(u,p){try{(p?localStorage:sessionStorage).setItem(SK,JSON.st
 function readSession(){try{return JSON.parse(localStorage.getItem(SK)||sessionStorage.getItem(SK)||'null')}catch(e){return null}}
 function clearSession(){try{localStorage.removeItem(SK);sessionStorage.removeItem(SK)}catch(e){}}
 
-window.addEventListener('DOMContentLoaded',async()=>{loadBrandingOnce();const s=readSession();if(!s||!s.ID)return;
+window.addEventListener('DOMContentLoaded',async()=>{
+  loadBrandingOnce();
+  const s=readSession();
+  if(!s||!s.ID)return;
   // أخفِ شاشة الدخول أثناء التحقق حتى لا تومض قبل دخول المستخدم المسجَّل تلقائياً
   $('loginScreen').classList.add('hidden');
-  const r=await guard(DS.verifyUser(s.ID),'استعادة الجلسة…');
-  if(r&&r.success)enterApp(r.user);
-  else { clearSession(); $('loginScreen').classList.remove('hidden'); }
+  const r=await guardSplash(DS.verifyUser(s.ID));
+  if(r&&r.success){enterApp(r.user);setTimeout(()=>splash(false),500);}
+  else { splash(false); clearSession(); $('loginScreen').classList.remove('hidden'); }
 });
 function showForgotPassword(){
   openModal('نسيت كلمة المرور؟',`<div class="space-y-4">
@@ -739,7 +752,17 @@ async function doForgotPassword(){
   saveSession(r.user, false);
   enterApp(r.user);
 }
-async function handleLogin(){const id=$('loginId').value.trim(),p=$('loginPass').value.trim();if(!id||!p){$('loginErr').textContent='أدخل البيانات';$('loginErr').classList.remove('hidden');return}const r=await guard(DS.login(id,p),'جارٍ الدخول…');if(!r)return;if(!r.success){$('loginErr').textContent=r.message;$('loginErr').classList.remove('hidden');return}saveSession(r.user,$('rememberMe').checked);enterApp(r.user)}
+async function handleLogin(){
+  const id=$('loginId').value.trim(),p=$('loginPass').value.trim();
+  if(!id||!p){$('loginErr').textContent='أدخل البيانات';$('loginErr').classList.remove('hidden');return}
+  const r=await guardSplash(DS.login(id,p));
+  if(!r){splash(false);return}
+  if(!r.success){splash(false);$('loginErr').textContent=r.message;$('loginErr').classList.remove('hidden');return}
+  saveSession(r.user,$('rememberMe').checked);
+  enterApp(r.user);
+  // الصفحة الترحيبية تبقى لحظات حتى يتهيأ التطبيق خلف الكواليس
+  setTimeout(()=>splash(false),500);
+}
 function enterApp(u){
   currentUser=u; $('loginErr').classList.add('hidden'); $('loginScreen').classList.add('hidden'); $('app').classList.remove('hidden');
   $('userName').textContent=u.Name; $('roleLabel').textContent=ROLE_AR[u.Role]||''; $('avatar').textContent=(u.Name||'?').trim().charAt(0);
