@@ -8,48 +8,30 @@
      renderTaahudStudent(body)    — بوابتا الطالب وولي الأمر (عرض فقط)
    ===================================================================== */
 
-/* ---------- DS endpoints (مدمج بأسلوب apiCommunity*) ---------- */
-(function(){
-  if(typeof DS !== 'object') return;
-  const orig_c = DS.c.bind(DS);
-  // نضيف الدوال فقط إن لم تكن موجودة (دفاعياً)
-  if(!DS.taahudData) DS.taahudData = function(periodId){ return orig_c('apiTaahudData', periodId||''); };
-  if(!DS.taahudCreatePeriod) DS.taahudCreatePeriod = function(name, startDate, endDate){ return orig_c('apiTaahudCreatePeriod', name, startDate||'', endDate||''); };
-  if(!DS.taahudUpdatePeriod) DS.taahudUpdatePeriod = function(id, upd){ return orig_c('apiTaahudUpdatePeriod', id, upd); };
-  if(!DS.taahudDeletePeriod) DS.taahudDeletePeriod = function(id){ return orig_c('apiTaahudDeletePeriod', id); };
-  if(!DS.taahudSaveAssignments) DS.taahudSaveAssignments = function(periodId, studentId, hizbs){ return orig_c('apiTaahudSaveAssignments', periodId, studentId, hizbs); };
-  if(!DS.taahudRecord) DS.taahudRecord = function(assignmentId, mistakes, warnings){ return orig_c('apiTaahudRecord', assignmentId, mistakes, warnings); };
-  if(!DS.taahudDeleteRecord) DS.taahudDeleteRecord = function(id){ return orig_c('apiTaahudDeleteRecord', id); };
-
-  // أضف المسارات إلى خريطة M داخل DS.c عبر تعديل الدالة الأصلية
-  const M_ADD = {
-    apiTaahudData:            (a)=>['GET','/api/taahud/data'+(a[0]?'?periodId='+encodeURIComponent(a[0]):'')],
-    apiTaahudCreatePeriod:    (a)=>['POST','/api/taahud/periods',{name:a[0],startDate:a[1]||'',endDate:a[2]||''}],
-    apiTaahudUpdatePeriod:    (a)=>['PATCH','/api/taahud/periods',Object.assign({id:a[0]}, a[1]||{})],
-    apiTaahudDeletePeriod:    (a)=>['DELETE','/api/taahud/periods',{id:a[0]}],
-    apiTaahudSaveAssignments: (a)=>['POST','/api/taahud/assignments',{periodId:a[0],studentId:a[1],hizbs:a[2]||[]}],
-    apiTaahudRecord:          (a)=>['POST','/api/taahud/records',{assignmentId:a[0],mistakes:a[1],warnings:a[2]}],
-    apiTaahudDeleteRecord:    (a)=>['DELETE','/api/taahud/records',{id:a[0]}]
-  };
-  DS.c = async function(fn, ...a){
-    if(M_ADD[fn]){
-      const [method, path, body] = M_ADD[fn](a);
-      const opts = { method, credentials:'include', headers:{} };
-      if(body !== undefined){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
-      try{
-        const res = await fetch(path, opts);
-        if(res.status===401){ if(typeof handleAuthExpiry==='function') handleAuthExpiry(); return {success:false, message:'انتهت الجلسة', _auth:true}; }
-        const text = await res.text();
-        let data; try{ data = text ? JSON.parse(text) : {}; }catch(e){ data = {success:false, message:text}; }
-        if(!res.ok && !data.message) data.message = 'HTTP '+res.status;
-        return data;
-      }catch(e){
-        return {success:false, message: (navigator.onLine===false?'لا يوجد اتصال بالإنترنت':'تعذّر الاتصال بالخادم'), _network:true};
-      }
-    }
-    return orig_c(fn, ...a);
-  };
-})();
+/* ---------- طلبات HTTP مباشرة (مستقلّة عن DS.c كيلا تحتاج تسجيل أسماء API مسبقاً) ---------- */
+async function _thFetch(method, path, body){
+  const opts = { method, credentials:'include', headers:{} };
+  if(body !== undefined){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  try{
+    const res = await fetch(path, opts);
+    if(res.status===401){ if(typeof handleAuthExpiry==='function') handleAuthExpiry(); return {success:false, message:'انتهت الجلسة', _auth:true}; }
+    const text = await res.text();
+    let data; try{ data = text ? JSON.parse(text) : {}; }catch(e){ data = {success:false, message:text}; }
+    if(!res.ok && !data.message) data.message = 'HTTP '+res.status;
+    return data;
+  }catch(e){
+    return {success:false, message: (navigator.onLine===false?'لا يوجد اتصال بالإنترنت':'تعذّر الاتصال بالخادم'), _network:true};
+  }
+}
+if(typeof DS === 'object'){
+  DS.taahudData            = (periodId) => _thFetch('GET', '/api/taahud/data' + (periodId?'?periodId='+encodeURIComponent(periodId):''));
+  DS.taahudCreatePeriod    = (name, startDate, endDate) => _thFetch('POST', '/api/taahud/periods', {name, startDate:startDate||'', endDate:endDate||''});
+  DS.taahudUpdatePeriod    = (id, upd) => _thFetch('PATCH', '/api/taahud/periods', Object.assign({id}, upd||{}));
+  DS.taahudDeletePeriod    = (id) => _thFetch('DELETE', '/api/taahud/periods', {id});
+  DS.taahudSaveAssignments = (periodId, studentId, hizbs) => _thFetch('POST', '/api/taahud/assignments', {periodId, studentId, hizbs:hizbs||[]});
+  DS.taahudRecord          = (assignmentId, mistakes, warnings) => _thFetch('POST', '/api/taahud/records', {assignmentId, mistakes, warnings});
+  DS.taahudDeleteRecord    = (id) => _thFetch('DELETE', '/api/taahud/records', {id});
+}
 
 /* ---------- حالة محلية ---------- */
 window._th = window._th || {
@@ -67,8 +49,10 @@ async function _thLoad(force){
   if(_th.loading) return;
   if(_th.loaded && !force) return;
   _th.loading = true;
-  const r = await DS.taahudData(_th.periodId || '');
-  _th.loading = false;
+  let r;
+  try { r = await DS.taahudData(_th.periodId || ''); }
+  catch(e){ r = {success:false, message: (e && e.message) || 'تعذّر التحميل'}; }
+  finally { _th.loading = false; }
   if(!r || !r.success){ if(r && !r._auth) toast((r && r.message) || 'تعذّر التحميل', 'error'); return; }
   _th.data = r;
   _th.loaded = true;
