@@ -254,73 +254,189 @@ async function _thDoSaveAssign(){
   toast('تم الحفظ');
 }
 
-/* نافذة: اختر حزباً من المسندة لرصده */
+/* =====================================================================
+   وضع الرصد المباشر: شاشة واحدة — شريط أحزاب في الأعلى، درجة كبيرة متحرّكة،
+   وزرّان كبيران «خطأ/تنبيه» بضغطة واحدة لكل حدث. تراجع فوري، حفظ، ثم ينتقل
+   تلقائياً للحزب التالي. لا كتابة أرقام، لا نوافذ متداخلة.
+   ===================================================================== */
 function _thOpenRecord(studentId){
   const d = _th.data; if(!d) return;
-  const assigns = (d.assignments||[]).filter(a => a.studentId === studentId);
+  const assigns = (d.assignments||[]).filter(a => a.studentId === studentId).sort((a,b)=>a.hizbNumber-b.hizbNumber);
   const recByAid = {}; (d.records||[]).forEach(r => { recByAid[r.assignmentId] = r; });
-  const pending = assigns.filter(a => !recByAid[a.id]).sort((a,b)=>a.hizbNumber-b.hizbNumber);
-  const recorded = assigns.filter(a => recByAid[a.id]).sort((a,b)=>a.hizbNumber-b.hizbNumber);
-  const student = (d.students||[]).find(s => s.id === studentId);
-  const title = 'رصد سرد · ' + (student ? student.name : '');
+  // ابدأ تلقائياً بأول حزب لم يُرصد؛ إن اكتمل الجميع، لا نفتح شيئاً
+  const firstPending = assigns.find(a => !recByAid[a.id]);
+  _th.rec = {
+    studentId,
+    activeAid: firstPending ? firstPending.id : (assigns[0] && assigns[0].id) || null,
+    mistakes: 0, warnings: 0, log: []
+  };
+  _thRecRender();
+}
 
-  const list = pending.map(a => `<button type="button" class="u-row _lrow" style="width:100%;padding:12px 14px;background:transparent;border:0;border-bottom:1px solid var(--line);cursor:pointer;text-align:right;font-family:inherit;gap:12px" onclick="_thOpenRecordForm(${jsArg(a.id)}, ${a.hizbNumber})">
-    <div class="u-avatar" style="width:36px;height:36px;background:var(--brand-soft);color:var(--brand-ink);border-radius:12px;font-weight:800">${_thNum(a.hizbNumber)}</div>
-    <div class="u-grow"><div class="u-name" style="font-size:15px">${esc(_thHizbLabel(a.hizbNumber))}</div><div class="u-muted">الجزء ${_thNum(_thJuzOfHizb(a.hizbNumber))}</div></div>
-    <span class="u-pill mute">قيد الرصد</span>
-  </button>`).join('');
+function _thRecRender(){
+  const d = _th.data; if(!d) return;
+  const st = _th.rec; if(!st) return;
+  const student = (d.students||[]).find(s => s.id === st.studentId);
+  const assigns = (d.assignments||[]).filter(a => a.studentId === st.studentId).sort((a,b)=>a.hizbNumber-b.hizbNumber);
+  const recByAid = {}; (d.records||[]).forEach(r => { recByAid[r.assignmentId] = r; });
+  const cfg = d.config || { totalPerHizb:100, deductPerMistake:2, deductPerWarning:1 };
+  const total = cfg.totalPerHizb || 100;
 
-  const recList = recorded.map(a => {
+  const chips = assigns.map(a => {
     const r = recByAid[a.id];
-    return `<div class="u-item"><div class="u-grow"><div class="u-name" style="font-size:14px">${esc(_thHizbLabel(a.hizbNumber))}</div><div class="u-muted">الدرجة: ${_thNum(r.score)} من ${_thNum(r.totalPoints)} · أخطاء ${_thNum(r.mistakes)} · تنبيهات ${_thNum(r.warnings)}</div></div>
-      <button type="button" class="u-icon-btn" title="إلغاء الرصد" onclick="_thUndoRecord(${jsArg(r.id)}, ${jsArg(student?student.id:'')})">${svg('trash','w-4 h-4')}</button></div>`;
+    const active = st.activeAid === a.id;
+    const cls = r ? 'th-rchip done' : (active ? 'th-rchip active' : 'th-rchip pending');
+    const inner = r
+      ? `<div class="th-rchip-num">${_thNum(a.hizbNumber)}</div><div class="th-rchip-score">${_thNum(r.score)}</div>`
+      : `<div class="th-rchip-num">${_thNum(a.hizbNumber)}</div><div class="th-rchip-sub">جـ${_thNum(_thJuzOfHizb(a.hizbNumber))}</div>`;
+    return `<button type="button" class="${cls}" data-aid="${esc(a.id)}" onclick="_thRecPick(${jsArg(a.id)})">${inner}</button>`;
   }).join('');
 
-  openModal(title, `<div style="display:grid;gap:12px">
-    ${pending.length?`<div><div class="u-section" style="margin:0 0 6px">قيد الرصد</div><div class="u-card" style="padding:0;overflow:hidden">${list}<style>.u-card ._lrow:last-child{border-bottom:0 !important}</style></div></div>`:'<div class="u-muted" style="text-align:center;padding:8px">لا توجد أحزاب في انتظار الرصد</div>'}
-    ${recorded.length?`<div><div class="u-section" style="margin:14px 0 6px">تم رصدها</div><div class="u-card" style="padding:8px 12px"><div class="u-list">${recList}</div></div></div>`:''}
-    <button type="button" class="u-btn u-btn-g u-grow" onclick="closeModal()">إغلاق</button>
-  </div>`);
+  const activeAssign = st.activeAid ? assigns.find(a => a.id === st.activeAid) : null;
+  const activeRec = activeAssign && recByAid[activeAssign.id];
+
+  let pad = '';
+  if(!activeAssign){
+    pad = `<div class="u-empty" style="padding:30px 20px">${svg('book','w-10 h-10')}لا توجد أحزاب مسندة</div>`;
+  } else if(activeRec){
+    const col = _thScoreColor(activeRec.score, activeRec.totalPoints);
+    pad = `<div class="th-rec-done">
+      <div class="u-pill ok" style="font-size:12px">تم رصد ${esc(_thHizbLabel(activeAssign.hizbNumber))}</div>
+      <div class="th-rec-score-big" style="color:${col}">${_thNum(activeRec.score)}</div>
+      <div class="u-muted">من ${_thNum(activeRec.totalPoints)}</div>
+      <div class="u-row" style="justify-content:center;gap:14px;margin-top:8px"><span class="u-pill bad">${svg('warn','w-3 h-3')} أخطاء: ${_thNum(activeRec.mistakes)}</span><span class="u-pill warn">${svg('bell','w-3 h-3')} تنبيهات: ${_thNum(activeRec.warnings)}</span></div>
+      <button type="button" class="u-btn u-btn-bad sm" style="margin-top:14px" onclick="_thUndoRecord(${jsArg(activeRec.id)}, ${jsArg(st.studentId)})">${svg('trash','w-4 h-4')} إلغاء الرصد لإعادة التسميع</button>
+    </div>`;
+  } else {
+    const score = _thCalcScore(cfg, st.mistakes, st.warnings);
+    const col = _thScoreColor(score, total);
+    pad = `<div class="th-rec-live">
+      <div class="th-rec-hizb-lbl">${esc(_thHizbLabel(activeAssign.hizbNumber))} · الجزء ${_thNum(_thJuzOfHizb(activeAssign.hizbNumber))}</div>
+      <div class="th-rec-score-big" id="th_rscore" style="color:${col}">${_thNum(score)}</div>
+      <div class="u-muted" style="text-align:center">من ${_thNum(total)}</div>
+      <div class="th-rec-counters">
+        <button type="button" class="th-cnt mistake" onclick="_thRecTap('m')" aria-label="إضافة خطأ">
+          <div class="th-cnt-plus">+1</div>
+          <div class="th-cnt-num" id="th_rcm">${_thNum(st.mistakes)}</div>
+          <div class="th-cnt-label">خطأ</div>
+          <div class="th-cnt-ded">−${_thNum(cfg.deductPerMistake)}</div>
+        </button>
+        <button type="button" class="th-cnt warning" onclick="_thRecTap('w')" aria-label="إضافة تنبيه">
+          <div class="th-cnt-plus">+1</div>
+          <div class="th-cnt-num" id="th_rcw">${_thNum(st.warnings)}</div>
+          <div class="th-cnt-label">تنبيه</div>
+          <div class="th-cnt-ded">−${_thNum(cfg.deductPerWarning)}</div>
+        </button>
+      </div>
+      <div class="u-row" style="gap:8px;margin-top:14px">
+        <button type="button" class="u-btn u-btn-g" id="th_rundo" onclick="_thRecUndo()" ${!st.log.length?'disabled':''}>↶ تراجع</button>
+        <button type="button" class="u-btn u-btn-g" onclick="_thRecReset()" ${!st.log.length?'disabled':''}>تصفير</button>
+        <button type="button" class="u-btn u-btn-p u-grow" onclick="_thRecSave()">${svg('check','w-4 h-4')} حفظ وانتقال للتالي</button>
+      </div>
+    </div>`;
+  }
+
+  const title = 'رصد مباشر · ' + (student ? student.name : '');
+  const bodyHtml = `<div class="th-rec-wrap">
+    <div class="th-rec-chips">${chips}</div>
+    ${pad}
+  </div>`;
+  openModal(title, bodyHtml);
 }
 
-function _thOpenRecordForm(assignmentId, hizbNumber){
-  const d = _th.data; const cfg = (d && d.config) || { totalPerHizb:100, deductPerMistake:2, deductPerWarning:1 };
-  openModal('رصد ' + _thHizbLabel(hizbNumber), `<div style="display:grid;gap:12px">
-    <div class="u-muted" style="font-size:12.5px">الدرجة الكلية ${_thNum(cfg.totalPerHizb)} · حسم كل خطأ ${_thNum(cfg.deductPerMistake)} · حسم كل تنبيه ${_thNum(cfg.deductPerWarning)}</div>
-    <div class="u-row" style="gap:8px">
-      <div class="u-grow"><label class="u-muted" style="font-size:12px">عدد الأخطاء</label><input id="th_rm" type="number" min="0" value="0" class="u-input" oninput="_thPreviewScore()"></div>
-      <div class="u-grow"><label class="u-muted" style="font-size:12px">عدد التنبيهات</label><input id="th_rw" type="number" min="0" value="0" class="u-input" oninput="_thPreviewScore()"></div>
-    </div>
-    <div class="u-card" style="padding:12px;text-align:center;background:var(--brand-soft);border:1px solid var(--brand-soft)"><div class="u-muted" style="font-size:12px">الدرجة المتوقّعة</div><div id="th_rprev" class="u-num" style="font-size:28px;color:var(--gold);margin-top:4px">${_thNum(cfg.totalPerHizb)}</div><div class="u-muted" style="font-size:11.5px">من ${_thNum(cfg.totalPerHizb)}</div></div>
-    <div class="u-row" style="gap:8px"><button type="button" class="u-btn u-btn-p u-grow" onclick="_thDoRecord(${jsArg(assignmentId)})">${svg('check','w-4 h-4')} حفظ الرصد</button><button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button></div>
-  </div>`);
-  // خزّن للسحب في معاينة الدرجة
-  _th._rCfg = cfg;
+function _thCalcScore(cfg, m, w){
+  return Math.max(0, (cfg.totalPerHizb||100) - (m||0)*(cfg.deductPerMistake||0) - (w||0)*(cfg.deductPerWarning||0));
 }
-function _thPreviewScore(){
-  const cfg = _th._rCfg || { totalPerHizb:100, deductPerMistake:2, deductPerWarning:1 };
-  const m = Math.max(0, Math.round(Number(($('th_rm')||{}).value || 0)));
-  const w = Math.max(0, Math.round(Number(($('th_rw')||{}).value || 0)));
-  const score = Math.max(0, cfg.totalPerHizb - m*cfg.deductPerMistake - w*cfg.deductPerWarning);
-  const el = $('th_rprev'); if(el) el.textContent = _thNum(score);
+function _thScoreColor(score, total){
+  if(!total) return 'var(--ink)';
+  const pct = Math.round((score/total)*100);
+  if(pct >= 85) return 'var(--ok)';
+  if(pct >= 60) return 'var(--gold)';
+  return 'var(--bad)';
 }
-async function _thDoRecord(assignmentId){
-  const m = Math.max(0, Math.round(Number(($('th_rm')||{}).value || 0)));
-  const w = Math.max(0, Math.round(Number(($('th_rw')||{}).value || 0)));
-  const r = await guard(DS.taahudRecord(assignmentId, m, w), 'حفظ الرصد…');
-  if(!r || !r.success) return r && toast(r.message||'فشل الحفظ', 'error');
+
+/* تحديث جزئي في مكان الدرجة والعدّادات، بدون إعادة بناء النافذة كاملة. */
+function _thRecRefreshLive(){
+  const d = _th.data; const st = _th.rec; if(!d || !st) return;
+  const cfg = d.config || { totalPerHizb:100, deductPerMistake:2, deductPerWarning:1 };
+  const score = _thCalcScore(cfg, st.mistakes, st.warnings);
+  const total = cfg.totalPerHizb || 100;
+  const col = _thScoreColor(score, total);
+  const se = $('th_rscore');
+  if(se){
+    se.textContent = _thNum(score);
+    se.style.color = col;
+    se.classList.remove('pulse');
+    void se.offsetWidth; // restart animation
+    se.classList.add('pulse');
+  }
+  const me = $('th_rcm'); if(me) me.textContent = _thNum(st.mistakes);
+  const we = $('th_rcw'); if(we) we.textContent = _thNum(st.warnings);
+  const ub = $('th_rundo'); if(ub) ub.disabled = !st.log.length;
+}
+
+function _thRecPick(aid){
+  const st = _th.rec; if(!st) return;
+  // تحذير إن كانت هناك ضغطات غير محفوظة
+  if(st.activeAid && st.activeAid !== aid && st.log.length){
+    if(!confirm('لديك تحديثات لم تُحفظ. الانتقال سيُفقدها. متابعة؟')) return;
+  }
+  st.activeAid = aid;
+  st.mistakes = 0; st.warnings = 0; st.log = [];
+  _thRecRender();
+}
+
+function _thRecTap(kind){
+  const st = _th.rec; if(!st || !st.activeAid) return;
+  if(kind === 'm') st.mistakes++;
+  else if(kind === 'w') st.warnings++;
+  else return;
+  st.log.push(kind);
+  try{ if(navigator.vibrate) navigator.vibrate(12); }catch(e){}
+  _thRecRefreshLive();
+}
+
+function _thRecUndo(){
+  const st = _th.rec; if(!st || !st.log.length) return;
+  const last = st.log.pop();
+  if(last === 'm') st.mistakes = Math.max(0, st.mistakes-1);
+  else if(last === 'w') st.warnings = Math.max(0, st.warnings-1);
+  _thRecRefreshLive();
+}
+
+function _thRecReset(){
+  const st = _th.rec; if(!st) return;
+  st.mistakes = 0; st.warnings = 0; st.log = [];
+  _thRecRefreshLive();
+}
+
+async function _thRecSave(){
+  const st = _th.rec; if(!st || !st.activeAid) return;
+  const r = await guard(DS.taahudRecord(st.activeAid, st.mistakes, st.warnings), 'حفظ الرصد…');
+  if(!r || !r.success) return r && toast(r.message||'فشل', 'error');
+  toast('تم · الدرجة ' + _thNum(r.record.score), 'success');
   await _thLoad(true);
-  closeModal();
-  _thRenderTeacher($('portal'));
-  toast('تم الرصد · الدرجة ' + _thNum(r.record.score));
+  // ابحث عن أول حزب لم يُرصد بعد الحفظ وانتقل إليه
+  const d = _th.data;
+  const sid = st.studentId;
+  const assigns = (d.assignments||[]).filter(a => a.studentId === sid).sort((a,b)=>a.hizbNumber-b.hizbNumber);
+  const recByAid = {}; (d.records||[]).forEach(rc => { recByAid[rc.assignmentId] = rc; });
+  const next = assigns.find(a => !recByAid[a.id]);
+  _th.rec = { studentId: sid, activeAid: next ? next.id : st.activeAid, mistakes:0, warnings:0, log:[] };
+  _thRecRender();
+  // حدّث قائمة المعلم في الخلفية
+  if(typeof _thRenderTeacher === 'function' && $('portal')) _thRenderTeacher($('portal'));
 }
+
 async function _thUndoRecord(recordId, studentId){
   const ok = await confirmModal({title:'إلغاء الرصد', message:'سيُحذف سجل الرصد وتتمكن من رصد الحزب مجدداً. متابعة؟', confirmText:'نعم، احذف', danger:true});
   if(!ok) return;
   const r = await guard(DS.taahudDeleteRecord(recordId), 'حذف…');
   if(!r || !r.success) return r && toast(r.message||'فشل', 'error');
   await _thLoad(true);
-  if(studentId) _thOpenRecord(studentId); else closeModal();
+  if(studentId){ _th.rec = { studentId, activeAid: null, mistakes:0, warnings:0, log:[] }; _thOpenRecord(studentId); }
+  else closeModal();
+  if(typeof _thRenderTeacher === 'function' && $('portal')) _thRenderTeacher($('portal'));
   toast('تم');
 }
 
