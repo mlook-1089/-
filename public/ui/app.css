@@ -385,3 +385,15 @@ html.dark .bg-gradient-to-r.from-brand{
 @media (max-width:767px){
   .card-v4, .u-card{ padding:14px !important; }
 }
+
+/* ===== برنامج «تعاهد» — شبكة الأحزاب في نافذة الإسناد ===== */
+.th-hizb-grid{ display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:6px; }
+@media (max-width:480px){ .th-hizb-grid{ grid-template-columns:repeat(5, minmax(0,1fr)); gap:5px; } }
+.th-h{ position:relative; padding:8px 4px; border-radius:12px; border:1.5px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:52px; transition:transform .12s, background .15s, border-color .15s; }
+.th-h:active{ transform:scale(.96); }
+.th-h.on{ background:var(--brand-soft); border-color:var(--brand); color:var(--brand-ink); }
+.th-h.locked{ background:var(--gold-soft); border-color:var(--gold); color:var(--gold); cursor:not-allowed; }
+.th-h-num{ font-weight:800; font-size:15px; line-height:1.1; }
+.th-h-sub{ font-size:10.5px; color:var(--ink3); margin-top:2px; }
+.th-h.on .th-h-sub, .th-h.locked .th-h-sub{ color:inherit; opacity:.75; }
+.th-h-lock{ position:absolute; top:3px; left:4px; opacity:.8; }

@@ -61,6 +61,7 @@ const _PAGES = {
   // المتابعة
   plandays:   { label:'الفصل الدراسي',      icon:'calendar', group:'followup' },
   allplans:   { label:'خطط الطلاب',          icon:'book',     group:'followup' },
+  taahud:     { label:'برنامج تعاهد',        icon:'book',     group:'followup', admin:true },
   audit:      { label:'سجل النقاط',         icon:'history',  group:'followup' },
 
   // الهوية والمظهر
@@ -235,6 +236,7 @@ const _PAGE_DISPATCH = {
   items:      (b)=>renderItemsTab(b),
   plandays:   (b)=>{ if(typeof renderPlanDaysTab==='function') renderPlanDaysTab(b); },
   allplans:   (b)=>{ if(typeof renderAllPlansTab==='function') renderAllPlansTab(b); },
+  taahud:     (b)=>{ if(typeof renderTaahudSettings==='function') renderTaahudSettings(b); },
   audit:      (b)=>renderAuditTab(b),
   appearance: (b)=>renderAppearanceTab(b),
   darkMode:   (b)=>_renderDarkModePage(b),

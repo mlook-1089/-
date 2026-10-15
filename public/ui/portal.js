@@ -105,6 +105,7 @@ function _ptNav(){
   uiNav([
     { k: 'today', t: 'اليوم', i: 'home', onSelect: go },
     { k: 'progress', t: par ? 'التقدّم' : 'تقدّمي', i: 'chart', onSelect: go },
+    { k: 'taahud', t: 'تعاهد', i: 'book', onSelect: go },
     { k: 'news', t: 'الأخبار', i: 'news', onSelect: go }
   ], _pt.sec, { moreLabel: 'حسابي', moreIcon: 'lock' });
 }
@@ -120,19 +121,26 @@ function _ptRender(){
   if(typeof uiHeader === 'function') uiHeader(par ? (name || (currentUser && currentUser.Name) || '') : name, par ? (name ? ['متابعة الابن', grp].filter(Boolean).join(' · ') : 'ولي أمر') : grp);
   // عنوان الصفحة: يُخفى على الجوال حين يتوفّر رأس الهيكل الجديد (uHeadName) لتفادي التكرار
   const hasShellHead = !!document.getElementById('uHeadName');
-  const secT = { today: par ? 'اليوم' : 'ورد اليوم', progress: par ? 'تقدّم الابن' : 'تقدّمي', news: 'الأخبار والفعاليات' }[_pt.sec];
+  const secT = { today: par ? 'اليوم' : 'ورد اليوم', progress: par ? 'تقدّم الابن' : 'تقدّمي', taahud: 'تعاهد', news: 'الأخبار والفعاليات' }[_pt.sec];
   const topSub = _pt.sec === 'news' ? _ptHijri(new Date()) : [grp, _pt.sec === 'today' ? _ptHijri(new Date()) : ''].filter(Boolean).join(' · ');
   const topTitle = _pt.sec === 'news' ? secT : (name ? _ptFirstLast(name) : secT);
-  const top = `<div class="${hasShellHead ? 'hidden md:block' : ''}"><div class="u-top"><div class="u-grow">${topSub ? `<div class="u-sub">${esc(topSub)}</div>` : ''}<h1>${esc(topTitle)}</h1></div></div></div>`;
+  const showOwnHeader = _pt.sec === 'taahud';
+  const top = showOwnHeader ? '' : `<div class="${hasShellHead ? 'hidden md:block' : ''}"><div class="u-top"><div class="u-grow">${topSub ? `<div class="u-sub">${esc(topSub)}</div>` : ''}<h1>${esc(topTitle)}</h1></div></div></div>`;
   const chips = (par && _pt.children.length > 1 && _pt.sec !== 'news')
     ? `<div class="u-chips">${_pt.children.map(c => `<button type="button" class="u-chip ${String(c.id) === String(_pt.childId) ? 'on' : ''}" onclick="loadChild(${jsArg(c.id)})">${esc(_ptFirstLast(c.name))}</button>`).join('')}</div>` : '';
   let body;
   if(_pt.sec === 'news') body = _ptNews();
+  else if(_pt.sec === 'taahud'){
+    body = (par && !_pt.children.length) ? `<div class="u-card">${_ptEmpty('users', 'لا يوجد أبناء مرتبطون بحسابك حالياً')}</div>` : '<div id="th_body"></div>';
+  }
   else if(par && !_pt.children.length) body = `<div class="u-card">${_ptEmpty('users', 'لا يوجد أبناء مرتبطون بحسابك حالياً')}<p class="u-muted text-center" style="margin-top:-14px;padding-bottom:10px">تواصل مع المعلم لربط حساب ابنك</p></div>`;
   else if(!d) body = `<div class="u-card">${_ptEmpty('history', 'جارٍ التحميل…')}</div>`;
   else body = _pt.sec === 'progress' ? _ptProgress(d) : _ptToday(d);
   P.innerHTML = `<div class="u-page fade-in max-w-5xl mx-auto">${top}${chips}${body}</div>`;
   if(_pt.sec === 'news'){ _calEvents = (_pt.feed.events || []).slice(); if(!(_calDate instanceof Date)) _calDate = new Date(); _ptCal(); }
+  if(_pt.sec === 'taahud' && typeof renderTaahudStudent === 'function'){
+    renderTaahudStudent(document.getElementById('th_body'), par ? _pt.childId : (currentUser && currentUser.ID));
+  }
 }
 
 /* ---------- قسم: اليوم ---------- */

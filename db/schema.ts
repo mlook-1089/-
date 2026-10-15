@@ -213,3 +213,46 @@ export const communityReactions = pgTable('community_reactions', {
   pk: primaryKey({ columns: [t.messageId, t.userId, t.emoji] }),
   msgIdx: index('cr_msg_idx').on(t.messageId)
 }));
+
+// برنامج «تعاهد»: فترات سرد، كل فترة بإسنادات أحزاب لكل طالب، وسجل رصد لكل حزب.
+// فترة واحدة نشطة في كل وقت؛ عند فتح فترة جديدة تُؤرشف السابقة.
+export const taahudPeriods = pgTable('taahud_periods', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  startDate: date('start_date'),
+  endDate: date('end_date'),
+  status: text('status').default('active').notNull(), // active | archived
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  statusIdx: index('tp_status_idx').on(t.status)
+}));
+
+// إسناد حزب لطالب داخل فترة. UNIQUE(periodId, studentId, hizbNumber).
+export const taahudAssignments = pgTable('taahud_assignments', {
+  id: text('id').primaryKey(),
+  periodId: text('period_id').notNull().references(() => taahudPeriods.id, { onDelete: 'cascade' }),
+  studentId: text('student_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  hizbNumber: integer('hizb_number').notNull(), // 1..60
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  uniq: uniqueIndex('ta_period_student_hizb_uniq').on(t.periodId, t.studentId, t.hizbNumber),
+  periodStudentIdx: index('ta_period_student_idx').on(t.periodId, t.studentId)
+}));
+
+// سجل الرصد. علاقة واحد-لواحد مع الإسناد (الطالب يسرد كل حزب مرة واحدة فقط).
+// نحفظ لقطة الإعدادات (totalPoints, deductPerMistake, deductPerWarning) حتى
+// لا تتغير الدرجات السابقة عند تعديل المشرف للإعدادات.
+export const taahudRecords = pgTable('taahud_records', {
+  id: text('id').primaryKey(),
+  assignmentId: text('assignment_id').notNull().references(() => taahudAssignments.id, { onDelete: 'cascade' }),
+  teacherId: text('teacher_id').notNull(),
+  mistakes: integer('mistakes').default(0).notNull(),
+  warnings: integer('warnings').default(0).notNull(),
+  totalPoints: integer('total_points').notNull(),
+  deductPerMistake: integer('deduct_per_mistake').notNull(),
+  deductPerWarning: integer('deduct_per_warning').notNull(),
+  score: integer('score').notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow().notNull()
+}, (t) => ({
+  assignmentUniq: uniqueIndex('tr_assignment_uniq').on(t.assignmentId)
+}));
