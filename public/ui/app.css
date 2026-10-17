@@ -448,3 +448,11 @@ html.dark .bg-gradient-to-r.from-brand{
   .th-cnt{ height:118px; }
   .th-cnt-num{ font-size:40px; }
 }
+
+/* ===== تعاهد — جدول تقرير الطالب التفصيلي ===== */
+.th-rpt-table-wrap{ max-height:50vh; overflow:auto; border:1px solid var(--line); border-radius:12px; }
+.th-rpt-table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+.th-rpt-table th, .th-rpt-table td{ padding:8px 10px; text-align:center; border-bottom:1px solid var(--line); white-space:nowrap; }
+.th-rpt-table thead th{ background:var(--muted-bg); color:var(--ink2); font-weight:700; font-size:12px; position:sticky; top:0; z-index:1; }
+.th-rpt-table tbody tr.pending{ background:repeating-linear-gradient(45deg, transparent, transparent 10px, var(--muted-bg) 10px, var(--muted-bg) 12px); }
+.th-rpt-table tbody tr:last-child td{ border-bottom:0; }

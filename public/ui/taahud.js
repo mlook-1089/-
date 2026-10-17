@@ -41,6 +41,7 @@ window._th = window._th || {
   periodId: '',        // الفترة المعروضة (الافتراضي: النشطة)
   studentId: '',       // الطالب المختار في بوابة المعلم (أو ابن ولي الأمر)
   search: '',          // بحث الطلاب لدى المعلم
+  view: 'main',        // 'main' | 'reports'
   qSheetSid: '',       // الطالب المفتوحة له نافذة الأحزاب
   qPendingSel: new Set() // اختيارات مؤقتة في نافذة الإسناد
 };
@@ -74,7 +75,8 @@ function _thNum(n){ try{ return new Intl.NumberFormat('ar-u-nu-latn').format(n);
 async function renderTaahudTab(body){
   if(!body) return;
   if(!_th.loaded) { body.innerHTML = '<div class="u-page fade-in"><div class="u-card"><div class="u-empty">جارٍ التحميل…</div></div></div>'; await _thLoad(); }
-  _thRenderTeacher(body);
+  if(_th.view === 'reports') _thRenderReports(body);
+  else _thRenderTeacher(body);
 }
 
 function _thRenderTeacher(body){
@@ -109,6 +111,7 @@ function _thRenderTeacher(body){
 
   const header = `<div class="u-top">
     <div class="u-grow"><div class="u-sub">برنامج تعاهد</div><h1>${period ? esc(period.name) : 'لا توجد فترة بعد'}</h1></div>
+    <button type="button" class="u-btn u-btn-s sm" onclick="_th.view='reports';_thRenderReports($('portal'))" title="التقارير">${svg('chart','w-4 h-4')} التقارير</button>
     <button type="button" class="u-btn u-btn-p sm" onclick="_thOpenNewPeriod()">${svg('check','w-4 h-4')} فترة جديدة</button>
   </div>`;
 
@@ -564,4 +567,210 @@ async function _thDoDeletePeriod(id){
   await _thLoad(true);
   toast('تم');
   if($('settingsSubBody')) renderTaahudSettings($('settingsSubBody'));
+}
+
+/* =====================================================================
+   التقارير — ملخّص الفترة، أداء المجموعات، ترتيب الطلاب، تصدير Excel
+   ===================================================================== */
+function _thRenderReports(body){
+  const d = _th.data; if(!d){ body.innerHTML = '<div class="u-card"><div class="u-empty">جارٍ التحميل…</div></div>'; return; }
+  const periods = d.periods || [];
+  const period = periods.find(p => p.id === _th.periodId) || periods.find(p => p.id === d.activePeriodId);
+
+  const periodChips = periods.length ? `<div class="u-chips" style="margin:0 0 12px">
+    ${periods.map(p => {
+      const on = p.id === (period && period.id);
+      const badge = p.status === 'active' ? '<span class="u-pill ok" style="margin-right:6px;font-size:10.5px">نشطة</span>' : '';
+      return `<button type="button" class="u-chip ${on?'on':''}" onclick="_thSelectPeriodReports(${jsArg(p.id)})">${esc(p.name)}${badge}</button>`;
+    }).join('')}</div>` : '';
+
+  const topBar = `<div class="u-top">
+    <button type="button" class="u-icon-btn" title="رجوع" onclick="_th.view='main';_thRenderTeacher($('portal'))">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px;height:20px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <div class="u-grow"><div class="u-sub">تقارير · ${period?esc(period.name):'لا فترة'}</div><h1>تقارير تعاهد</h1></div>
+    <button type="button" class="u-btn u-btn-g sm" onclick="_thExportReport()" ${!period?'disabled':''}>${svg('check','w-4 h-4')} تصدير Excel</button>
+  </div>`;
+
+  if(!period){ body.innerHTML = `<div class="u-page fade-in max-w-5xl mx-auto">${topBar}${periodChips}<div class="u-card">${_thEmpty('book','لا توجد فترة لعرض التقارير')}</div></div>`; return; }
+
+  const assigns = d.assignments || [];
+  const records = d.records || [];
+  const recByAid = {}; records.forEach(r => recByAid[r.assignmentId] = r);
+  const students = (d.students||[]).slice();
+
+  // بيانات المجموعات من _tData (محمّلة لدى المعلم أصلاً)
+  const td = (typeof _tData !== 'undefined' && _tData) || {};
+  const groupOf = {}; (td.students||[]).forEach(s => { groupOf[s.Student_ID] = s.Group_ID; });
+  const groupName = {}; (td.groups||[]).forEach(g => { groupName[g.Group_ID] = g.Group_Name; });
+
+  const perStudent = students.map(st => {
+    const studentAssigns = assigns.filter(a => a.studentId === st.id);
+    const studentRecs = studentAssigns.filter(a => recByAid[a.id]).map(a => recByAid[a.id]);
+    const score = studentRecs.reduce((s,r) => s + (r.score||0), 0);
+    const max = studentRecs.reduce((s,r) => s + (r.totalPoints||0), 0);
+    const expectedMax = studentAssigns.length * ((d.config && d.config.totalPerHizb) || 100);
+    const avgPct = max ? Math.round((score/max)*100) : null;
+    return {
+      id: st.id, name: st.name,
+      groupId: groupOf[st.id] || '',
+      groupName: groupName[groupOf[st.id]] || '',
+      assigned: studentAssigns.length,
+      recorded: studentRecs.length,
+      score, max, expectedMax, avgPct,
+      mistakes: studentRecs.reduce((s,r)=>s+(r.mistakes||0),0),
+      warnings: studentRecs.reduce((s,r)=>s+(r.warnings||0),0)
+    };
+  }).filter(s => s.assigned > 0);
+
+  const totalStudents = perStudent.length;
+  const totalAssigned = perStudent.reduce((s,p)=>s+p.assigned, 0);
+  const totalRecorded = perStudent.reduce((s,p)=>s+p.recorded, 0);
+  const totalScore = perStudent.reduce((s,p)=>s+p.score, 0);
+  const totalMax = perStudent.reduce((s,p)=>s+p.max, 0);
+  const avgHizbScore = totalRecorded ? Math.round(totalScore / totalRecorded) : 0;
+  const completionPct = totalAssigned ? Math.round((totalRecorded/totalAssigned)*100) : 0;
+  const fullyCompleted = perStudent.filter(s => s.recorded === s.assigned && s.assigned > 0).length;
+  const overallPct = totalMax ? Math.round((totalScore/totalMax)*100) : 0;
+
+  const sorted = perStudent.slice().sort((a,b) => {
+    const av = a.avgPct==null ? -1 : a.avgPct;
+    const bv = b.avgPct==null ? -1 : b.avgPct;
+    if(bv !== av) return bv - av;
+    return (b.recorded) - (a.recorded);
+  });
+
+  // تجميع بالمجموعات
+  const byGroup = {};
+  perStudent.forEach(p => {
+    const key = p.groupId || '__none__';
+    byGroup[key] = byGroup[key] || { name: p.groupName || 'بدون مجموعة', assigned:0, recorded:0, score:0, max:0, students:0 };
+    byGroup[key].assigned += p.assigned;
+    byGroup[key].recorded += p.recorded;
+    byGroup[key].score += p.score;
+    byGroup[key].max += p.max;
+    byGroup[key].students++;
+  });
+  const groupRows = Object.values(byGroup).sort((a,b) => {
+    const ap = a.max ? a.score/a.max : 0;
+    const bp = b.max ? b.score/b.max : 0;
+    return bp - ap;
+  });
+
+  const summary = `<div class="u-grid2 md4" style="margin-bottom:14px">
+    <div class="u-stat"><div class="l">الطلاب</div><div class="v">${_thNum(totalStudents)}</div></div>
+    <div class="u-stat"><div class="l">نسبة الإنجاز</div><div class="v" style="color:var(--brand-ink)">${_thNum(completionPct)}%</div><div class="u-muted">${_thNum(totalRecorded)} من ${_thNum(totalAssigned)}</div></div>
+    <div class="u-stat"><div class="l">متوسّط درجة الحزب</div><div class="v" style="color:var(--gold)">${_thNum(avgHizbScore)}</div><div class="u-muted">النسبة العامة ${_thNum(overallPct)}%</div></div>
+    <div class="u-stat"><div class="l">أتمّوا السرد</div><div class="v" style="color:var(--ok)">${_thNum(fullyCompleted)}</div></div>
+  </div>`;
+
+  const groupCard = groupRows.length ? `<div class="u-card">
+    <div class="u-section" style="margin:0 0 10px">أداء المجموعات</div>
+    <div class="u-list">${groupRows.map(g => {
+      const pct = g.max ? Math.round((g.score/g.max)*100) : 0;
+      const col = pct >= 85 ? 'var(--ok)' : pct >= 60 ? 'var(--gold)' : pct > 0 ? 'var(--bad)' : 'var(--ink3)';
+      const compPct = g.assigned ? Math.round((g.recorded/g.assigned)*100) : 0;
+      return `<div class="u-item">
+        <div class="u-grow"><div class="u-name">${esc(g.name)}</div><div class="u-muted">${_thNum(g.students)} طالب · أنجزوا ${_thNum(compPct)}% (${_thNum(g.recorded)}/${_thNum(g.assigned)})</div></div>
+        <div style="text-align:left"><div class="u-num" style="color:${col};font-size:18px">${_thNum(pct)}%</div><div class="u-muted" style="font-size:11px">${_thNum(g.score)}/${_thNum(g.max)}</div></div>
+      </div>`;
+    }).join('')}</div>
+  </div>` : '';
+
+  const rankCard = `<div class="u-card" style="margin-top:12px">
+    <div class="u-section" style="margin:0 0 10px">ترتيب الطلاب (انقر على طالب لعرض تفاصيله)</div>
+    <div class="u-list">${sorted.map((s, i) => {
+      const col = s.avgPct==null ? 'var(--ink3)' : s.avgPct >= 85 ? 'var(--ok)' : s.avgPct >= 60 ? 'var(--gold)' : 'var(--bad)';
+      const trophy = i<3 ? ['r1','r2','r3'][i] : '';
+      return `<button type="button" class="u-item" style="width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);text-align:right;cursor:pointer;font-family:inherit;padding:10px 0" onclick="_thOpenStudentReport(${jsArg(s.id)})">
+        <div class="u-rank ${trophy}">${i+1}</div>
+        <div class="u-grow"><div class="u-name">${esc(s.name)}</div><div class="u-muted">${s.groupName?esc(s.groupName)+' · ':''}${_thNum(s.recorded)} من ${_thNum(s.assigned)} حزب · أخطاء ${_thNum(s.mistakes)} · تنبيهات ${_thNum(s.warnings)}</div></div>
+        <div style="text-align:left"><div class="u-num" style="color:${col};font-size:17px">${s.avgPct==null?'—':_thNum(s.avgPct)+'%'}</div><div class="u-muted" style="font-size:11px">${_thNum(s.score)}/${_thNum(s.max||s.expectedMax)}</div></div>
+      </button>`;
+    }).join('') || `<div class="u-empty">${svg('users','w-9 h-9')}لا طلاب في البرنامج بعد</div>`}</div>
+  </div>`;
+
+  body.innerHTML = `<div class="u-page fade-in max-w-5xl mx-auto">${topBar}${periodChips}${summary}${groupCard}${rankCard}</div>`;
+
+  // خزّن للتصدير
+  _th._reportCache = { period, perStudent: sorted, groupRows, summary: { totalStudents, totalAssigned, totalRecorded, completionPct, avgHizbScore, overallPct, fullyCompleted } };
+}
+
+function _thSelectPeriodReports(id){ _th.periodId = id; _thLoad(true).then(()=>_thRenderReports($('portal'))); }
+
+function _thOpenStudentReport(studentId){
+  const d = _th.data; if(!d) return;
+  const assigns = (d.assignments||[]).filter(a => a.studentId === studentId).sort((a,b)=>a.hizbNumber-b.hizbNumber);
+  const recByAid = {}; (d.records||[]).forEach(r => recByAid[r.assignmentId] = r);
+  const student = (d.students||[]).find(s => s.id === studentId);
+  if(!assigns.length){ openModal('تفاصيل الطالب', `<div class="u-muted" style="text-align:center;padding:20px">لم تُسنَد أحزاب لهذا الطالب في الفترة الحالية</div>`); return; }
+
+  const rows = assigns.map(a => {
+    const r = recByAid[a.id];
+    return r
+      ? `<tr><td><b>${_thNum(a.hizbNumber)}</b></td><td>${_thNum(_thJuzOfHizb(a.hizbNumber))}</td><td>${_thNum(r.mistakes)}</td><td>${_thNum(r.warnings)}</td><td><b style="color:${_thScoreColor(r.score,r.totalPoints)}">${_thNum(r.score)}</b> <span class="u-muted">/${_thNum(r.totalPoints)}</span></td></tr>`
+      : `<tr class="pending"><td><b>${_thNum(a.hizbNumber)}</b></td><td>${_thNum(_thJuzOfHizb(a.hizbNumber))}</td><td colspan="3" class="u-muted" style="text-align:center">—  لم يُرصد  —</td></tr>`;
+  }).join('');
+
+  const recorded = assigns.filter(a => recByAid[a.id]).map(a => recByAid[a.id]);
+  const totalScore = recorded.reduce((s,r)=>s+r.score, 0);
+  const totalMax = recorded.reduce((s,r)=>s+r.totalPoints, 0);
+  const pct = totalMax ? Math.round((totalScore/totalMax)*100) : 0;
+  const totalM = recorded.reduce((s,r)=>s+r.mistakes, 0);
+  const totalW = recorded.reduce((s,r)=>s+r.warnings, 0);
+
+  openModal('تفاصيل · ' + (student?student.name:''), `<div style="display:grid;gap:12px">
+    <div class="u-grid2">
+      <div class="u-stat"><div class="l">مجموع الدرجة</div><div class="v" style="color:${_thScoreColor(totalScore,totalMax||1)}">${_thNum(totalScore)}</div><div class="u-muted">من ${_thNum(totalMax)} · ${_thNum(pct)}%</div></div>
+      <div class="u-stat"><div class="l">السرد</div><div class="v">${_thNum(recorded.length)}/${_thNum(assigns.length)}</div><div class="u-muted">أخطاء ${_thNum(totalM)} · تنبيهات ${_thNum(totalW)}</div></div>
+    </div>
+    <div class="th-rpt-table-wrap"><table class="th-rpt-table"><thead><tr><th>الحزب</th><th>الجزء</th><th>أخطاء</th><th>تنبيهات</th><th>الدرجة</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`);
+}
+
+async function _thExportReport(){
+  const c = _th._reportCache; if(!c) return toast('لا بيانات', 'warn');
+  try{ await ensureLib('xlsx'); }catch(e){ return toast('تعذّر تحميل مكتبة Excel', 'error'); }
+  const wb = XLSX.utils.book_new();
+  // الملخّص
+  const s = c.summary;
+  const sumAoa = [
+    ['برنامج تعاهد — تقرير الفترة'], [c.period.name],
+    [''], ['الطلاب في البرنامج', s.totalStudents],
+    ['أحزاب مسندة (إجمالي)', s.totalAssigned],
+    ['أحزاب مرصودة', s.totalRecorded],
+    ['نسبة الإنجاز', s.completionPct + '%'],
+    ['متوسّط درجة الحزب', s.avgHizbScore],
+    ['النسبة العامة للدرجات', s.overallPct + '%'],
+    ['أتمّوا السرد بالكامل', s.fullyCompleted]
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sumAoa), 'الملخّص');
+  // الطلاب
+  const sh = ['#','الطالب','المجموعة','مسندة','مرصودة','مجموع الدرجة','من','النسبة','مجموع الأخطاء','مجموع التنبيهات'];
+  const sr = c.perStudent.map((st,i) => [i+1, st.name, st.groupName||'', st.assigned, st.recorded, st.score, st.max||st.expectedMax, (st.avgPct==null?'':st.avgPct+'%'), st.mistakes, st.warnings]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([sh, ...sr]), 'ترتيب الطلاب');
+  // المجموعات
+  if(c.groupRows.length){
+    const gh = ['المجموعة','عدد الطلاب','مسندة','مرصودة','مجموع الدرجة','من','النسبة'];
+    const gr = c.groupRows.map(g => {
+      const pct = g.max ? Math.round((g.score/g.max)*100) : 0;
+      return [g.name, g.students, g.assigned, g.recorded, g.score, g.max, pct+'%'];
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([gh, ...gr]), 'المجموعات');
+  }
+  // تفصيل السرد
+  const dh = ['الطالب','الحزب','الجزء','أخطاء','تنبيهات','الدرجة','من'];
+  const detRows = [];
+  const d = _th.data;
+  const recByAid = {}; (d.records||[]).forEach(r => recByAid[r.assignmentId] = r);
+  (d.assignments||[]).forEach(a => {
+    const stRow = c.perStudent.find(x => x.id === a.studentId); if(!stRow) return;
+    const r = recByAid[a.id];
+    if(r) detRows.push([stRow.name, a.hizbNumber, _thJuzOfHizb(a.hizbNumber), r.mistakes, r.warnings, r.score, r.totalPoints]);
+  });
+  detRows.sort((a,b) => (a[0]+'').localeCompare(b[0]+'', 'ar') || a[1]-b[1]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([dh, ...detRows]), 'تفصيل السرد');
+  const safe = (c.period.name||'period').replace(/[^؀-ۿa-zA-Z0-9_-]+/g,'_');
+  XLSX.writeFile(wb, 'تعاهد_' + safe + '.xlsx');
+  toast('تم التصدير');
 }
