@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges, settings } from '@/db/schema';
-import { gte, inArray } from 'drizzle-orm';
+import { users, groups, studentsData, plans, pointItems, news, events, attendance, badges, settings, planDefinitions } from '@/db/schema';
+import { eq, gte, inArray } from 'drizzle-orm';
 import { requireRole, errorResponse } from '@/lib/auth';
 import { SURAHS, SURAH_AYAH_COUNT, today } from '@/lib/utils';
+import { getProgress, type PlanDefLike } from '@/lib/plan-progress';
 
 /** نافذة البيانات التاريخية: كل الخطط المستقبلية + آخر WINDOW_DAYS يوماً فقط (بدل كل التاريخ، الذي يثقل الجوال مع الوقت).
  * الأيام الأقدم تُجلب عند الطلب من /api/day-data. */
@@ -13,7 +14,7 @@ export async function GET() {
   try {
     await requireRole('Teacher');
     const since = new Date(new Date(today() + 'T12:00:00Z').getTime() - WINDOW_DAYS * 864e5).toISOString().slice(0, 10);
-    const [u, g, sd, pl, it, nw, ev, at, bd, cfg] = await Promise.all([
+    const [u, g, sd, pl, it, nw, ev, at, bd, cfg, apd] = await Promise.all([
       db.select().from(users),
       db.select().from(groups),
       db.select().from(studentsData),
@@ -23,8 +24,19 @@ export async function GET() {
       db.select().from(events),
       db.select().from(attendance).where(gte(attendance.date, since)),
       db.select().from(badges),
-      db.select().from(settings).where(inArray(settings.key, ['plan_work_days', 'plan_term_start', 'plan_term_end']))
+      db.select().from(settings).where(inArray(settings.key, ['plan_work_days', 'plan_term_start', 'plan_term_end'])),
+      db.select().from(planDefinitions).where(eq(planDefinitions.active, true))
     ]);
+    // progressOrd لكل خطة نشطة — تستعمله الواجهة لعرض شريط التقدّم بلا طلب إضافي.
+    const activePlans = await Promise.all(apd.map(async (def) => {
+      const p = await getProgress(def as any as PlanDefLike).catch(() => ({ progressOrd: null, currentRangeIndex: 0, isComplete: false }));
+      return {
+        id: def.id, studentId: def.studentId, type: def.type,
+        ranges: def.ranges, dailyPages: def.dailyPages,
+        workDays: def.workDays, direction: def.direction || 'asc',
+        progressOrd: p.progressOrd, currentRangeIndex: p.currentRangeIndex, isComplete: p.isComplete
+      };
+    }));
     const nameMap: Record<string,string> = {}; u.forEach(x => nameMap[x.id] = x.name);
     const studentsEnriched = sd.map(s => ({
       Student_ID: s.studentId, Parent_ID: s.parentId, Group_ID: s.groupId,
@@ -59,7 +71,8 @@ export async function GET() {
         workDays: (() => { const v = cfg.find(r => r.key === 'plan_work_days')?.value || ''; return v ? v.split(',').map(Number).filter(n => n >= 0 && n <= 6) : [0,1,2,3,4]; })(),
         termStart: cfg.find(r => r.key === 'plan_term_start')?.value || '',
         termEnd: cfg.find(r => r.key === 'plan_term_end')?.value || ''
-      }
+      },
+      activePlans
     });
   } catch (e: any) { return errorResponse(e); }
 }

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { plans, pointLogs, pointItems, groups, badges, attendance, studentsData, users } from '@/db/schema';
+import { plans, pointLogs, pointItems, groups, badges, attendance, studentsData, users, planDefinitions } from '@/db/schema';
 import { and, desc, eq } from 'drizzle-orm';
 import { requireSession, AuthError, errorResponse } from '@/lib/auth';
 import { today, buildPlanTarget } from '@/lib/utils';
 import { computeStreak, getWorkDays } from '@/lib/badges';
+import { suggestNext, type PlanDefLike } from '@/lib/plan-progress';
 import type { SessionUser } from '@/lib/auth';
 
 /** تحقق أن المستخدم مصرّح له بعرض ملف الطالب sid */
@@ -73,12 +74,24 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   });
 
   const t = today();
+
+  // الاقتراحات اليومية من الخطط النشطة (نموذج "خطة خام"). الواجهة تستعملها عندما
+  // لا يوجد صفّ plans مسجّل لليوم (أي لم يُرصَد ورد اليوم بعد).
+  const activeDefs = await db.select().from(planDefinitions)
+    .where(and(eq(planDefinitions.studentId, sid), eq(planDefinitions.active, true)));
+  const suggestedToday: Record<string, any> = { conserve: null, revision: null };
+  for (const def of activeDefs) {
+    const sug = await suggestNext(def as any as PlanDefLike);
+    if (sug) suggestedToday[def.type] = sug;
+  }
+
   return NextResponse.json({
     success: true,
     totalPoints: me?.totalPoints || 0,
     // قد يكون للطالب أكثر من ورد اليوم (حفظ + مراجعة): todayPlans للكل، وtodayPlan للتوافق مع الواجهات القديمة.
     todayPlan: enriched.find(p => p.Date === t) || null,
     todayPlans: enriched.filter(p => p.Date === t),
+    suggestedToday,
     plans: enriched, logs, leaderboard, badges: stBadges,
     myGroupId: me?.groupId || null,
     stats: { donePlans: doneAll.length, totalPlans: enriched.length, donePct: enriched.length ? Math.round(doneAll.length / enriched.length * 100) : 0, streak, presentDays, lateDays, absentDays },

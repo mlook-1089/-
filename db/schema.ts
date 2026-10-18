@@ -61,7 +61,12 @@ export const plans = pgTable('plans', {
   studentDateIdx: index('plans_student_date_idx').on(t.studentId, t.date),
   dateIdx: index('plans_date_idx').on(t.date),
   nazemItemIdx: index('plans_nazem_item_idx').on(t.nazemItemDayId),
-  planDefIdx: index('plans_plan_def_idx').on(t.planDefId)
+  planDefIdx: index('plans_plan_def_idx').on(t.planDefId),
+  // أُضيف في هجرة migrate-to-raw-plan — يمنع تكرار الورد لنفس اليوم من السباق،
+  // ويمكّن onConflictDoUpdate في POST /api/plans/record.
+  studentDateTypeUniq: uniqueIndex('plans_student_date_type_uniq').on(t.studentId, t.date, t.type),
+  // لجلب "آخر إنجاز" لخطة بسرعة.
+  defDateDesc: index('plans_def_date_desc').on(t.planDefId, t.date)
 }));
 
 // تعريف خطة فصلية: المصدر الحقيقي لحقول «المولِّد» (النطاقات، الكمية اليومية،
@@ -74,12 +79,17 @@ export const planDefinitions = pgTable('plan_definitions', {
   ranges: jsonb('ranges').notNull(),           // [{fromSurah, fromAyah, toSurah, toAyah}, ...]
   dailyPages: text('daily_pages').notNull(),   // كسر صفحة كنص: '0.25' | '0.5' | '1' | '1.5' | '2'
   workDays: text('work_days').notNull(),       // '0,1,2,3,4'
-  termStart: date('term_start').notNull(),
-  termEnd: date('term_end').notNull(),
+  // termStart/termEnd: اختيارية (nullable) — في النموذج الجديد تُعرض للمعلومية فقط ولا تُولَّد منها أوراد مسبقاً.
+  termStart: date('term_start'),
+  termEnd: date('term_end'),
   direction: text('direction').default('asc'), // asc | desc
+  // active=false يعني الخطة مُؤرشفة (اكتملت أو استُبدلت بأخرى جديدة). الاستعلامات تُفلتر على active=true.
+  active: boolean('active').notNull().default(true),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 }, (t) => ({
-  studentTypeIdx: index('plandef_student_type_idx').on(t.studentId, t.type)
+  studentTypeIdx: index('plandef_student_type_idx').on(t.studentId, t.type),
+  studentTypeActiveIdx: index('plandef_student_type_active_idx').on(t.studentId, t.type, t.active)
 }));
 
 export const pointItems = pgTable('point_items', {
