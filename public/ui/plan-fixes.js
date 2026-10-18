@@ -299,25 +299,15 @@ function openCreateManualPlan(sid, edit){
   const surOpts = surs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
   const unitOpts = Object.entries(MP_UNITS).map(([k,v]) =>
     `<option value="${k}" ${k==='full'?'selected':''}>${v.label}</option>`).join('');
-  const cfg = _tData?.planConfig || {};
-  const dayN = ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
-  const cfgInfo = cfg.termStart && cfg.termEnd
-    ? `<div class="u-plan" style="background:var(--brand-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--brand-ink);margin-bottom:12px">الفصل: <span class="u-num">${esc(cfg.termStart)}</span> — <span class="u-num">${esc(cfg.termEnd)}</span><br>الأيام: ${(cfg.workDays||[]).map(d=>dayN[d]||d).join('، ')}</div>`
-    : `<div class="u-plan" style="background:var(--warn-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--warn);margin-bottom:12px">لم تُعيَّن بيانات الفصل — من الإعدادات ثم أيام الحلقة</div>`;
-  const editNote = edit ? `<div class="u-plan" style="background:var(--warn-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:12px">عند الحفظ تُعاد الخطة كاملة على أيام الفصل بالقيم أدناه${edit.recorded ? ` — يُستبدل <span class="u-num">${edit.recorded}</span> ورد مرصود سابقاً، وتبقى نقاطه` : ''}.</div>` : '';
-  openModal((edit ? 'تعديل الخطة — ' : 'خطة فصلية — ') + name, `
-    ${cfgInfo}
+  // في النموذج الجديد (خطة خام)، لا نحتاج termStart/termEnd ولا workDays ولا replace flag.
+  // التعديل: المقدار يسري على اقتراح الغد؛ المرصود السابق لا يُلمس ونقاطه تبقى.
+  const editNote = edit ? `<div class="u-plan" style="background:var(--brand-soft);border-color:transparent;font-size:12.5px;font-weight:600;color:var(--brand-ink);margin-bottom:12px">تعديل الخطة الحالية${edit.recorded ? ` — <span class="u-num">${edit.recorded}</span> ورد مرصود يبقى كما هو مع نقاطه، والمقدار الجديد يسري من اقتراح الغد` : ''}.</div>` : '';
+  openModal((edit ? 'تعديل الخطة — ' : 'خطة جديدة — ') + name, `
     ${editNote}
     <div class="u-grid2" style="gap:8px">
       <div><label ${_FU_LBL}>النوع</label><select id="cp_type" class="u-input"><option value="conserve">حفظ</option><option value="revision">مراجعة</option></select></div>
       <div><label ${_FU_LBL}>المقدار اليومي</label><select id="cp_unit" class="u-input">${unitOpts}</select></div>
     </div>
-    ${edit ? '' : `<div class="u-field"><label>تاريخ بداية الخطة</label>
-      <input type="date" id="cp_start_date" class="u-input u-num"
-        value="${esc(_fuSuggestStart(cfg))}"
-        min="${esc(cfg.termStart||'')}" max="${esc(cfg.termEnd||'')}">
-      <div class="u-muted" style="margin-top:4px;font-size:11.5px">افتراضياً: اليوم (أو بداية الفصل إن كان مستقبلاً). غيّره لبدء خطة جديدة من يوم محدَّد ضمن الفصل.</div>
-    </div>`}
     <div class="u-note brand" style="margin-bottom:12px;font-size:11.5px">الوجه = صفحة مصحف المدينة. تختلف الآيات لكل يوم حسب كثافة الآيات في موضع الطالب.</div>
     <div class="u-plan" style="background:var(--card2);margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px">المدى القرآني</div>
@@ -331,16 +321,13 @@ function openCreateManualPlan(sid, edit){
       <div id="cp_extra_ranges"></div>
       <button type="button" class="u-btn sm u-btn-s w" style="margin-top:10px" onclick="_cpAddRange()">${svg('plus','w-4 h-4')} نطاق تالٍ</button>
     </div>
-    ${edit ? '' : `<label class="u-row" style="gap:8px;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:14px;cursor:pointer">
-      <input type="checkbox" id="cp_replace" style="width:18px;height:18px;accent-color:var(--brand)"> استبدال أي خطة قائمة من النوع نفسه في هذا المدى
-    </label>`}
     ${edit ? `<button type="button" class="u-btn u-btn-bad w" style="margin-bottom:10px" onclick="confirmDeleteStudentPlan(${jsArg(targetId)},${jsArg(edit.type)})">
       ${svg('trash','w-4 h-4')} حذف هذه الخطة بالكامل
     </button>` : ''}
     <div class="u-grid2" style="margin:0">
       <button type="button" class="u-btn u-btn-g" onclick="closeModal()">إلغاء</button>
       ${edit
-        ? `<button type="button" class="u-btn u-btn-p" onclick="doSaveFullPlan(${jsArg(targetId)},${jsArg(edit.type)})">حفظ وإعادة التوليد</button>`
+        ? `<button type="button" class="u-btn u-btn-p" onclick="doSaveFullPlan(${jsArg(targetId)},${jsArg(edit.type)},${jsArg(edit.id||'')})">حفظ التعديلات</button>`
         : `<button type="button" class="u-btn u-btn-p" onclick="doCreateManualPlan()">إنشاء الخطة</button>`}
     </div>`);
   if(edit) _fuPrefillPlan(edit);
@@ -362,81 +349,85 @@ function _fuReadPlanForm(){
   });
   const unit = val('cp_unit') || 'full';
   const dailyPages = (MP_UNITS[unit] && Number(MP_UNITS[unit].pages)) || 1;
-  return { type: val('cp_type') === 'revision' ? 'revision' : 'conserve', ranges, dailyPages, unit };
+  // الاتجاه مأخوذ من أول نطاق فعّال في النموذج (زرّا dirAsc/dirDesc على كل نطاق).
+  // لا يوجد تعريف "اتجاه مُختلط" في الـbackend؛ النطاقات اللاحقة تتبع الاتجاه نفسه.
+  let direction = 'asc';
+  const firstDirDesc = document.querySelector('[id^="cp_dirDesc"]');
+  if(firstDirDesc && firstDirDesc.classList.contains('on')) direction = 'desc';
+  return { type: val('cp_type') === 'revision' ? 'revision' : 'conserve', ranges, dailyPages, unit, direction };
 }
 
-/* ---------- إنشاء الخطة: نرسل dailyPages بدل dailyAmount ---------- */
+/* ---------- إنشاء الخطة (نموذج "خطة خام") ---------- */
 async function doCreateManualPlan(){
-  const type = $('cp_type').value;
-  const unit = $('cp_unit').value;
-  const planCfg = _tData?.planConfig || {};
-  // تاريخ البدء المختار (قد يكون "اليوم" للخطط اللاحقة ضمن نفس الفصل) — أو بداية الفصل كـ fallback
-  const chosenStart = $('cp_start_date')?.value || '';
-  const startDate = chosenStart || planCfg.termStart || '';
-  const endDate   = planCfg.termEnd   || '';
-  const workDays  = planCfg.workDays?.length ? planCfg.workDays : [];
-  if(!startDate || !endDate) return toast('عيّن بداية ونهاية الفصل في الإعدادات → أيام الحلقة','warn');
-  if(startDate < (planCfg.termStart || '')) return toast('تاريخ البداية قبل بداية الفصل','warn');
-  if(startDate > endDate) return toast('تاريخ البداية بعد نهاية الفصل','warn');
-  if(!workDays.length)       return toast('عيّن أيام الحلقة في الإعدادات → أيام الحلقة','warn');
+  const f = _fuReadPlanForm();
+  if(!f.ranges.length) return toast('اختر نطاقاً قرآنياً على الأقل','warn');
+  if(!f.dailyPages || f.dailyPages < 0.1) return toast('اختر مقداراً يومياً صحيحاً','warn');
 
-  const ranges = [];
-  // النطاق الرئيسي قد يكون مُزالاً (المستخدم ضغط "حذف" عليه) — تحقّق بأمان قبل القراءة
-  const fromS_main = $('cp_fromS')?.value;
-  const toS_main   = $('cp_toS')?.value;
-  if(fromS_main && toS_main){
-    const fromA_main = Number($('cp_fromA')?.value) || 1;
-    const toA_main   = Number($('cp_toA')?.value)   || 1;
-    ranges.push({ fromSurah:fromS_main, fromAyah:fromA_main, toSurah:toS_main, toAyah:toA_main });
-  }
-  document.querySelectorAll('[id^="cp_range_"]').forEach(div => {
-    if(div.id === 'cp_range_main') return; // الرئيسي قُرئ أعلاه
-    const n = div.id.replace('cp_range_','');
-    const fS = $(`cp_fromS_${n}`)?.value;
-    const fA = Number($(`cp_fromA_${n}`)?.value) || 1;
-    const tS = $(`cp_toS_${n}`)?.value;
-    const tA = Number($(`cp_toA_${n}`)?.value) || 1;
-    if(fS && tS) ranges.push({ fromSurah:fS, fromAyah:fA, toSurah:tS, toAyah:tA });
-  });
-  if(!ranges.length) return toast('اختر نطاقاً قرآنياً على الأقل','warn');
-
-  const dailyPages = (MP_UNITS[unit] && Number(MP_UNITS[unit].pages)) || 1;
-  const replaceExisting = $('cp_replace')?.checked || false;
-
-  const payload = { studentId:_mp.studentId, type, startDate, endDate, ranges, workDays, dailyPages, replaceExisting };
-  const r = await guard(DS.planGenerate(payload), 'توليد الخطة…');
-  if(!r || !r.success) return toast((r && r.message) || 'فشل التوليد','error');
+  const payload = {
+    studentId: _mp.studentId,
+    type: f.type,
+    ranges: f.ranges,
+    dailyPages: String(f.dailyPages),
+    direction: f.direction || 'asc'
+  };
+  const r = await guard(DS.createPlanDef(payload), 'إنشاء الخطة…');
+  if(!r || !r.success) return toast((r && r.message) || 'فشل الإنشاء','error');
   closeModal();
-  const warn = r.warning ? ' · ' + r.warning : '';
-  toast(`تم توليد ${r.created} يوم${r.replaced ? ` (استُبدل ${r.replaced})` : ''}${warn}`, r.warning ? 'warn' : 'success');
+  toast('تم إنشاء الخطة', 'success');
   await refreshTeacherStudents();
   if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
   else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
 }
 
-/* ---------- حفظ تعديل الخطة الكاملة ---------- */
-async function doSaveFullPlan(sid, origType){
-  const cfg = _tData?.planConfig || {};
-  if(!cfg.termStart || !cfg.termEnd) return toast('عيّن بداية ونهاية الفصل من الإعدادات ← أيام الحلقة','warn');
+/* ---------- حفظ تعديل الخطة ---------- */
+// في النموذج الجديد:
+//  - تغيّر dailyPages فقط → PATCH على plan_definitions (آمن، يسري على اقتراح الغد).
+//  - تغيّر ranges أو direction أو type → تأكيد ثم POST (يُؤرشِف الحالية ويُنشِئ جديدة).
+async function doSaveFullPlan(sid, origType, planDefId){
   const f = _fuReadPlanForm();
   if(!f.ranges.length) return toast('اختر المدى القرآني','warn');
   if(!f.dailyPages || f.dailyPages < 0.1) return toast('اختر مقداراً يومياً صحيحاً','warn');
+
+  // قراءة التعريف الحالي لمعرفة ماذا تغيّر
+  let curDef = null;
+  try { const r = await DS.getPlanDefinition(sid, origType); if(r && r.success) curDef = r.definition; } catch(e){}
+  const curRanges = curDef && Array.isArray(curDef.ranges) ? curDef.ranges : [];
+  const curDailyPages = curDef ? Number(curDef.dailyPages) : null;
+  const curDirection = curDef ? (curDef.direction || 'asc') : 'asc';
+
+  const rangesChanged = JSON.stringify(curRanges) !== JSON.stringify(f.ranges);
   const typeChanged = f.type !== origType;
-  if(typeChanged && (_tData.plans||[]).some(p => String(p.Student_ID) === String(sid) && p.Type === f.type && p.Source === 'Manual'))
-    return toast('لدى الطالب خطة ' + (f.type === 'revision' ? 'مراجعة' : 'حفظ') + ' قائمة — عدّلها هي بدلاً من تغيير النوع','warn');
-  const payload = {
-    studentId:sid, type:f.type,
-    startDate:cfg.termStart, endDate:cfg.termEnd, ranges:f.ranges,
-    workDays: cfg.workDays?.length ? cfg.workDays : [0,1,2,3,4],
-    dailyPages: f.dailyPages,
-    replaceExisting: true
-  };
-  const r = await guard(DS.planGenerate(payload), 'حفظ الخطة وإعادة توليدها…');
-  if(!r || !r.success) return toast((r && r.message) || 'فشل حفظ الخطة','error');
-  if(typeChanged) await guard(DS.deleteManualPlans(sid, origType), 'حذف الخطة السابقة…');
-  closeModal();
-  const warn = r.warning ? ' · ' + r.warning : '';
-  toast('تم حفظ الخطة' + (r.created != null ? ' — ' + r.created + ' ورد' : '') + warn, r.warning ? 'warn' : 'success');
+  const directionChanged = (f.direction || 'asc') !== curDirection;
+  const pagesChanged = curDailyPages !== f.dailyPages;
+
+  // تعديل بنيوي → أرشفة + إنشاء جديدة
+  if(rangesChanged || typeChanged || directionChanged){
+    const ok = await confirmModal({
+      title: 'تعديل بنيوي للخطة',
+      message: 'تغيير النطاقات أو النوع أو الاتجاه يُؤرشِف الخطة الحالية ويُنشِئ خطة جديدة.<br><br><b style="color:var(--ok)">المرصود السابق يبقى سليماً مع نقاطه.</b><br><br>متابعة؟',
+      confirmText: 'نعم، احفظ'
+    });
+    if(!ok) return;
+    const payload = {
+      studentId: sid, type: f.type, ranges: f.ranges,
+      dailyPages: String(f.dailyPages), direction: f.direction || 'asc'
+    };
+    const r = await guard(DS.createPlanDef(payload), 'أرشفة القديمة وإنشاء الجديدة…');
+    if(!r || !r.success) return toast((r && r.message) || 'فشل الحفظ','error');
+    closeModal();
+    toast('تم حفظ الخطة الجديدة', 'success');
+  } else if(pagesChanged && planDefId){
+    // تعديل كمي فقط → PATCH
+    const r = await guard(DS.updatePlanDef(planDefId, { dailyPages: String(f.dailyPages) }), 'تحديث المقدار…');
+    if(!r || !r.success) return toast((r && r.message) || 'فشل التحديث','error');
+    closeModal();
+    toast('تم تحديث المقدار (يسري من اقتراح الغد)', 'success');
+  } else {
+    closeModal();
+    toast('لا تغييرات', 'info');
+    return;
+  }
+
   await refreshTeacherStudents();
   if($('fuSubBody')) renderManualPlanTab($('fuSubBody'));
   else if($('settingsSubBody') && _settingsSub === 'allplans') renderAllPlansTab($('settingsSubBody'));
@@ -467,7 +458,7 @@ async function openEditFullPlan(sid, type){
   }
   const recorded = items.filter(p => (p.Accomplishment_Status || 'Pending') !== 'Pending').length;
   if(!ranges.length) return toast('تعذّر قراءة مدى الخطة','error');
-  openCreateManualPlan(sid, { type, ranges, dailyPages, recorded });
+  openCreateManualPlan(sid, { type, ranges, dailyPages, recorded, id: def?.id || '', direction: def?.direction || 'asc' });
 }
 
 /* ---------- تعبئة النموذج: نختار الوحدة التي تطابق dailyPages ---------- */
