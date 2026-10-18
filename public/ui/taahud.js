@@ -91,14 +91,18 @@ function _thRenderTeacher(body){
   const q = (_th.search || '').trim();
   const filtered = q ? students.filter(s => arMatches(s.name || '', q) || arMatches(s.id || '', q)) : students;
 
-  // إحصاء لكل طالب
+  // إحصاء لكل طالب — المقام = مجموع كل الأحزاب المسندة × الدرجة الكلية
+  // (الحزب المسنَد غير المرصود يُحتسب 0، فلا يُظلم من رصد مقابل من لم يرصد).
+  const defaultTotal = (d.config && d.config.totalPerHizb) || 100;
   const perStudent = {};
   students.forEach(s => { perStudent[s.id] = { total: 0, recorded: 0, score: 0, max: 0 }; });
   assigns.forEach(a => {
     const st = perStudent[a.studentId]; if(!st) return;
     st.total++;
     const r = recByAid[a.id];
-    if(r){ st.recorded++; st.score += (r.score || 0); st.max += (r.totalPoints || 0); }
+    // المقام: درجة الحزب لحظة الرصد إن وُجدت، وإلا الدرجة الكلية الحالية
+    st.max += r ? (r.totalPoints || 0) : defaultTotal;
+    if(r){ st.recorded++; st.score += (r.score || 0); }
   });
 
   const periodChips = periods.length ? `<div class="u-chips" style="margin:0 0 12px">
@@ -135,7 +139,7 @@ function _thRenderTeacher(body){
       : (s.recorded < s.total
         ? `<span class="u-pill warn">${_thNum(s.recorded)} / ${_thNum(s.total)} رُصد</span>`
         : `<span class="u-pill ok">اكتمل · ${_thNum(s.total)} حزب</span>`);
-    const scoreLine = s.recorded ? `<div class="u-muted" style="margin-top:3px">الدرجة: <b style="color:var(--gold)">${_thNum(s.score)}</b> من ${_thNum(s.max)}${pct!=null?` · ${pct}%`:''}</div>` : '';
+    const scoreLine = s.total ? `<div class="u-muted" style="margin-top:3px">الدرجة: <b style="color:var(--gold)">${_thNum(s.score)}</b> من ${_thNum(s.max)}${pct!=null?` · ${pct}%`:''}</div>` : '';
     return `<div class="u-card" style="padding:14px 14px 10px">
       <div class="u-row" style="align-items:flex-start">
         <div class="u-avatar" style="background:var(--brand);color:var(--gold-bright)">${esc(String(st.name||'?').trim().charAt(0))}</div>
@@ -604,12 +608,16 @@ function _thRenderReports(body){
   const groupOf = {}; (td.students||[]).forEach(s => { groupOf[s.Student_ID] = s.Group_ID; });
   const groupName = {}; (td.groups||[]).forEach(g => { groupName[g.Group_ID] = g.Group_Name; });
 
+  const defaultTotal = (d.config && d.config.totalPerHizb) || 100;
   const perStudent = students.map(st => {
     const studentAssigns = assigns.filter(a => a.studentId === st.id);
     const studentRecs = studentAssigns.filter(a => recByAid[a.id]).map(a => recByAid[a.id]);
     const score = studentRecs.reduce((s,r) => s + (r.score||0), 0);
-    const max = studentRecs.reduce((s,r) => s + (r.totalPoints||0), 0);
-    const expectedMax = studentAssigns.length * ((d.config && d.config.totalPerHizb) || 100);
+    // المقام = مجموع كل الأحزاب المسندة (مرصودة + غير مرصودة). غير المرصود = 0 درجة.
+    const max = studentAssigns.reduce((s,a) => {
+      const r = recByAid[a.id];
+      return s + (r ? (r.totalPoints||0) : defaultTotal);
+    }, 0);
     const avgPct = max ? Math.round((score/max)*100) : null;
     return {
       id: st.id, name: st.name,
@@ -617,7 +625,7 @@ function _thRenderReports(body){
       groupName: groupName[groupOf[st.id]] || '',
       assigned: studentAssigns.length,
       recorded: studentRecs.length,
-      score, max, expectedMax, avgPct,
+      score, max, avgPct,
       mistakes: studentRecs.reduce((s,r)=>s+(r.mistakes||0),0),
       warnings: studentRecs.reduce((s,r)=>s+(r.warnings||0),0)
     };
@@ -627,11 +635,11 @@ function _thRenderReports(body){
   const totalAssigned = perStudent.reduce((s,p)=>s+p.assigned, 0);
   const totalRecorded = perStudent.reduce((s,p)=>s+p.recorded, 0);
   const totalScore = perStudent.reduce((s,p)=>s+p.score, 0);
-  const totalMax = perStudent.reduce((s,p)=>s+p.max, 0);
+  const totalMax = perStudent.reduce((s,p)=>s+p.max, 0); // يشمل الأحزاب غير المرصودة
   const avgHizbScore = totalRecorded ? Math.round(totalScore / totalRecorded) : 0;
   const completionPct = totalAssigned ? Math.round((totalRecorded/totalAssigned)*100) : 0;
   const fullyCompleted = perStudent.filter(s => s.recorded === s.assigned && s.assigned > 0).length;
-  const overallPct = totalMax ? Math.round((totalScore/totalMax)*100) : 0;
+  const overallPct = totalMax ? Math.round((totalScore/totalMax)*100) : 0; // النسبة من كل المسنَد
 
   const sorted = perStudent.slice().sort((a,b) => {
     const av = a.avgPct==null ? -1 : a.avgPct;
@@ -685,7 +693,7 @@ function _thRenderReports(body){
       return `<button type="button" class="u-item" style="width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);text-align:right;cursor:pointer;font-family:inherit;padding:10px 0" onclick="_thOpenStudentReport(${jsArg(s.id)})">
         <div class="u-rank ${trophy}">${i+1}</div>
         <div class="u-grow"><div class="u-name">${esc(s.name)}</div><div class="u-muted">${s.groupName?esc(s.groupName)+' · ':''}${_thNum(s.recorded)} من ${_thNum(s.assigned)} حزب · أخطاء ${_thNum(s.mistakes)} · تنبيهات ${_thNum(s.warnings)}</div></div>
-        <div style="text-align:left"><div class="u-num" style="color:${col};font-size:17px">${s.avgPct==null?'—':_thNum(s.avgPct)+'%'}</div><div class="u-muted" style="font-size:11px">${_thNum(s.score)}/${_thNum(s.max||s.expectedMax)}</div></div>
+        <div style="text-align:left"><div class="u-num" style="color:${col};font-size:17px">${s.avgPct==null?'—':_thNum(s.avgPct)+'%'}</div><div class="u-muted" style="font-size:11px">${_thNum(s.score)}/${_thNum(s.max)}</div></div>
       </button>`;
     }).join('') || `<div class="u-empty">${svg('users','w-9 h-9')}لا طلاب في البرنامج بعد</div>`}</div>
   </div>`;
@@ -714,7 +722,9 @@ function _thOpenStudentReport(studentId){
 
   const recorded = assigns.filter(a => recByAid[a.id]).map(a => recByAid[a.id]);
   const totalScore = recorded.reduce((s,r)=>s+r.score, 0);
-  const totalMax = recorded.reduce((s,r)=>s+r.totalPoints, 0);
+  // المقام يشمل الأحزاب غير المرصودة (كل منها 0 درجة)
+  const dft = (d.config && d.config.totalPerHizb) || 100;
+  const totalMax = assigns.reduce((s,a) => s + (recByAid[a.id] ? (recByAid[a.id].totalPoints||0) : dft), 0);
   const pct = totalMax ? Math.round((totalScore/totalMax)*100) : 0;
   const totalM = recorded.reduce((s,r)=>s+r.mistakes, 0);
   const totalW = recorded.reduce((s,r)=>s+r.warnings, 0);
@@ -747,7 +757,7 @@ async function _thExportReport(){
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sumAoa), 'الملخّص');
   // الطلاب
   const sh = ['#','الطالب','المجموعة','مسندة','مرصودة','مجموع الدرجة','من','النسبة','مجموع الأخطاء','مجموع التنبيهات'];
-  const sr = c.perStudent.map((st,i) => [i+1, st.name, st.groupName||'', st.assigned, st.recorded, st.score, st.max||st.expectedMax, (st.avgPct==null?'':st.avgPct+'%'), st.mistakes, st.warnings]);
+  const sr = c.perStudent.map((st,i) => [i+1, st.name, st.groupName||'', st.assigned, st.recorded, st.score, st.max, (st.avgPct==null?'':st.avgPct+'%'), st.mistakes, st.warnings]);
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([sh, ...sr]), 'ترتيب الطلاب');
   // المجموعات
   if(c.groupRows.length){
