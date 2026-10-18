@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>حذف تغريدات X — بوكماركلت</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #0f172a;
+    --muted: #64748b;
+    --accent: #1d9bf0;
+    --danger: #dc2626;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --code-bg: #0f172a;
+    --code-fg: #e2e8f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f172a;
+      --fg: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #1d9bf0;
+      --surface: #1e293b;
+      --border: #334155;
+      --code-bg: #020617;
+      --code-fg: #e2e8f0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f172a; --fg: #f1f5f9; --muted: #94a3b8;
+    --surface: #1e293b; --border: #334155;
+    --code-bg: #020617; --code-fg: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Tahoma', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 16px;
+    line-height: 1.7;
+  }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  h2 { font-size: 1.2rem; margin: 24px 0 8px; border-top: 1px solid var(--border); padding-top: 16px; }
+  .lead { color: var(--muted); margin-bottom: 24px; }
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: grab;
+    user-select: none;
+  }
+  .btn.danger { background: var(--danger); }
+  .warning {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .warning { background: #450a0a; color: #fecaca; border-color: #7f1d1d; }
+  }
+  ol li { margin: 8px 0; }
+  code {
+    background: var(--surface);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Consolas, monospace;
+    direction: ltr;
+    display: inline-block;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-fg);
+    padding: 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    direction: ltr;
+    text-align: left;
+    font-size: 0.85rem;
+  }
+  .config {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+  }
+  .config label { display: block; margin: 8px 0 4px; font-weight: 600; }
+  .config input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: inherit;
+  }
+  .steps { background: var(--surface); padding: 16px 24px; border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<h1>🗑️ حذف تغريدات X — بدون API</h1>
+<p class="lead">
+  هذه طريقة بديلة تعمل داخل متصفحك مباشرة (لا تحتاج مفاتيح مطوّر).
+  اسحب الزر الأحمر إلى شريط المفضّلة، ثم افتحه داخل صفحة ملفك الشخصي في X.
+</p>
+
+<div class="warning">
+  ⚠️ <strong>تحذير:</strong> هذه الأداة تعدّل صفحة X في متصفحك فقط. استخدمها على حسابك.
+  الحذف نهائي ولا يمكن التراجع عنه. ننصح بتصدير أرشيف X أولاً.
+</div>
+
+<h2>الخطوة 1 — اضبط الإعدادات (اختياري)</h2>
+<div class="config">
+  <label>احذف فقط التغريدات الأقدم من:</label>
+  <input type="date" id="olderThan">
+
+  <label>الحد الأقصى في الجلسة الواحدة:</label>
+  <input type="number" id="maxPerRun" value="500">
+
+  <label>التأخير بين كل حذف (ثانية):</label>
+  <input type="number" id="delay" value="2" step="0.5">
+
+  <label>احتفظ بالتغريدات ذات الإعجابات الأكبر من:</label>
+  <input type="number" id="minLikes" value="0">
+</div>
+
+<h2>الخطوة 2 — اسحب هذا الزر إلى شريط المفضّلة</h2>
+<p>
+  <a id="bookmarklet" class="btn danger" href="#">🗑️ حذف تغريداتي</a>
+</p>
+<p style="color: var(--muted); font-size: 0.9rem;">
+  (في Chrome: اضغط <code>Ctrl+Shift+B</code> لإظهار شريط المفضّلة، ثم اسحب الزر إليه.)
+</p>
+
+<h2>الخطوة 3 — استخدمه</h2>
+<div class="steps">
+  <ol>
+    <li>افتح <code>https://x.com/your-username</code> (ملفك الشخصي).</li>
+    <li>اضغط على زر "حذف تغريداتي" من شريط المفضّلة.</li>
+    <li>ستظهر لوحة تحكم أعلى الصفحة — اضغط "ابدأ".</li>
+    <li>الأداة ستُمرّر الصفحة تلقائياً وتحذف كل تغريدة بالترتيب.</li>
+    <li>لإيقافها: اضغط "توقف" من اللوحة نفسها.</li>
+  </ol>
+</div>
+
+<h2>كود البوكماركلت (للمرجع)</h2>
+<pre id="code">—</pre>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// منطق البوكماركلت الفعلي (يُحقن في صفحة X)
+// ─────────────────────────────────────────────────────────
+const bookmarkletFn = function(opts) {
+  if (!/^https:\/\/(x|twitter)\.com\//.test(location.href)) {
+    alert('افتح هذه الأداة من داخل x.com أولاً');
+    return;
+  }
+
+  // منع التكرار
+  if (window.__xDeleterRunning) {
+    alert('الأداة شغّالة بالفعل');
+    return;
+  }
+  window.__xDeleterRunning = true;
+
+  const state = {
+    running: false,
+    deleted: 0,
+    failed: 0,
+    skipped: 0,
+    maxPerRun: opts.maxPerRun,
+    delayMs: opts.delay * 1000,
+    olderThan: opts.olderThan ? new Date(opts.olderThan).getTime() : null,
+    minLikes: opts.minLikes,
+  };
+
+  // لوحة التحكم
+  const panel = document.createElement('div');
+  panel.style.cssText = 'position:fixed;top:12px;left:12px;z-index:999999;background:#0f172a;color:#fff;padding:14px;border-radius:10px;font-family:system-ui;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);min-width:260px;direction:rtl';
+  panel.innerHTML = `
+    <div style="font-weight:700;margin-bottom:8px">🗑️ حذف التغريدات</div>
+    <div id="xd-stats" style="margin-bottom:10px;line-height:1.6">
+      محذوفة: <b id="xd-del">0</b> |
+      مُستثناة: <b id="xd-skip">0</b> |
+      فشل: <b id="xd-fail">0</b>
+    </div>
+    <div id="xd-current" style="font-size:12px;color:#94a3b8;margin-bottom:10px;max-height:40px;overflow:hidden">جاهز</div>
+    <button id="xd-start" style="background:#dc2626;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;margin-left:6px">ابدأ</button>
+    <button id="xd-stop" style="background:#475569;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer" disabled>توقف</button>
+    <button id="xd-close" style="background:transparent;color:#94a3b8;border:0;padding:8px;cursor:pointer;float:left">✕</button>
+  `;
+  document.body.appendChild(panel);
+
+  const $ = (id) => document.getElementById(id);
+  const upd = () => {
+    $('xd-del').textContent = state.deleted;
+    $('xd-skip').textContent = state.skipped;
+    $('xd-fail').textContent = state.failed;
+  };
+
+  $('xd-close').onclick = () => { state.running = false; panel.remove(); window.__xDeleterRunning = false; };
+  $('xd-stop').onclick = () => { state.running = false; $('xd-start').disabled = false; $('xd-stop').disabled = true; };
+  $('xd-start').onclick = () => {
+    state.running = true;
+    $('xd-start').disabled = true;
+    $('xd-stop').disabled = false;
+    run();
+  };
+
+  async function run() {
+    while (state.running && state.deleted < state.maxPerRun) {
+      const article = findNextTweet();
+      if (!article) {
+        $('xd-current').textContent = 'لا توجد تغريدات ظاهرة — تمرير...';
+        window.scrollBy(0, 800);
+        await sleep(1500);
+        if (!findNextTweet()) {
+          $('xd-current').textContent = '✅ انتهت الصفحة';
+          break;
+        }
+        continue;
+      }
+
+      // استثناء المثبّتة
+      if (article.innerText.includes('مثبّتة') || article.innerText.includes('Pinned')) {
+        article.setAttribute('data-xd-skip', '1');
+        state.skipped++; upd();
+        continue;
+      }
+
+      // استثناء بالتاريخ
+      if (state.olderThan) {
+        const time = article.querySelector('time');
+        if (time) {
+          const t = new Date(time.getAttribute('datetime')).getTime();
+          if (t >= state.olderThan) {
+            article.setAttribute('data-xd-skip', '1');
+            state.skipped++; upd();
+            continue;
+          }
+        }
+      }
+
+      // استثناء بالإعجابات
+      if (state.minLikes > 0) {
+        const likeBtn = article.querySelector('[data-testid="like"],[data-testid="unlike"]');
+        const likes = parseLikes(likeBtn?.getAttribute('aria-label') || '');
+        if (likes > state.minLikes) {
+          article.setAttribute('data-xd-skip', '1');
+          state.skipped++; upd();
+          continue;
+        }
+      }
+
+      const ok = await deleteOne(article);
+      if (ok) { state.deleted++; } else { state.failed++; article.setAttribute('data-xd-fail', '1'); }
+      upd();
+      await sleep(state.delayMs);
+    }
+
+    state.running = false;
+    $('xd-start').disabled = false;
+    $('xd-stop').disabled = true;
+    $('xd-current').textContent = `✅ تمّت ${state.deleted} عملية حذف`;
+  }
+
+  function findNextTweet() {
+    const arts = document.querySelectorAll('article[data-testid="tweet"]:not([data-xd-skip]):not([data-xd-fail])');
+    return arts[0] || null;
+  }
+
+  async function deleteOne(article) {
+    try {
+      article.scrollIntoView({ block: 'center' });
+      await sleep(300);
+
+      const caret = article.querySelector('[data-testid="caret"]');
+      if (!caret) return false;
+      caret.click();
+      await sleep(400);
+
+      // زر الحذف في القائمة المنسدلة
+      const menuItems = document.querySelectorAll('[role="menuitem"]');
+      let deleteBtn = null;
+      for (const mi of menuItems) {
+        const text = mi.textContent;
+        if (text.includes('حذف') || /Delete/i.test(text)) {
+          deleteBtn = mi; break;
+        }
+      }
+      if (!deleteBtn) {
+        // أغلق القائمة
+        document.body.click();
+        return false;
+      }
+
+      $('xd-current').textContent = article.innerText.slice(0, 60);
+      deleteBtn.click();
+      await sleep(400);
+
+      // زر التأكيد في المربع الحواري
+      const confirm = document.querySelector('[data-testid="confirmationSheetConfirm"]');
+      if (!confirm) return false;
+      confirm.click();
+      await sleep(800);
+
+      return true;
+    } catch (e) {
+      console.error('[xDeleter]', e);
+      return false;
+    }
+  }
+
+  function parseLikes(label) {
+    const m = label.match(/(\d[\d,]*)/);
+    return m ? parseInt(m[1].replace(/,/g, ''), 10) : 0;
+  }
+
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+};
+
+// ─────────────────────────────────────────────────────────
+// بناء رابط البوكماركلت وتحديثه عند تغيير الإعدادات
+// ─────────────────────────────────────────────────────────
+function build() {
+  const opts = {
+    maxPerRun: +document.getElementById('maxPerRun').value || 500,
+    delay: +document.getElementById('delay').value || 2,
+    olderThan: document.getElementById('olderThan').value || null,
+    minLikes: +document.getElementById('minLikes').value || 0,
+  };
+
+  const code = `(${bookmarkletFn.toString()})(${JSON.stringify(opts)})`;
+  const href = 'javascript:' + encodeURIComponent(code);
+  document.getElementById('bookmarklet').href = href;
+  document.getElementById('code').textContent = code;
+}
+
+document.querySelectorAll('.config input').forEach((el) => el.addEventListener('input', build));
+document.getElementById('bookmarklet').addEventListener('click', (e) => {
+  e.preventDefault();
+  alert('اسحب هذا الزر إلى شريط المفضّلة بدلاً من الضغط عليه.');
+});
+build();
+</script>
+
+</body>
+</html>
