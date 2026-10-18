@@ -9,6 +9,17 @@ let _pt = { role: '', sec: 'today', dash: null, feed: { news: [], events: [] }, 
 
 /* ---------- أدوات صغيرة ---------- */
 function _ptTodayPlans(d){ return (d && d.todayPlans && d.todayPlans.length) ? d.todayPlans : (d && d.todayPlan ? [d.todayPlan] : []); }
+/* الاقتراحات غير المرصودة: إذا لم يُرصَد ورد اليوم بعد لكن الخطة النشطة تقترح واحداً،
+   نعرضه مع علامة "لم يُرصد بعد" — بوابة الطالب/ولي الأمر فقط (قراءة محضة). */
+function _ptSuggested(d){
+  const s = d && d.suggestedToday || {};
+  const out = [];
+  for (const t of ['conserve', 'revision']) {
+    if (!s[t]) continue;
+    out.push({ type: t, s: s[t] });
+  }
+  return out;
+}
 const _PT_ST = { Done: ['ok', 'مكتمل'], Partial: ['warn', 'جزئي'], Missed: ['bad', 'لم يحفظ'] };
 function _ptStPill(s){ const x = _PT_ST[s] || ['mute', 'لم يُسمَّع']; return `<span class="u-pill ${x[0]}">${x[1]}</span>`; }
 function _ptAtt(s){ return s === 'Present' ? ['ok', 'حاضر'] : s === 'Late' ? ['warn', 'متأخر'] : ['bad', 'غائب']; }
@@ -151,11 +162,18 @@ function _ptToday(d){
   const pct = tps.length ? Math.round(tps.reduce((a, p) => a + w(p.Accomplishment_Status), 0) / tps.length) : 0;
   const done = tps.filter(p => p.Accomplishment_Status === 'Done').length;
   const color = pct >= 100 ? 'var(--ok)' : pct > 0 ? 'var(--gold)' : 'var(--ink3)';
+  const sugs = tps.length ? [] : _ptSuggested(d);
   const planCard = tps.length ? `<div class="u-card">
       <div class="u-row" style="gap:14px">${_ptRing(pct, color)}
         <div class="u-grow"><div class="u-name" style="font-size:16px">ورد اليوم</div><div class="u-muted" style="margin-top:2px">${par ? 'أنجز' : 'أنجزت'} ${done} من ${tps.length}${tps.some(p => p.Accomplishment_Status === 'Missed') ? ' · يوجد ورد لم يُحفظ' : ''}</div></div>
       </div>
       <div style="margin-top:12px">${tps.map(p => { const t = _ptPlanText(p); return `<div class="u-plan"><div class="u-between" style="margin-bottom:6px"><span class="u-tag ${p.Type === 'revision' ? 'rev' : ''}">${p.Type === 'revision' ? 'مراجعة' : 'حفظ'}</span>${_ptStPill(p.Accomplishment_Status)}</div><div class="u-name">${esc(t.main)}</div>${t.sub ? `<div class="u-muted" style="margin-top:2px">${esc(t.sub)}</div>` : ''}</div>`; }).join('')}</div>
+    </div>`
+    : sugs.length ? `<div class="u-card">
+      <div class="u-row" style="gap:14px">${_ptRing(0, 'var(--gold)')}
+        <div class="u-grow"><div class="u-name" style="font-size:16px">ورد اليوم المقترح</div><div class="u-muted" style="margin-top:2px">${par ? 'لم يُرصَد بعد' : 'لم يُرصَد بعد — راجع المعلم بعد التسميع'}</div></div>
+      </div>
+      <div style="margin-top:12px">${sugs.map(x => { const t = _ptPlanText({ From_Surah: x.s.fromSurah, From_Ayah: x.s.fromAyah, To_Surah: x.s.toSurah, To_Ayah: x.s.toAyah, Daily_Target: '', Type: x.type }); return `<div class="u-plan"><div class="u-between" style="margin-bottom:6px"><span class="u-tag ${x.type === 'revision' ? 'rev' : ''}">${x.type === 'revision' ? 'مراجعة' : 'حفظ'}</span><span class="u-pill mute">لم يُرصد بعد</span></div><div class="u-name">${esc(t.main)}</div>${x.s.pages ? `<div class="u-muted" style="margin-top:2px">المقدار: ${esc(x.s.pages)} صفحة</div>` : ''}</div>`; }).join('')}</div>
     </div>`
     : `<div class="u-card"><div class="u-row" style="gap:14px">${_ptRing(0, 'var(--ink3)')}<div class="u-grow"><div class="u-name" style="font-size:16px">لا ورد مقرّر اليوم</div><div class="u-muted" style="margin-top:2px">${par ? 'لم يُسجَّل ورد للابن هذا اليوم' : 'خذ قسطاً من الراحة وراجع محفوظك'}</div></div></div></div>`;
 

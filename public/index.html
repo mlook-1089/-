@@ -521,6 +521,10 @@ const DS = {
       apiPushUnsubscribe:       () => ['DELETE','/api/push/subscribe',{endpoint:a[0]}],
       apiResetAllData:          () => ['POST','/api/admin/reset',{confirm:'DELETE_ALL_DATA'}],
       apiResetPendingPlans:     () => ['POST','/api/admin/reset-pending-plans',{confirm:'RESET_PENDING_PLANS'}],
+      apiSuggestPlan:           () => ['GET','/api/plans/suggest?studentId='+encodeURIComponent(a[0])+'&type='+encodeURIComponent(a[1])],
+      apiRecordPlan:            () => ['POST','/api/plans/record',a[0]],
+      apiCreatePlanDef:         () => ['POST','/api/plans/definitions',a[0]],
+      apiUpdatePlanDef:         () => ['PATCH','/api/plans/definitions',{id:a[0],upd:a[1]}],
       apiAuthForgotPassword:    () => ['POST','/api/auth/forgot-password',{identity:a[0]}],
       apiCommunityList:         () => ['GET','/api/community/messages?groupId='+encodeURIComponent(a[0]||'')+(a[1]?'&since='+encodeURIComponent(a[1]):'')],
       apiCommunityPost:         () => ['POST','/api/community/messages',{body:a[0],groupId:a[1]||undefined}],
@@ -601,6 +605,10 @@ const DS = {
   dayData(d){return this.c('apiDayData',d)},
   deleteManualPlans(sid,type){return this.c('apiDeleteManualPlans',sid,type)},
   resetPendingPlans(){return this.c('apiResetPendingPlans')},
+  suggestPlan(sid,type){return this.c('apiSuggestPlan',sid,type)},
+  recordPlan(body){return this.c('apiRecordPlan',body)},
+  createPlanDef(body){return this.c('apiCreatePlanDef',body)},
+  updatePlanDef(id,upd){return this.c('apiUpdatePlanDef',id,upd)},
   forgotPassword(identity){return this.c('apiAuthForgotPassword',identity)},
   communityList(groupId,since){return this.c('apiCommunityList',groupId,since)},
   communityPost(body,groupId){return this.c('apiCommunityPost',body,groupId)},
@@ -4237,7 +4245,7 @@ window.logout = async function(){
 */
 </script>
 <!-- شاشات v6 (تُعرِّف دوال render تحل محل القديمة) -->
-<script src="/ui/portal.js?v=4"></script>
+<script src="/ui/portal.js?v=5"></script>
 <script src="/ui/login-qr.js?v=2"></script>
 <script src="/ui/attendance-students.js?v=4"></script>
 <script src="/ui/followup.js?v=9"></script>
