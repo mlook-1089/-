@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>حذف تغريدات X</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #0f172a;
+    --muted: #64748b;
+    --accent: #1d9bf0;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --warn: #d97706;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --input-bg: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f172a; --fg: #f1f5f9; --muted: #94a3b8;
+      --surface: #1e293b; --border: #334155; --input-bg: #0f172a;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: var(--bg); color: var(--fg);
+    min-height: 100vh;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+  h1 { font-size: 1.3rem; margin: 8px 0 4px; }
+  h2 { font-size: 1rem; margin: 20px 0 8px; color: var(--muted); font-weight: 600; }
+  .lead { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  label { display: block; font-size: 0.85rem; margin: 10px 0 4px; font-weight: 600; }
+  input[type="text"], input[type="password"], input[type="number"], input[type="date"] {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--fg);
+    font-size: 16px;
+    font-family: inherit;
+    direction: ltr;
+    text-align: left;
+  }
+  input[type="date"] { direction: rtl; text-align: right; }
+  button {
+    width: 100%;
+    padding: 13px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 10px;
+  }
+  button:disabled { opacity: 0.5; }
+  button.danger { background: var(--danger); }
+  button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .msg {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin: 10px 0;
+    display: none;
+  }
+  .msg.show { display: block; }
+  .msg.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .msg.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  .msg.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  @media (prefers-color-scheme: dark) {
+    .msg.err { background: #450a0a; color: #fecaca; border-color: #7f1d1d; }
+    .msg.ok { background: #052e2b; color: #a7f3d0; border-color: #065f46; }
+    .msg.warn { background: #451a03; color: #fde68a; border-color: #78350f; }
+  }
+  .progress {
+    width: 100%;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--success));
+    width: 0;
+    transition: width 0.3s;
+  }
+  .stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .stat:last-child { border-bottom: 0; }
+  .stat b { color: var(--fg); }
+  .log {
+    max-height: 160px;
+    overflow-y: auto;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 0.75rem;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    direction: ltr;
+    text-align: left;
+  }
+  .log-line { padding: 2px 0; opacity: 0.9; }
+  .log-line.ok { color: var(--success); }
+  .log-line.err { color: var(--danger); }
+  .log-line.skip { color: var(--muted); }
+  details { margin: 8px 0; }
+  summary { cursor: pointer; color: var(--muted); font-size: 0.85rem; padding: 6px 0; }
+  code {
+    direction: ltr;
+    display: inline-block;
+    background: var(--input-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>🗑️ حذف تغريدات X</h1>
+<p class="lead">أداة محمولة لحذف تغريداتك عبر X API. المفاتيح تُحفظ في جوالك فقط.</p>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- 1. المفاتيح -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>١. مفاتيح X API</h2>
+  <details>
+    <summary>كيف أحصل عليها؟</summary>
+    <div style="font-size: 0.85rem; color: var(--muted); margin-top: 8px;">
+      <ol style="padding-right: 20px;">
+        <li>افتح <a href="https://developer.x.com/en/portal/dashboard" target="_blank">developer.x.com</a> وسجّل كمطوّر مجاناً.</li>
+        <li>Projects → Create Project → Create App.</li>
+        <li>User authentication settings:
+          <ul style="padding-right: 20px;">
+            <li>Type: <code>Web App or Bot</code></li>
+            <li>Permissions: <code>Read and write</code></li>
+            <li>Callback: <code>http://localhost</code></li>
+          </ul>
+        </li>
+        <li>Keys and tokens → انسخ المفاتيح الأربعة.</li>
+        <li>⚠️ لو كان Access Token صلاحيته Read فقط، احذفه وأعد إنشاءه.</li>
+      </ol>
+    </div>
+  </details>
+
+  <label>API Key</label>
+  <input type="text" id="k_apiKey" autocomplete="off" spellcheck="false">
+
+  <label>API Key Secret</label>
+  <input type="password" id="k_apiSecret" autocomplete="off">
+
+  <label>Access Token</label>
+  <input type="text" id="k_token" autocomplete="off" spellcheck="false">
+
+  <label>Access Token Secret</label>
+  <input type="password" id="k_tokenSecret" autocomplete="off">
+
+  <div class="row">
+    <button id="btn-test" class="secondary">🔗 اختبر الاتصال</button>
+    <button id="btn-clear" class="secondary">🗑 امسح</button>
+  </div>
+  <div id="msg-auth" class="msg"></div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- 2. الخيارات -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>٢. خيارات الحذف</h2>
+
+  <label>احذف فقط التغريدات الأقدم من:</label>
+  <input type="date" id="opt_olderThan">
+
+  <label>احتفظ بالتغريدات ذات الإعجابات أكبر من:</label>
+  <input type="number" id="opt_minLikes" value="0" min="0">
+
+  <label>الحد الأقصى في الجلسة:</label>
+  <input type="number" id="opt_maxPerRun" value="200" min="1">
+
+  <label>التأخير بين كل حذف (ثانية):</label>
+  <input type="number" id="opt_delay" value="2" min="0.5" step="0.5">
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!-- 3. التشغيل -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>٣. التشغيل</h2>
+
+  <button id="btn-fetch" class="secondary">📥 اجلب قائمة التغريدات</button>
+  <button id="btn-start" class="danger" disabled>🗑️ ابدأ الحذف</button>
+  <button id="btn-stop" class="secondary" style="display:none">⏸ أوقف</button>
+
+  <div class="progress"><div class="progress-fill" id="progFill"></div></div>
+
+  <div class="stat"><span>الإجمالي المجلوب</span><b id="stat-total">0</b></div>
+  <div class="stat"><span>محذوفة</span><b id="stat-deleted" style="color:var(--success)">0</b></div>
+  <div class="stat"><span>مُستثناة</span><b id="stat-skipped" style="color:var(--muted)">0</b></div>
+  <div class="stat"><span>فشلت</span><b id="stat-failed" style="color:var(--danger)">0</b></div>
+
+  <div id="msg-run" class="msg"></div>
+
+  <details>
+    <summary>سجلّ العمليات</summary>
+    <div class="log" id="log"></div>
+  </details>
+</div>
+
+<p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 24px;">
+  ⚠️ الحذف نهائي. تأكّد من تصدير أرشيفك قبل البدء.
+</p>
+
+<script>
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const KEY_STORE = 'x-delete-keys-v1';
+const state = {
+  running: false,
+  userId: null,
+  tweets: [],
+  deleted: 0,
+  skipped: 0,
+  failed: 0,
+};
+
+// ─────────────────────────────────────────────────────────
+// تحميل المفاتيح من localStorage (إن وُجدت)
+// ─────────────────────────────────────────────────────────
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY_STORE) || 'null');
+  if (saved) {
+    $('k_apiKey').value = saved.apiKey || '';
+    $('k_apiSecret').value = saved.apiSecret || '';
+    $('k_token').value = saved.token || '';
+    $('k_tokenSecret').value = saved.tokenSecret || '';
+  }
+} catch {}
+
+function getKeys() {
+  const keys = {
+    apiKey: $('k_apiKey').value.trim(),
+    apiSecret: $('k_apiSecret').value.trim(),
+    token: $('k_token').value.trim(),
+    tokenSecret: $('k_tokenSecret').value.trim(),
+  };
+  if (!keys.apiKey || !keys.apiSecret || !keys.token || !keys.tokenSecret) return null;
+  return keys;
+}
+
+function saveKeys(keys) {
+  try { localStorage.setItem(KEY_STORE, JSON.stringify(keys)); } catch {}
+}
+
+function msg(el, text, kind = 'ok') {
+  const m = $(el);
+  m.className = 'msg show ' + kind;
+  m.textContent = text;
+}
+
+function hideMsg(el) {
+  $(el).className = 'msg';
+}
+
+function logLine(text, kind = '') {
+  const line = document.createElement('div');
+  line.className = 'log-line ' + kind;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  const log = $('log');
+  log.insertBefore(line, log.firstChild);
+  while (log.children.length > 200) log.removeChild(log.lastChild);
+}
+
+async function api(action, extra = {}) {
+  const keys = getKeys();
+  if (!keys) throw new Error('أدخل المفاتيح الأربعة أولاً');
+  const res = await fetch('/api/x-delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, keys, ...extra }),
+  });
+  if (res.status === 404) {
+    throw new Error('هذه الأداة غير مُفعّلة على السيرفر. أضف X_DELETE_ENABLED=1 في Vercel env.');
+  }
+  return await res.json();
+}
+
+// ─────────────────────────────────────────────────────────
+// اختبار الاتصال
+// ─────────────────────────────────────────────────────────
+$('btn-test').onclick = async () => {
+  try {
+    hideMsg('msg-auth');
+    const keys = getKeys();
+    if (!keys) { msg('msg-auth', '⚠️ أدخل المفاتيح الأربعة', 'warn'); return; }
+    $('btn-test').disabled = true;
+    const r = await api('me');
+    if (r.ok && r.data?.data?.id) {
+      state.userId = r.data.data.id;
+      saveKeys(keys);
+      msg('msg-auth', `✅ متّصل بحساب @${r.data.data.username} (ID: ${state.userId})`, 'ok');
+    } else {
+      const err = r.data?.detail || r.data?.title || `HTTP ${r.status}`;
+      msg('msg-auth', `❌ فشل: ${err}`, 'err');
+    }
+  } catch (e) {
+    msg('msg-auth', '❌ ' + e.message, 'err');
+  } finally {
+    $('btn-test').disabled = false;
+  }
+};
+
+$('btn-clear').onclick = () => {
+  ['k_apiKey','k_apiSecret','k_token','k_tokenSecret'].forEach(id => $(id).value = '');
+  try { localStorage.removeItem(KEY_STORE); } catch {}
+  hideMsg('msg-auth');
+};
+
+// ─────────────────────────────────────────────────────────
+// جلب التغريدات (آخر 3200 كحد أقصى — حد X API)
+// ─────────────────────────────────────────────────────────
+$('btn-fetch').onclick = async () => {
+  try {
+    hideMsg('msg-run');
+    if (!state.userId) {
+      const r = await api('me');
+      if (!r.ok) { msg('msg-run', '❌ اختبر الاتصال أولاً', 'err'); return; }
+      state.userId = r.data.data.id;
+    }
+    $('btn-fetch').disabled = true;
+    state.tweets = [];
+    let paginationToken = null;
+    let pages = 0;
+
+    while (true) {
+      pages++;
+      logLine(`📥 جلب الصفحة ${pages}...`);
+      const r = await api('list', { userId: state.userId, paginationToken });
+      if (!r.ok) {
+        logLine('❌ ' + (r.data?.detail || r.data?.title || `HTTP ${r.status}`), 'err');
+        break;
+      }
+      const tweets = r.data?.data || [];
+      state.tweets.push(...tweets);
+      $('stat-total').textContent = state.tweets.length;
+      paginationToken = r.data?.meta?.next_token;
+      if (!paginationToken || tweets.length === 0) break;
+      // تأخير قصير لتفادي rate limit
+      await sleep(1500);
+    }
+
+    logLine(`✅ تم جلب ${state.tweets.length} تغريدة`, 'ok');
+    msg('msg-run', `جُلبت ${state.tweets.length} تغريدة. اضغط "ابدأ الحذف".`, 'ok');
+    $('btn-start').disabled = state.tweets.length === 0;
+  } catch (e) {
+    msg('msg-run', '❌ ' + e.message, 'err');
+  } finally {
+    $('btn-fetch').disabled = false;
+  }
+};
+
+// ─────────────────────────────────────────────────────────
+// بدء الحذف
+// ─────────────────────────────────────────────────────────
+$('btn-start').onclick = async () => {
+  const olderThan = $('opt_olderThan').value ? new Date($('opt_olderThan').value).getTime() : null;
+  const minLikes = Number($('opt_minLikes').value) || 0;
+  const maxPerRun = Number($('opt_maxPerRun').value) || 200;
+  const delayMs = (Number($('opt_delay').value) || 2) * 1000;
+
+  // فلترة
+  const toDelete = state.tweets.filter((t) => {
+    const created = new Date(t.created_at).getTime();
+    if (olderThan && created >= olderThan) return false;
+    if (minLikes > 0 && (t.public_metrics?.like_count || 0) > minLikes) return false;
+    return true;
+  });
+
+  // الأقدم أولاً
+  toDelete.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const batch = toDelete.slice(0, maxPerRun);
+
+  if (batch.length === 0) {
+    msg('msg-run', '⚠️ لا توجد تغريدات تطابق الفلتر', 'warn');
+    return;
+  }
+
+  if (!confirm(`سيتم حذف ${batch.length} تغريدة. متأكد؟`)) return;
+
+  state.running = true;
+  state.deleted = 0; state.skipped = state.tweets.length - batch.length; state.failed = 0;
+  updateStats();
+  $('btn-start').style.display = 'none';
+  $('btn-stop').style.display = 'block';
+  $('btn-fetch').disabled = true;
+
+  for (let i = 0; i < batch.length; i++) {
+    if (!state.running) { logLine('⏸ توقّف يدوياً', 'skip'); break; }
+    const t = batch[i];
+    try {
+      const r = await api('delete', { tweetId: t.id });
+      if (r.ok || r.status === 404) {
+        state.deleted++;
+        logLine(`✓ ${t.id} ${(t.text || '').slice(0, 40)}`, 'ok');
+      } else if (r.status === 429) {
+        const resetIn = Number(r.rateLimit?.reset) - Math.floor(Date.now()/1000);
+        logLine(`⏳ rate limit — استئناف بعد ~${Math.ceil(resetIn/60)} دقيقة`, 'err');
+        msg('msg-run', `⏳ تم بلوغ حد المعدل. انتظر ${Math.ceil(resetIn/60)} دقيقة ثم أكمل.`, 'warn');
+        break;
+      } else {
+        state.failed++;
+        logLine(`✗ ${t.id} — ${r.data?.detail || r.data?.title || r.status}`, 'err');
+      }
+    } catch (e) {
+      state.failed++;
+      logLine(`✗ ${t.id} — ${e.message}`, 'err');
+    }
+    updateStats();
+    const pct = Math.round(((i + 1) / batch.length) * 100);
+    $('progFill').style.width = pct + '%';
+
+    if (i < batch.length - 1) await sleep(delayMs);
+  }
+
+  state.running = false;
+  $('btn-start').style.display = 'block';
+  $('btn-stop').style.display = 'none';
+  $('btn-fetch').disabled = false;
+  msg('msg-run', `✅ انتهت الجلسة: ${state.deleted} حُذفت، ${state.failed} فشلت`, 'ok');
+};
+
+$('btn-stop').onclick = () => { state.running = false; };
+
+function updateStats() {
+  $('stat-deleted').textContent = state.deleted;
+  $('stat-skipped').textContent = state.skipped;
+  $('stat-failed').textContent = state.failed;
+}
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+</script>
+
+</body>
+</html>

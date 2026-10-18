@@ -1,0 +1,18 @@
+{
+  "name": "x-tweets-deleter",
+  "version": "1.0.0",
+  "description": "أداة لحذف جميع تغريداتك في منصة X",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "parse": "node parse-archive.mjs",
+    "delete": "node delete-tweets.mjs",
+    "stats": "node stats.mjs"
+  },
+  "dependencies": {
+    "oauth-1.0a": "^2.2.6"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
