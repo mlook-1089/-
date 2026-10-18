@@ -255,11 +255,15 @@ function bookmarkletCode(opts) {
   const BEARER = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
   const DEL_QID = 'nxpZCY2K-I6QoFHAHeojFQ';
 
+  // استخراج اسم المستخدم من URL البروفايل (الصفحة الحالية)
+  const PROFILE_USER = (location.pathname.match(/^\/([^/]+)\/?$/) || [])[1] || null;
+
   const S = {
-    running: false, phase: 'idle',
+    running: false, mode: 'dry',
     collected: new Map(),
     deletedIds: new Set(),
-    failed: 0, skipped: 0,
+    logs: [],
+    counters: { ownTweets: 0, retweets: 0, replies: 0, pinned: 0, tooNew: 0, tooLiked: 0, failed: 0 },
     maxPerRun: opts.maxPerRun,
     delayMs: opts.delayMs,
     olderThan: opts.olderThan ? new Date(opts.olderThan).getTime() : null,
@@ -268,53 +272,93 @@ function bookmarkletCode(opts) {
   };
   window.__xdf = S;
 
+  function resetCounters() {
+    S.counters = { ownTweets: 0, retweets: 0, replies: 0, pinned: 0, tooNew: 0, tooLiked: 0, failed: 0 };
+    S.collected = new Map();
+    S.deletedIds = new Set();
+    S.logs = [];
+  }
+
   const p = document.createElement('div');
   p.id = 'xdf-panel';
-  p.style.cssText = 'position:fixed;top:env(safe-area-inset-top,8px);inset-inline:8px;z-index:2147483647;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;font:14px/1.5 system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5);direction:rtl;text-align:right;max-width:400px;margin:0 auto';
+  p.style.cssText = 'position:fixed;top:env(safe-area-inset-top,8px);inset-inline:8px;z-index:2147483647;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;font:14px/1.5 system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5);direction:rtl;text-align:right;max-width:420px;margin:0 auto';
   p.innerHTML = ''
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
     + '<b>⚡ حذف التغريدات</b>'
     + '<span id="xdf-close" style="cursor:pointer;color:#94a3b8;font-size:18px;padding:0 4px">✕</span>'
     + '</div>'
-    + '<div id="xdf-phase" style="font-size:12px;color:#60a5fa;margin-bottom:6px">جاهز</div>'
-    + '<div style="font-size:13px;color:#cbd5e1;margin-bottom:8px">'
+    + '<div id="xdf-phase" style="font-size:12px;color:#60a5fa;margin-bottom:6px">'
+    + (PROFILE_USER ? ('بروفايل: @' + PROFILE_USER) : '⚠️ افتح صفحة بروفايلك')
+    + '</div>'
+    + '<div style="font-size:13px;color:#cbd5e1;margin-bottom:6px">'
     + '📥 <b id="xdf-c">0</b> &nbsp;•&nbsp; '
-    + '✅ <b id="xdf-d">0</b> &nbsp;•&nbsp; '
-    + '⏭ <b id="xdf-s">0</b> &nbsp;•&nbsp; '
+    + '🗑 <b id="xdf-d">0</b> &nbsp;•&nbsp; '
     + '❌ <b id="xdf-f">0</b>'
     + '</div>'
-    + '<div id="xdf-cur" style="font-size:12px;color:#94a3b8;min-height:16px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>'
-    + '<div style="display:flex;gap:6px">'
-    + '<button id="xdf-go" style="flex:1;background:#dc2626;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:14px">▶ ابدأ</button>'
-    + '<button id="xdf-stop" style="flex:1;background:#475569;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:14px;display:none">⏸ أوقف</button>'
-    + '</div>';
+    + '<div id="xdf-detail" style="font-size:11px;color:#94a3b8;margin-bottom:6px">—</div>'
+    + '<div id="xdf-cur" style="font-size:12px;color:#60a5fa;min-height:16px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">جاهز</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap">'
+    + '<button id="xdf-dry" style="flex:1;background:#2563eb;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:13px">👁 معاينة</button>'
+    + '<button id="xdf-del" style="flex:1;background:#dc2626;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:13px">🗑 احذف</button>'
+    + '<button id="xdf-stop" style="flex:1;background:#475569;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:13px;display:none">⏸ أوقف</button>'
+    + '</div>'
+    + '<details style="margin-top:8px"><summary style="color:#94a3b8;font-size:12px;cursor:pointer">📋 السجلّ</summary>'
+    + '<div id="xdf-log" style="max-height:120px;overflow-y:auto;font-size:11px;background:#020617;padding:6px;border-radius:6px;margin-top:4px;direction:ltr;text-align:left"></div>'
+    + '</details>';
   document.body.appendChild(p);
 
   const $ = (id) => document.getElementById(id);
   const upd = () => {
-    $('xdf-c').textContent = S.collected.size;
+    $('xdf-c').textContent = S.counters.ownTweets;
     $('xdf-d').textContent = S.deletedIds.size;
-    $('xdf-s').textContent = S.skipped;
-    $('xdf-f').textContent = S.failed;
+    $('xdf-f').textContent = S.counters.failed;
+    const c = S.counters;
+    $('xdf-detail').textContent =
+      'تخطّى: ' + c.retweets + ' إعادة · '
+      + c.pinned + ' مثبّتة · '
+      + c.tooNew + ' حديثة · '
+      + c.tooLiked + ' محبوبة';
   };
   const phase = (t) => { $('xdf-phase').textContent = t; };
   const stat = (t) => { $('xdf-cur').textContent = t; };
+  const log = (msg) => {
+    S.logs.push(msg);
+    const el = $('xdf-log');
+    const line = document.createElement('div');
+    line.textContent = msg;
+    el.insertBefore(line, el.firstChild);
+    while (el.children.length > 100) el.removeChild(el.lastChild);
+  };
 
   $('xdf-close').onclick = () => { S.running = false; p.remove(); window.__xdf = null; };
   $('xdf-stop').onclick = () => { S.running = false; };
-  $('xdf-go').onclick = async () => {
+  $('xdf-dry').onclick = () => run('dry');
+  $('xdf-del').onclick = () => {
+    if (!confirm('سيتم حذف تغريداتك فعلياً. استمر؟')) return;
+    run('delete');
+  };
+
+  async function run(mode) {
+    if (!PROFILE_USER) { stat('❌ افتح x.com/<حسابك> أولاً'); return; }
+    resetCounters();
+    upd();
+    S.mode = mode;
     S.running = true;
-    $('xdf-go').style.display = 'none';
+    $('xdf-dry').style.display = 'none';
+    $('xdf-del').style.display = 'none';
     $('xdf-stop').style.display = '';
     try {
-      await collectThenDelete();
+      await collectAll();
+      if (S.running) await processAll();
     } catch (e) {
       stat('❌ ' + e.message);
+      log('ERROR: ' + e.message);
     }
     S.running = false;
-    $('xdf-go').style.display = '';
+    $('xdf-dry').style.display = '';
+    $('xdf-del').style.display = '';
     $('xdf-stop').style.display = 'none';
-  };
+  }
 
   // ────────────────────────────────────────
   function getCt0() {
@@ -322,41 +366,62 @@ function bookmarkletCode(opts) {
     return m ? m[1] : null;
   }
 
+  function classify(art) {
+    // تحقّق أن التغريدة لصاحب البروفايل نفسه
+    const link = art.querySelector('a[href*="/status/"][role="link"]');
+    if (!link) return { skip: 'no-link' };
+    const m = link.getAttribute('href').match(/^\/([^/]+)\/status\/(\d+)/);
+    if (!m) return { skip: 'bad-link' };
+    const author = m[1].toLowerCase();
+    const id = m[2];
+
+    // مثبّتة؟
+    const social = art.querySelector('[data-testid="socialContext"]');
+    const socialText = social ? social.textContent : '';
+    if (/pinned|مثبّت|مثبت/i.test(socialText)) return { id, author, skip: 'pinned' };
+    // إعادة نشر؟
+    if (/retweeted|reposted|أعاد|إعادة/i.test(socialText)) return { id, author, skip: 'retweet' };
+
+    // تغريدة ليست لصاحب البروفايل؟ (ردود، اقتباسات لآخرين)
+    if (author !== PROFILE_USER.toLowerCase()) return { id, author, skip: 'other-user' };
+
+    // استخرج التاريخ
+    const timeEl = art.querySelector('time');
+    const createdAt = timeEl ? new Date(timeEl.getAttribute('datetime')).getTime() : null;
+
+    // استخرج الإعجابات
+    const likeBtn = art.querySelector('[data-testid="like"],[data-testid="unlike"]');
+    let likes = 0;
+    if (likeBtn) {
+      const lbl = likeBtn.getAttribute('aria-label') || '';
+      const n = lbl.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*([KMك-م]?)/i);
+      if (n) {
+        likes = parseFloat(n[1]);
+        if (/K|ألف/i.test(n[2])) likes *= 1000;
+        else if (/M|مليون/i.test(n[2])) likes *= 1000000;
+        likes = Math.round(likes);
+      }
+    }
+
+    return { id, author, createdAt, likes, skip: null };
+  }
+
   function collectFromDom() {
-    // كل التغريدات الظاهرة الآن
     let added = 0;
     const articles = document.querySelectorAll('article[data-testid="tweet"]');
     for (const art of articles) {
-      // ابحث عن رابط status
-      const link = art.querySelector('a[href*="/status/"][role="link"]');
-      if (!link) continue;
-      const m = link.getAttribute('href').match(/^\/([^/]+)\/status\/(\d+)/);
-      if (!m) continue;
-      const user = m[1];
-      const id = m[2];
-      if (S.collected.has(id)) continue;
+      const info = classify(art);
+      if (!info.id) continue;
+      if (S.collected.has(info.id)) continue;
 
-      // تجنّب التغريدات المثبّتة
-      if (/Pinned|مثبّت|مثبت/i.test(art.innerText.slice(0, 150))) continue;
+      if (info.skip === 'pinned') { S.counters.pinned++; S.collected.set(info.id, { ...info }); continue; }
+      if (info.skip === 'retweet') { S.counters.retweets++; S.collected.set(info.id, { ...info }); continue; }
+      if (info.skip === 'other-user') { S.counters.replies++; S.collected.set(info.id, { ...info }); continue; }
+      if (info.skip) { S.collected.set(info.id, { ...info }); continue; }
 
-      // استخرج التاريخ والإعجابات
-      const timeEl = art.querySelector('time');
-      const createdAt = timeEl ? new Date(timeEl.getAttribute('datetime')).getTime() : null;
-
-      const likeBtn = art.querySelector('[data-testid="like"],[data-testid="unlike"]');
-      let likes = 0;
-      if (likeBtn) {
-        const lbl = likeBtn.getAttribute('aria-label') || '';
-        const n = lbl.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*([KMك-م]?)/i);
-        if (n) {
-          likes = parseFloat(n[1]);
-          if (/K|ألف/i.test(n[2])) likes *= 1000;
-          else if (/M|مليون/i.test(n[2])) likes *= 1000000;
-          likes = Math.round(likes);
-        }
-      }
-
-      S.collected.set(id, { id, user, createdAt, likes });
+      // تغريدتك
+      S.counters.ownTweets++;
+      S.collected.set(info.id, info);
       added++;
     }
     return added;
@@ -365,18 +430,27 @@ function bookmarkletCode(opts) {
   async function collectAll() {
     phase('📥 جمع التغريدات...');
     let noNew = 0;
-    while (S.running && S.collected.size < S.maxPerRun * 3) {
+    let lastH = 0;
+    while (S.running && S.counters.ownTweets < S.maxPerRun * 2) {
       const added = collectFromDom();
-      stat('جُمع ' + S.collected.size + ' حتى الآن');
+      stat('جمع ' + S.counters.ownTweets + ' تغريدة لك');
       upd();
       if (added === 0) {
         noNew++;
-        if (noNew >= 5) break;
+        if (noNew >= 6) break;
       } else { noNew = 0; }
-      window.scrollBy({ top: 2000, behavior: 'instant' });
-      await sleep(1200);
+      // تمرير حتى آخر الصفحة
+      const h = document.documentElement.scrollHeight;
+      if (h === lastH) noNew++; else lastH = h;
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      await sleep(1500);
     }
-    phase('✅ انتهى الجمع: ' + S.collected.size + ' تغريدة');
+    phase('✅ جمع ' + S.counters.ownTweets + ' تغريدة لك');
+    log('إجمالي ما ظهر: ' + S.collected.size);
+    log('  تغريداتك: ' + S.counters.ownTweets);
+    log('  إعادة نشر: ' + S.counters.retweets);
+    log('  مثبّتة: ' + S.counters.pinned);
+    log('  لمستخدمين آخرين: ' + S.counters.replies);
   }
 
   async function deleteOne(id) {
@@ -405,21 +479,54 @@ function bookmarkletCode(opts) {
     return { ok: false, status: res.status, msg: text.slice(0, 100) };
   }
 
-  async function deleteAll() {
-    phase('🗑 جاري الحذف...');
-    const list = [...S.collected.values()];
-    // فلترة
-    const filtered = list.filter((t) => {
-      if (S.olderThan && t.createdAt && t.createdAt >= S.olderThan) { S.skipped++; return false; }
-      if (S.minLikes > 0 && t.likes > S.minLikes) { S.skipped++; return false; }
-      return true;
-    });
+  async function processAll() {
+    // جمع تغريداتك فقط التي تمرّ على الفلتر
+    const own = [...S.collected.values()].filter((t) => !t.skip);
+    let eligible = own.slice();
+
+    if (S.olderThan) {
+      const before = eligible.length;
+      eligible = eligible.filter((t) => {
+        if (t.createdAt && t.createdAt >= S.olderThan) return false;
+        return true;
+      });
+      S.counters.tooNew = before - eligible.length;
+    }
+    if (S.minLikes > 0) {
+      const before = eligible.length;
+      eligible = eligible.filter((t) => (t.likes || 0) <= S.minLikes);
+      S.counters.tooLiked = before - eligible.length;
+    }
     upd();
 
     // الأقدم أولاً
-    filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-    const batch = filtered.slice(0, S.maxPerRun);
+    eligible.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const batch = eligible.slice(0, S.maxPerRun);
 
+    log('—');
+    log('المؤهّلة للحذف: ' + batch.length);
+    if (S.counters.tooNew) log('  تخطّي ' + S.counters.tooNew + ' (أحدث من الحد)');
+    if (S.counters.tooLiked) log('  تخطّي ' + S.counters.tooLiked + ' (محبوبة)');
+
+    if (batch.length === 0) {
+      phase('⚠️ لا توجد تغريدات مؤهّلة للحذف');
+      stat('راجع الفلاتر في الأعلى');
+      return;
+    }
+
+    if (S.mode === 'dry') {
+      phase('👁 معاينة: ' + batch.length + ' تغريدة ستُحذف');
+      stat('اضغط "احذف" للتنفيذ الفعلي');
+      log('—');
+      for (const t of batch.slice(0, 20)) {
+        const d = t.createdAt ? new Date(t.createdAt).toISOString().slice(0, 10) : '?';
+        log('  ' + t.id + ' | ' + d + ' | ❤️ ' + (t.likes || 0));
+      }
+      if (batch.length > 20) log('  … و ' + (batch.length - 20) + ' تغريدة أخرى');
+      return;
+    }
+
+    phase('🗑 جاري الحذف...');
     for (let i = 0; i < batch.length; i++) {
       if (!S.running) break;
       const t = batch[i];
@@ -430,28 +537,26 @@ function bookmarkletCode(opts) {
         const r = await deleteOne(t.id);
         if (r.ok) {
           S.deletedIds.add(t.id);
+          log('✓ ' + t.id);
         } else if (r.rateLimit) {
           stat('⏳ rate limit — توقّف');
-          phase('⏳ تم بلوغ الحد');
+          phase('⏳ تم بلوغ الحد — أعِد بعد 15د');
+          log('⏳ rate limit');
           break;
         } else {
-          S.failed++;
+          S.counters.failed++;
+          log('✗ ' + t.id + ' | HTTP ' + r.status + ' | ' + (r.msg || ''));
         }
       } catch (e) {
-        S.failed++;
+        S.counters.failed++;
+        log('✗ ' + t.id + ' | ' + e.message);
       }
       upd();
       if (i < batch.length - 1) await sleep(S.delayMs);
     }
 
-    phase('✅ انتهى: حذف ' + S.deletedIds.size + ' من ' + batch.length);
-    stat('');
-  }
-
-  async function collectThenDelete() {
-    await collectAll();
-    if (!S.running) return;
-    await deleteAll();
+    phase('✅ حذف ' + S.deletedIds.size + ' من ' + batch.length);
+    stat('انتهى');
   }
 
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
