@@ -3,14 +3,21 @@
 أداة لحذف جميع تغريداتك من حسابك في منصة X (تويتر سابقاً).
 توجد **ثلاث طرق** — اختر الأنسب لك.
 
-## 📱 الطريقة الأسرع للجوال
+## 📱 الطريقة الأسرع للجوال — بدون مفاتيح API
+
+افتح من جوالك: **https://ibn-kathir-halaqa.vercel.app/x-delete-tap.html**
+
+- تعمل عبر محاكاة ضغط داخل تبويب x.com — لا تحتاج API ولا حدود يومية.
+- اضبط الخيارات → انسخ الكود → ثبّته كـ bookmark في Safari (iOS) أو Kiwi Browser (Android) → افتح x.com واضغطه.
+- التعليمات خطوة بخطوة داخل الصفحة.
+
+### أو مع X API (للكميات الكبيرة والموثوقية)
 
 افتح من جوالك: **https://ibn-kathir-halaqa.vercel.app/x-delete.html**
 
-> يتطلب تفعيل متغير `X_DELETE_ENABLED=1` في Vercel env أولاً (معطّل افتراضياً لحمايتك).
-> بعد التفعيل: Vercel → Settings → Environment Variables → أضف `X_DELETE_ENABLED` = `1` ثم أعد النشر.
+> يتطلب تفعيل متغير `X_DELETE_ENABLED=1` في Vercel env (معطّل افتراضياً لحمايتك).
 
-ثم أدخل مفاتيح X API الأربعة (من [developer.x.com](https://developer.x.com)) → اضغط "اجلب القائمة" → "ابدأ الحذف". تعمل من جوالك بالكامل. تفاصيل أكثر بالأسفل.
+ثم أدخل مفاتيح X API الأربعة (من [developer.x.com](https://developer.x.com)) → اضغط "اجلب القائمة" → "ابدأ الحذف".
 
 ---
 
