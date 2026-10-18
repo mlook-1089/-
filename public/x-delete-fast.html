@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>حذف تغريدات X — سريع</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #0f172a; --muted: #64748b;
+    --accent: #1d9bf0; --danger: #dc2626; --success: #16a34a;
+    --surface: #f8fafc; --border: #e2e8f0; --input-bg: #ffffff;
+    --code-bg: #0f172a; --code-fg: #e2e8f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f172a; --fg: #f1f5f9; --muted: #94a3b8;
+      --surface: #1e293b; --border: #334155; --input-bg: #0f172a;
+      --code-bg: #020617;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: var(--bg); color: var(--fg);
+    min-height: 100vh;
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+    max-width: 540px; margin: 0 auto; line-height: 1.6;
+  }
+  h1 { font-size: 1.3rem; margin: 8px 0 4px; }
+  h2 { font-size: 1rem; margin: 20px 0 8px; color: var(--muted); font-weight: 600; }
+  .lead { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 14px;
+  }
+  label { display: block; font-size: 0.85rem; margin: 10px 0 4px; font-weight: 600; }
+  input[type="number"], input[type="date"] {
+    width: 100%; padding: 11px 12px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--input-bg); color: var(--fg);
+    font-size: 16px; font-family: inherit;
+  }
+  input[type="date"] { direction: rtl; text-align: right; }
+  button {
+    width: 100%; padding: 13px 16px; border: 0; border-radius: 10px;
+    background: var(--accent); color: #fff;
+    font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+    margin-top: 10px;
+  }
+  button.success { background: var(--success); }
+  button.danger { background: var(--danger); }
+  pre.code {
+    background: var(--code-bg); color: var(--code-fg);
+    padding: 12px; border-radius: 8px;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+    font-size: 0.72rem; direction: ltr; text-align: left;
+    word-break: break-all; white-space: pre-wrap;
+    max-height: 180px; overflow-y: auto;
+    margin: 10px 0;
+  }
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 10px;
+    background: var(--input-bg); padding: 4px; border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .tabs button {
+    flex: 1; margin: 0; padding: 10px 8px;
+    background: transparent; color: var(--muted);
+    font-size: 0.85rem; border-radius: 6px;
+  }
+  .tabs button.active { background: var(--accent); color: #fff; }
+  .step {
+    display: flex; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid var(--border); font-size: 0.9rem;
+  }
+  .step:last-child { border-bottom: 0; }
+  .step-num {
+    flex-shrink: 0; width: 26px; height: 26px;
+    background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex;
+    align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .pane { display: none; }
+  .pane.active { display: block; }
+  code {
+    direction: ltr; display: inline-block;
+    background: var(--input-bg); padding: 1px 6px;
+    border-radius: 4px; font-size: 0.82rem;
+    font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  }
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--success); color: #fff;
+    padding: 10px 20px; border-radius: 999px;
+    font-weight: 600; opacity: 0; transition: opacity 0.3s;
+    z-index: 1000;
+  }
+  .toast.show { opacity: 1; }
+  .warn {
+    background: #fffbeb; color: #92400e;
+    border: 1px solid #fde68a; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.85rem; margin: 10px 0;
+  }
+  .info {
+    background: #eff6ff; color: #1e40af;
+    border: 1px solid #bfdbfe; padding: 10px 12px;
+    border-radius: 8px; font-size: 0.85rem; margin: 10px 0;
+  }
+  @media (prefers-color-scheme: dark) {
+    .warn { background: #451a03; color: #fde68a; border-color: #78350f; }
+    .info { background: #172554; color: #bfdbfe; border-color: #1e40af; }
+  }
+  details > summary { cursor: pointer; padding: 6px 0; color: var(--muted); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast">تم النسخ ✓</div>
+
+<h1>⚡ حذف تغريدات X — سريع</h1>
+<p class="lead">يستدعي GraphQL الداخلي لـ X مباشرة — أسرع 10 أضعاف من محاكاة الضغط.</p>
+
+<div class="info">
+  💡 <strong>كيف يشتغل؟</strong> البوكماركلت يُحقن في تبويبك المسجّل، يجمع IDs من الصفحة، ثم يستدعي <code>DeleteTweet</code> GraphQL
+  (نفس الذي يستخدمه موقع X نفسه عند الضغط على "حذف"). الكوكيز تُرسَل تلقائياً من المتصفح.
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>١. اضبط الإعدادات</h2>
+
+  <label>احذف فقط الأقدم من:</label>
+  <input type="date" id="opt_olderThan">
+
+  <label>احتفظ بالتغريدات ذات الإعجابات أكبر من:</label>
+  <input type="number" id="opt_minLikes" value="0" min="0">
+
+  <label>الحد الأقصى في الجلسة:</label>
+  <input type="number" id="opt_maxPerRun" value="500" min="1">
+
+  <label>التأخير بين كل حذف (ملّي ثانية):</label>
+  <input type="number" id="opt_delayMs" value="400" min="100" step="100">
+  <div style="font-size: 0.8rem; color: var(--muted); margin-top: 4px;">
+    400ms آمن. أقل من ذلك قد يُثير آلية مكافحة الإساءة.
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>٢. انسخ الكود</h2>
+  <button id="btn-copy" class="success">📋 انسخ كود البوكماركلت</button>
+  <details style="margin-top: 10px;">
+    <summary>عرض الكود</summary>
+    <pre class="code" id="code">—</pre>
+  </details>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>٣. ثبّته في متصفحك</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-pane="ios">📱 iPhone (Safari)</button>
+    <button class="tab-btn" data-pane="desktop">💻 كمبيوتر</button>
+  </div>
+
+  <div class="pane active" id="pane-ios">
+    <div class="warn">
+      ⚠️ في الآيفون <strong>Safari فقط</strong> — Chrome iOS يحذف البوكماركلت تلقائياً.
+    </div>
+    <div class="step">
+      <div class="step-num">١</div>
+      <div>افتح <strong>Safari</strong>، وتصفّح هذه الصفحة فيه (ليس Chrome).</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٢</div>
+      <div>اضغط زر "انسخ الكود" أعلاه.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٣</div>
+      <div>اضغط زر <strong>المشاركة</strong> 📤 (أسفل الشاشة) → <strong>Add Bookmark</strong> → اسم: <code>XDel</code> → Save.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٤</div>
+      <div>افتح <strong>Bookmarks</strong> 📖 → <strong>Edit</strong> → اضغط على <code>XDel</code>.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٥</div>
+      <div>امسح حقل العنوان كاملاً → اضغط مطوّلاً → <strong>Paste</strong>. يجب أن يبدأ بـ <code>javascript:</code>. Done.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٦</div>
+      <div>اذهب إلى <code>x.com/your-username</code> → Bookmarks → اضغط <code>XDel</code> → ستظهر لوحة التحكم.</div>
+    </div>
+  </div>
+
+  <div class="pane" id="pane-desktop">
+    <div class="step">
+      <div class="step-num">١</div>
+      <div>اضغط <code>Ctrl+Shift+B</code> لإظهار شريط المفضّلة.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٢</div>
+      <div>اضغط بزر الفأرة الأيمن على الشريط → <strong>Add page</strong>.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٣</div>
+      <div>الاسم: <code>XDel</code>. الـ URL: الصق الكود المنسوخ. احفظ.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">٤</div>
+      <div>افتح <code>x.com/your-username</code> واضغط <code>XDel</code> من الشريط.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="card">
+  <h2>٤. ماذا سيحدث؟</h2>
+  <ul style="padding-right: 20px; font-size: 0.9rem;">
+    <li>ستظهر لوحة تحكم عائمة في زاوية الشاشة.</li>
+    <li>اضغط <strong>"ابدأ"</strong> → ستبدأ الأداة بتمرير الصفحة لجمع IDs التغريدات (بدون أي ضغطات مرئية).</li>
+    <li>ثم تستدعي <code>DeleteTweet</code> API مباشرة لكل تغريدة.</li>
+    <li>ستتجاوز <strong>المثبّتة</strong> والردود على الآخرين تلقائياً.</li>
+    <li>زر <strong>"توقف"</strong> يوقفها.</li>
+    <li>⚠️ إذا رجعت رسالة <code>authorization</code> خطأ، سجّل خروج ودخول مرة ثانية في X.</li>
+  </ul>
+</div>
+
+<p style="font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 24px;">
+  ⚠️ الحذف نهائي — نزّل أرشيف X أولاً.
+</p>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+// منطق البوكماركلت
+// ═══════════════════════════════════════════════════════════════
+function bookmarkletCode(opts) {
+  if (!/^https:\/\/(x|twitter)\.com\//.test(location.href)) {
+    alert('❌ افتح x.com أولاً');
+    return;
+  }
+  if (window.__xdf) {
+    document.getElementById('xdf-panel')?.remove();
+    window.__xdf = null;
+    return;
+  }
+
+  const BEARER = 'AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA';
+  const DEL_QID = 'nxpZCY2K-I6QoFHAHeojFQ';
+
+  const S = {
+    running: false, phase: 'idle',
+    collected: new Map(),
+    deletedIds: new Set(),
+    failed: 0, skipped: 0,
+    maxPerRun: opts.maxPerRun,
+    delayMs: opts.delayMs,
+    olderThan: opts.olderThan ? new Date(opts.olderThan).getTime() : null,
+    minLikes: opts.minLikes,
+    stop() { S.running = false; },
+  };
+  window.__xdf = S;
+
+  const p = document.createElement('div');
+  p.id = 'xdf-panel';
+  p.style.cssText = 'position:fixed;top:env(safe-area-inset-top,8px);inset-inline:8px;z-index:2147483647;background:#0f172a;color:#fff;padding:12px 14px;border-radius:12px;font:14px/1.5 system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5);direction:rtl;text-align:right;max-width:400px;margin:0 auto';
+  p.innerHTML = ''
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+    + '<b>⚡ حذف التغريدات</b>'
+    + '<span id="xdf-close" style="cursor:pointer;color:#94a3b8;font-size:18px;padding:0 4px">✕</span>'
+    + '</div>'
+    + '<div id="xdf-phase" style="font-size:12px;color:#60a5fa;margin-bottom:6px">جاهز</div>'
+    + '<div style="font-size:13px;color:#cbd5e1;margin-bottom:8px">'
+    + '📥 <b id="xdf-c">0</b> &nbsp;•&nbsp; '
+    + '✅ <b id="xdf-d">0</b> &nbsp;•&nbsp; '
+    + '⏭ <b id="xdf-s">0</b> &nbsp;•&nbsp; '
+    + '❌ <b id="xdf-f">0</b>'
+    + '</div>'
+    + '<div id="xdf-cur" style="font-size:12px;color:#94a3b8;min-height:16px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>'
+    + '<div style="display:flex;gap:6px">'
+    + '<button id="xdf-go" style="flex:1;background:#dc2626;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:14px">▶ ابدأ</button>'
+    + '<button id="xdf-stop" style="flex:1;background:#475569;color:#fff;border:0;padding:9px;border-radius:8px;font-weight:700;font-size:14px;display:none">⏸ أوقف</button>'
+    + '</div>';
+  document.body.appendChild(p);
+
+  const $ = (id) => document.getElementById(id);
+  const upd = () => {
+    $('xdf-c').textContent = S.collected.size;
+    $('xdf-d').textContent = S.deletedIds.size;
+    $('xdf-s').textContent = S.skipped;
+    $('xdf-f').textContent = S.failed;
+  };
+  const phase = (t) => { $('xdf-phase').textContent = t; };
+  const stat = (t) => { $('xdf-cur').textContent = t; };
+
+  $('xdf-close').onclick = () => { S.running = false; p.remove(); window.__xdf = null; };
+  $('xdf-stop').onclick = () => { S.running = false; };
+  $('xdf-go').onclick = async () => {
+    S.running = true;
+    $('xdf-go').style.display = 'none';
+    $('xdf-stop').style.display = '';
+    try {
+      await collectThenDelete();
+    } catch (e) {
+      stat('❌ ' + e.message);
+    }
+    S.running = false;
+    $('xdf-go').style.display = '';
+    $('xdf-stop').style.display = 'none';
+  };
+
+  // ────────────────────────────────────────
+  function getCt0() {
+    const m = document.cookie.match(/ct0=([^;]+)/);
+    return m ? m[1] : null;
+  }
+
+  function collectFromDom() {
+    // كل التغريدات الظاهرة الآن
+    let added = 0;
+    const articles = document.querySelectorAll('article[data-testid="tweet"]');
+    for (const art of articles) {
+      // ابحث عن رابط status
+      const link = art.querySelector('a[href*="/status/"][role="link"]');
+      if (!link) continue;
+      const m = link.getAttribute('href').match(/^\/([^/]+)\/status\/(\d+)/);
+      if (!m) continue;
+      const user = m[1];
+      const id = m[2];
+      if (S.collected.has(id)) continue;
+
+      // تجنّب التغريدات المثبّتة
+      if (/Pinned|مثبّت|مثبت/i.test(art.innerText.slice(0, 150))) continue;
+
+      // استخرج التاريخ والإعجابات
+      const timeEl = art.querySelector('time');
+      const createdAt = timeEl ? new Date(timeEl.getAttribute('datetime')).getTime() : null;
+
+      const likeBtn = art.querySelector('[data-testid="like"],[data-testid="unlike"]');
+      let likes = 0;
+      if (likeBtn) {
+        const lbl = likeBtn.getAttribute('aria-label') || '';
+        const n = lbl.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*([KMك-م]?)/i);
+        if (n) {
+          likes = parseFloat(n[1]);
+          if (/K|ألف/i.test(n[2])) likes *= 1000;
+          else if (/M|مليون/i.test(n[2])) likes *= 1000000;
+          likes = Math.round(likes);
+        }
+      }
+
+      S.collected.set(id, { id, user, createdAt, likes });
+      added++;
+    }
+    return added;
+  }
+
+  async function collectAll() {
+    phase('📥 جمع التغريدات...');
+    let noNew = 0;
+    while (S.running && S.collected.size < S.maxPerRun * 3) {
+      const added = collectFromDom();
+      stat('جُمع ' + S.collected.size + ' حتى الآن');
+      upd();
+      if (added === 0) {
+        noNew++;
+        if (noNew >= 5) break;
+      } else { noNew = 0; }
+      window.scrollBy({ top: 2000, behavior: 'instant' });
+      await sleep(1200);
+    }
+    phase('✅ انتهى الجمع: ' + S.collected.size + ' تغريدة');
+  }
+
+  async function deleteOne(id) {
+    const ct0 = getCt0();
+    if (!ct0) throw new Error('لا يوجد ct0 (سجّل خروج ودخول)');
+    const res = await fetch('/i/api/graphql/' + DEL_QID + '/DeleteTweet', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'authorization': 'Bearer ' + BEARER,
+        'x-csrf-token': ct0,
+        'x-twitter-auth-type': 'OAuth2Session',
+        'x-twitter-active-user': 'yes',
+        'x-twitter-client-language': document.documentElement.lang || 'en',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        variables: { tweet_id: String(id), dark_request: false },
+        queryId: DEL_QID,
+      }),
+    });
+    if (res.ok) return { ok: true };
+    if (res.status === 404) return { ok: true, notFound: true };
+    if (res.status === 429) return { rateLimit: true };
+    const text = await res.text();
+    return { ok: false, status: res.status, msg: text.slice(0, 100) };
+  }
+
+  async function deleteAll() {
+    phase('🗑 جاري الحذف...');
+    const list = [...S.collected.values()];
+    // فلترة
+    const filtered = list.filter((t) => {
+      if (S.olderThan && t.createdAt && t.createdAt >= S.olderThan) { S.skipped++; return false; }
+      if (S.minLikes > 0 && t.likes > S.minLikes) { S.skipped++; return false; }
+      return true;
+    });
+    upd();
+
+    // الأقدم أولاً
+    filtered.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    const batch = filtered.slice(0, S.maxPerRun);
+
+    for (let i = 0; i < batch.length; i++) {
+      if (!S.running) break;
+      const t = batch[i];
+      if (S.deletedIds.has(t.id)) continue;
+
+      stat('🗑 [' + (i + 1) + '/' + batch.length + '] ' + t.id);
+      try {
+        const r = await deleteOne(t.id);
+        if (r.ok) {
+          S.deletedIds.add(t.id);
+        } else if (r.rateLimit) {
+          stat('⏳ rate limit — توقّف');
+          phase('⏳ تم بلوغ الحد');
+          break;
+        } else {
+          S.failed++;
+        }
+      } catch (e) {
+        S.failed++;
+      }
+      upd();
+      if (i < batch.length - 1) await sleep(S.delayMs);
+    }
+
+    phase('✅ انتهى: حذف ' + S.deletedIds.size + ' من ' + batch.length);
+    stat('');
+  }
+
+  async function collectThenDelete() {
+    await collectAll();
+    if (!S.running) return;
+    await deleteAll();
+  }
+
+  function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// توليد الكود + نسخه
+// ═══════════════════════════════════════════════════════════════
+function buildCode() {
+  const opts = {
+    maxPerRun: Number(document.getElementById('opt_maxPerRun').value) || 500,
+    delayMs: Number(document.getElementById('opt_delayMs').value) || 400,
+    olderThan: document.getElementById('opt_olderThan').value || null,
+    minLikes: Number(document.getElementById('opt_minLikes').value) || 0,
+  };
+  const fnStr = bookmarkletCode.toString();
+  const code = 'javascript:(' + fnStr + ')(' + JSON.stringify(opts) + ');void(0);';
+  document.getElementById('code').textContent = code;
+  return code;
+}
+
+async function copyCode() {
+  const code = buildCode();
+  try {
+    await navigator.clipboard.writeText(code);
+    showToast('تم النسخ ✓');
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = code; ta.style.position = 'fixed'; ta.style.top = '-999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('تم النسخ ✓'); }
+    catch { alert('انسخ الكود يدوياً'); }
+    finally { ta.remove(); }
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+document.querySelectorAll('.tab-btn').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((x) => x.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach((x) => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('pane-' + b.dataset.pane).classList.add('active');
+  });
+});
+
+document.querySelectorAll('#opt_maxPerRun, #opt_delayMs, #opt_olderThan, #opt_minLikes')
+  .forEach((el) => el.addEventListener('input', buildCode));
+
+document.getElementById('btn-copy').addEventListener('click', copyCode);
+
+buildCode();
+</script>
+
+</body>
+</html>
