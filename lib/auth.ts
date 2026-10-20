@@ -87,6 +87,24 @@ export async function verifyPassword(pw: string, hash: string) { return bcrypt.c
 export function errorResponse(e: any) {
   if (e instanceof AuthError) return NextResponse.json({ success: false, message: e.message }, { status: 401 });
   if (e instanceof ForbiddenError) return NextResponse.json({ success: false, message: e.message }, { status: 403 });
+  // Postgres 23505: unique_violation — نُترجم ما يخصّ خطط الأوراد لرسالة بالعربية بدل stack technical.
+  const pgCode = e?.code || e?.cause?.code;
+  const pgConstraint = String(e?.constraint_name || e?.constraint || e?.cause?.constraint_name || e?.cause?.constraint || '');
+  if (pgCode === '23505') {
+    let friendly = 'سجل مكرّر: هذا الصف موجود مسبقاً.';
+    if (pgConstraint.includes('plans_student_date_type_uniq')) {
+      friendly = 'يوجد ورد لهذا الطالب في نفس اليوم والنوع — عدّله بدلاً من إنشاء ورد ثانٍ.';
+    } else if (pgConstraint.includes('att_student_date_uniq')) {
+      friendly = 'يوجد سجل حضور لهذا الطالب في هذا اليوم — عدّله بدلاً من إنشاء آخر.';
+    } else if (pgConstraint.includes('badges_student_code_uniq')) {
+      friendly = 'الطالب يملك شارة بهذا الرمز مسبقاً.';
+    } else if (pgConstraint.includes('ta_period_student_hizb_uniq')) {
+      friendly = 'هذا الحزب أُسنِد للطالب في هذه الفترة من قبل.';
+    } else if (pgConstraint.includes('tr_assignment_uniq')) {
+      friendly = 'يوجد سجل سرد لهذا الإسناد مسبقاً.';
+    }
+    return NextResponse.json({ success: false, message: friendly }, { status: 409 });
+  }
   console.error(e);
   return NextResponse.json({ success: false, message: e?.message || 'خطأ داخلي' }, { status: 500 });
 }

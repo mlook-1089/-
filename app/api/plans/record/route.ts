@@ -3,9 +3,9 @@ import { db } from '@/lib/db';
 import { plans, planDefinitions } from '@/db/schema';
 import { and, desc, eq, ne, sql } from 'drizzle-orm';
 import { requireRole, errorResponse } from '@/lib/auth';
-import { genId, buildPlanTarget, ayahOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
+import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 import { applyPlanStatus } from '@/lib/triggers';
-import { markCompleteIfReached } from '@/lib/plan-progress';
+import { getProgress, markCompleteIfReached, type PlanDefLike, type Range } from '@/lib/plan-progress';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const VALID_STATUS = new Set(['Done', 'Partial', 'Missed']);
@@ -84,8 +84,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // استنتاج fromSurah/fromAyah: الموضع التالي لآخر progressOrd (أو رأس النطاق الأول إن لم يبدأ).
+    // بدون هذا كان صف plans يحفظ to_* الجديدة مع from_* قديمة (من generate السابق) فيصبح النطاق مُشوّشاً.
+    const direction: 'asc' | 'desc' = def.direction === 'desc' ? 'desc' : 'asc';
+    const defRanges: Range[] = Array.isArray(def.ranges) ? (def.ranges as Range[]) : [];
+    const progress = await getProgress(def as any as PlanDefLike);
+    let fromOrd: number | null = null;
+    if (progress.progressOrd != null) {
+      fromOrd = direction === 'desc' ? progress.progressOrd - 1 : progress.progressOrd + 1;
+    } else if (defRanges.length) {
+      const r0 = defRanges[0];
+      fromOrd = ayahOrdinal(String(r0.fromSurah || ''), Number(r0.fromAyah) || 1);
+    }
+    let fromSurahVal = '';
+    let fromAyahVal = '';
+    if (fromOrd && fromOrd > 0) {
+      const fAt = fromOrdinal(fromOrd);
+      if (fAt) { fromSurahVal = fAt.surah; fromAyahVal = String(fAt.ayah); }
+    }
+
     const dailyTarget = buildPlanTarget({
-      fromSurah: '', fromAyah: '', // توليد target من to_* فقط إن أردنا — نكتفي بالقالب الحالي
+      fromSurah: fromSurahVal, fromAyah: fromAyahVal,
       toSurah: toSurah || '', toAyah: String(toAyah ?? ''),
       amount: def.dailyPages
     }) || 'ورد';
@@ -97,7 +116,7 @@ export async function POST(req: NextRequest) {
       studentId: def.studentId,
       date,
       dailyTarget,
-      fromSurah: '', fromAyah: '',
+      fromSurah: fromSurahVal, fromAyah: fromAyahVal,
       toSurah: toSurah || '',
       toAyah: toAyah != null ? String(toAyah) : '',
       actualToSurah: actualToSurah || null,
@@ -114,6 +133,8 @@ export async function POST(req: NextRequest) {
       target: [plans.studentId, plans.date, plans.type],
       set: {
         status,
+        fromSurah: fromSurahVal,
+        fromAyah: fromAyahVal,
         toSurah: toSurah || '',
         toAyah: toAyah != null ? String(toAyah) : '',
         actualToSurah: actualToSurah || null,

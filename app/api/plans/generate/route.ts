@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { plans, planDefinitions } from '@/db/schema';
-import { and, eq, gte, lte } from 'drizzle-orm';
+import { and, eq, gte, lte, sql } from 'drizzle-orm';
 import { requireRole, AuthError, errorResponse } from '@/lib/auth';
 import { genId, buildPlanTarget, ayahOrdinal, fromOrdinal, dowRiyadh, SURAHS, SURAH_AYAH_COUNT, PAGE_FIRST, PAGE_LAST, pageOfOrdinal } from '@/lib/utils';
 import { revokeRefs } from '@/lib/triggers';
@@ -230,25 +230,31 @@ export async function POST(req: NextRequest) {
     if (replaceExisting === true) {
       // قبل الحذف: اسحب نقاط الأيام المُنجزة سابقاً — لولا هذا لبقيت سجلات نقاط يتيمة
       // لا يمكن مطابقتها مع معرّفات الخطة الجديدة بعد إعادة التوليد.
+      // نحذف كل Manual للطالب+النوع (بغضّ النظر عن المدى) حتى لا تبقى أوراد يتيمة
+      // خارج [startDate,endDate] تُشير إلى تعريف قد أُرشِف — كانت تظهر في المتابعة اليومية بلا خطة أم.
       const existing = await db.select({ id: plans.id, status: plans.status }).from(plans).where(and(
         eq(plans.studentId, studentId),
         eq(plans.type, type),
-        eq(plans.source, 'Manual'),
-        gte(plans.date, startDate),
-        lte(plans.date, endDate)
+        eq(plans.source, 'Manual')
       ));
-      const doneIds = existing.filter(r => r.status !== 'Pending').map(r => r.id);
-      if (doneIds.length) await revokeRefs(doneIds.map(id => 'plan:' + id));
+      const earnedIds = existing.filter(r => r.status === 'Done' || r.status === 'Partial').map(r => r.id);
+      if (earnedIds.length) await revokeRefs(earnedIds.map(id => 'plan:' + id));
       const del = await db.delete(plans).where(and(
         eq(plans.studentId, studentId),
         eq(plans.type, type),
-        eq(plans.source, 'Manual'),
-        gte(plans.date, startDate),
-        lte(plans.date, endDate)
+        eq(plans.source, 'Manual')
       )).returning({ id: plans.id });
       replacedCount = del.length;
     }
     try {
+      // أرشفة أي تعريف خطة سابق نشط لنفس (studentId, type) قبل إدراج التعريف الجديد.
+      // بدون هذا تتراكم عدة active=true لنفس الطالب+النوع، فتضخم مخرجات teacher-data.activePlans
+      // وتُفسِد حسابات getProgress في المسارات الجديدة.
+      await db.execute(sql`
+        UPDATE plan_definitions
+        SET active = false, completed_at = COALESCE(completed_at, NOW())
+        WHERE student_id = ${studentId} AND type = ${type} AND active = true
+      `);
       // أنشئ تعريف الخطة أولاً ثم أدرج الأوراد. فشل الأوراد يترك التعريف يتيماً (سيُحذَف لاحقاً بالـ FK).
       await db.insert(planDefinitions).values({
         id: planDefId,

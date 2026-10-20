@@ -1906,105 +1906,18 @@ function qExactAyahs(fromSurah,fromAyah,unit){
   const f=fracs[unit]||1;return Math.max(1,Math.round(ps*f));
 }
 
-/* ---- نافذة إنشاء خطة يدوية (بوحدة "الوجه") ---- */
+/* ---- MP_UNITS: يُستبدَل محتواها بالصفحات في plan-fixes.js. يبقى التصريح هنا لأن plan-fixes.js
+   يستخدم Object.assign لا إعادة تعريف. تسميات ayat القديمة لم تَعُد تُقرأ. ---- */
 const MP_UNITS = {
   quarter: { label:'ربع وجه', ayat: 3 },
   half:    { label:'نصف وجه', ayat: 5 },
   full:    { label:'وجه',      ayat: 10 },
   page:    { label:'صفحة (وجهان)', ayat: 20 }
 };
-function openCreateManualPlan(sid){
-  const targetId = sid || _mp.studentId;
-  if(!targetId) return toast('اختر طالباً','warn');
-  _mp.studentId = targetId;
-  const {nameMap} = tMaps();
-  const name = nameMap[targetId] || targetId;
-  const surs = _tData?.surahs || [];
-  const surOpts = surs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
-  const today = ymd(new Date());
-  const unitOpts = Object.entries(MP_UNITS).map(([k,v])=>`<option value="${k}" ${k==='full'?'selected':''}>${v.label}</option>`).join('') + '<option value="custom">مخصّص (بالآيات)</option>';
-  const cfg = _tData?.planConfig || {};
-  const cfgInfo = cfg.termStart && cfg.termEnd
-    ? `<div class="text-[10px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg px-3 py-2 mb-1">الفصل: ${esc(cfg.termStart)} — ${esc(cfg.termEnd)} · الأيام: ${(cfg.workDays||[]).map(d=>['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][d]||d).join('، ')}</div>`
-    : `<div class="text-[10px] font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 mb-1">${svg('warn','w-3 h-3 inline')} لم يتم تعيين بيانات الفصل — اذهب إلى الإعدادات &gt; أيام الحلقة</div>`;
-  openModal('خطة فصلية — ' + esc(name), `
-    <div class="space-y-3">
-      ${cfgInfo}
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1">النوع</label>
-          <select id="cp_type" class="input py-2">
-            <option value="conserve">حفظ</option>
-            <option value="revision">مراجعة</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1">المقدار اليومي</label>
-          <select id="cp_unit" onchange="_mpToggleUnit()" class="input py-2">${unitOpts}</select>
-        </div>
-      </div>
-      <div id="cp_custom_wrap" class="hidden">
-        <label class="block text-xs font-bold text-slate-500 mb-1">عدد الآيات باليوم</label>
-        <input type="number" id="cp_daily" min="1" placeholder="10" class="input py-2 num text-center">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 mb-1">اتجاه الخطة</label>
-        <div class="grid grid-cols-2 gap-2">
-          <label id="cp_dir_asc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-brand-300 bg-brand-50 cursor-pointer transition">
-            <input type="radio" name="cp_dir" value="asc" checked onchange="_mpPlanDirChange()" class="accent-brand-900">
-            <span class="text-xs font-bold text-brand-800">${svg('arrowdown','w-3 h-3 inline')} تنازلي (الفاتحة←الناس)</span>
-          </label>
-          <label id="cp_dir_desc_lbl" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer transition">
-            <input type="radio" name="cp_dir" value="desc" onchange="_mpPlanDirChange()" class="accent-brand-900">
-            <span class="text-xs font-bold text-slate-600">${svg('arrowup','w-3 h-3 inline')} تصاعدي (الناس←الفاتحة)</span>
-          </label>
-        </div>
-      </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <div class="text-xs font-bold text-slate-600 mb-2">المدى القرآني</div>
-        <div class="grid grid-cols-2 gap-2 mb-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من سورة</label><select id="cp_fromS" onchange="_cpUpdateAyahMax('cp_fromA','cp_fromS')" class="input py-2 text-sm">${surOpts}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">من آية</label><input type="number" id="cp_fromA" min="1" value="1" class="input py-2 text-sm text-center num"></div>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى سورة</label><select id="cp_toS" onchange="_cpUpdateAyahMax('cp_toA','cp_toS')" class="input py-2 text-sm">${surOpts}</select></div>
-          <div><label class="block text-[10px] font-bold text-slate-500 mb-1">إلى آية</label><input type="number" id="cp_toA" min="1" value="1" class="input py-2 text-sm text-center num"></div>
-        </div>
-        <div id="cp_extra_ranges"></div>
-        <button type="button" onclick="_cpAddRange()" class="mt-2 w-full text-[11px] font-bold text-brand-700 bg-brand-50 border border-brand-200 rounded-lg py-1.5 hover:bg-brand-100 transition">+ نطاق تالٍ</button>
-      </div>
-      <label class="flex items-center gap-2 text-xs font-bold text-slate-600">
-        <input type="checkbox" id="cp_replace" class="w-4 h-4"> استبدل أي خطة قائمة من نفس النوع في هذا المدى
-      </label>
-      <div class="grid grid-cols-2 gap-2 pt-1">
-        <button onclick="closeModal()" class="btn-v4 btn-v4-ghost">إلغاء</button>
-        <button onclick="doCreateManualPlan()" class="btn-v4 btn-v4-primary">إنشاء الخطة</button>
-      </div>
-    </div>
-  `);
-}
-function _mpToggleUnit(){ const u = $('cp_unit')?.value; const w = $('cp_custom_wrap'); if(!w) return; w.classList.toggle('hidden', u!=='custom'); }
-function _mpPlanDirChange(){
-  const dir=document.querySelector('[name="cp_dir"]:checked')?.value||'asc';
-  const on='flex items-center gap-2 p-2 rounded-lg border border-brand-300 bg-brand-50 cursor-pointer transition';
-  const off='flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-white cursor-pointer transition';
-  const lA=$('cp_dir_asc_lbl'),lD=$('cp_dir_desc_lbl');
-  if(lA)lA.className=dir==='asc'?on:off;
-  if(lD)lD.className=dir==='desc'?on:off;
-  const surs=_tData?.surahs||[];
-  if(!surs.length)return;
-  if(dir==='desc'){
-    if($('cp_fromS'))$('cp_fromS').value=surs[surs.length-1]||'';
-    if($('cp_toS'))$('cp_toS').value=surs[0]||'';
-    if($('cp_fromA'))$('cp_fromA').value='1';
-    if($('cp_toA'))$('cp_toA').value='1';
-  } else {
-    if($('cp_fromS'))$('cp_fromS').value=surs[0]||'';
-    if($('cp_toS'))$('cp_toS').value=surs[surs.length-1]||'';
-    if($('cp_fromA'))$('cp_fromA').value='1';
-    if($('cp_toA'))$('cp_toA').value='1';
-  }
-}
+/* openCreateManualPlan + _mpToggleUnit + _mpPlanDirChange القديمة حُذفت — plan-fixes.js
+   يُعيد تعريفها كلّياً (المقدار اليومي بالصفحات، أزرار الاتجاه بتسميات صريحة).
+   stub احتياطي يَعرِض خطأً فقط لو حُمِّلت الصفحة قبل plan-fixes.js لسبب ما. */
+function openCreateManualPlan(){ try{ toast('جاري تحميل محرّر الخطط — أعد المحاولة بعد ثانية','warn'); }catch(e){} }
 function _cpUpdateAyahMax(ayahId, surahId){
   const surs=_tData?.surahs||[], counts=_tData?.surahCounts||[];
   const sel=$(surahId), inp=$(ayahId); if(!sel||!inp) return;
@@ -2961,16 +2874,17 @@ async function doRegenerateAllPlans(){
   const cfg = _tData?.planConfig || {};
   const surs = _tData?.surahs||[], counts = _tData?.surahCounts||[];
   const ord = (sur, ay) => { const i = surs.indexOf(sur); return i<0 ? 0 : counts.slice(0,i).reduce((a,b)=>a+b,0) + Number(ay); };
-  const plans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && p.Type==='conserve');
-  const byStudent = {};
-  plans.forEach(p => { (byStudent[p.Student_ID] = byStudent[p.Student_ID] || []).push(p); });
-  const studentIds = Object.keys(byStudent);
+  // نشمل خطط الحفظ والمراجعة معاً. المفتاح = Student_ID + '|' + Type.
+  const allPlans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && (p.Type==='conserve' || p.Type==='revision'));
+  const byKey = {};
+  allPlans.forEach(p => { const k = p.Student_ID + '|' + p.Type; (byKey[k] = byKey[k] || []).push(p); });
+  const keys = Object.keys(byKey);
   let ok=0, fail=0;
-  loader(true,`إعادة التوليد… 0/${studentIds.length}`);
-  for(let i=0;i<studentIds.length;i++){
-    const sid = studentIds[i];
-    loader(true,`إعادة التوليد… ${i+1}/${studentIds.length}`);
-    const cur = byStudent[sid].sort((a,b)=>a.Date.localeCompare(b.Date));
+  loader(true,`إعادة التوليد… 0/${keys.length}`);
+  for(let i=0;i<keys.length;i++){
+    const [sid, type] = keys[i].split('|');
+    loader(true,`إعادة التوليد… ${i+1}/${keys.length}`);
+    const cur = byKey[keys[i]].sort((a,b)=>a.Date.localeCompare(b.Date));
     // استنتج النطاقات من الخطة القائمة (نفس منطق تعديل المقدار)
     const ranges = [];
     let curStart = cur[0], curEnd = cur[0];
@@ -2981,13 +2895,34 @@ async function doRegenerateAllPlans(){
       else { ranges.push({from:curStart,to:curEnd}); curStart = cur[j]; curEnd = cur[j]; }
     }
     ranges.push({from:curStart,to:curEnd});
+    // استرجاع المقدار اليومي الأصلي بالصفحات من plan_definitions إن توفّر — وإلا نستنتجه من ورد قائم.
+    let dailyPages = null;
+    try{
+      if(typeof DS.getPlanDefinition === 'function'){
+        const d = await DS.getPlanDefinition(sid, type);
+        if(d && d.success && d.definition && d.definition.dailyPages) dailyPages = Number(d.definition.dailyPages);
+      }
+    }catch(e){}
+    // Fallback: نستخدم _fuPagesSpanned إن توفّرت على أول ورد لمعرفة المقدار اليومي بالوجه.
+    if((!dailyPages || !isFinite(dailyPages) || dailyPages<=0) && typeof _fuPagesSpanned === 'function' && cur[0]){
+      const p0 = cur[0];
+      const guess = _fuPagesSpanned(p0.From_Surah, p0.From_Ayah, p0.To_Surah, p0.To_Ayah);
+      if(guess && isFinite(guess) && guess > 0){
+        // تقريب لأقرب كسر مقبول في الخادم
+        const allowed = [0.25, 0.5, 1, 1.5, 2];
+        let best = 1, bestDiff = Infinity;
+        allowed.forEach(a => { const d = Math.abs(a-guess); if(d<bestDiff){ bestDiff=d; best=a; } });
+        dailyPages = best;
+      }
+    }
     const payload = {
-      studentId:sid, type:'conserve',
+      studentId:sid, type,
       startDate:cfg.termStart, endDate:cfg.termEnd,
       ranges: ranges.map(r=>({fromSurah:r.from.From_Surah,fromAyah:Number(r.from.From_Ayah)||1,toSurah:r.to.To_Surah,toAyah:Number(r.to.To_Ayah)||1})),
       workDays:cfg.workDays,
       replaceExisting:true
     };
+    if(dailyPages && isFinite(dailyPages) && dailyPages>0) payload.dailyPages = dailyPages;
     try{ const r = await DS.planGenerate(payload); if(r&&r.success) ok++; else fail++; }catch(e){ fail++; }
   }
   loader(false);
@@ -4240,10 +4175,10 @@ window.logout = async function(){
 <script src="/ui/portal.js?v=4"></script>
 <script src="/ui/login-qr.js?v=2"></script>
 <script src="/ui/attendance-students.js?v=4"></script>
-<script src="/ui/followup.js?v=9"></script>
+<script src="/ui/followup.js?v=10"></script>
 <script src="/ui/shell.js?v=2"></script>
 <script src="/ui/settings.js?v=3"></script>
-<script src="/ui/plan-fixes.js?v=5"></script>
+<script src="/ui/plan-fixes.js?v=6"></script>
 <script src="/ui/community.js?v=2"></script>
 <script src="/ui/taahud.js?v=5"></script>
 </body>

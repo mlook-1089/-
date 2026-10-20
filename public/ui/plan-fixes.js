@@ -101,7 +101,8 @@ async function doSavePlanDays(){
   if(_tData) _tData.planConfig = { workDays: days, termStart: start, termEnd: end };
   toast('تم حفظ إعدادات الفصل');
 
-  const manualPlans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && p.Type==='conserve');
+  // نشمل خطط الحفظ والمراجعة كلتيهما؛ عدّ الطلاب الفريدين (لا الأزواج طالب+نوع) حتى تطابق الرسالة الواقع.
+  const manualPlans = (_tData?.plans||[]).filter(p => p.Source==='Manual' && (p.Type==='conserve' || p.Type==='revision'));
   if(termChanged && manualPlans.length){
     const count = new Set(manualPlans.map(p => p.Student_ID)).size;
     setTimeout(() => (typeof openRegenerateAllPlans==='function') && openRegenerateAllPlans(count), 400);
@@ -463,7 +464,16 @@ async function openEditFullPlan(sid, type){
     dailyPages = Number(def.dailyPages) || 1;
   } else {
     ranges = _fuPlanRanges(items);
-    dailyPages = 1;
+    // استنتاج المقدار اليومي بالوجه من أوراد الخطة (median) بدل القيمة الثابتة 1.
+    // نحسب الصفحات لكل ورد ثم نقرّب لأقرب كسر مسموح به في الخادم.
+    const sample = items.filter(p => Number(p.Amount) > 0).slice(0, 20); // عيّنة كافية بدون إبطاء
+    const pagesList = sample.map(p => _fuPagesSpanned(p.From_Surah, p.From_Ayah, p.To_Surah, p.To_Ayah))
+                            .filter(v => v && isFinite(v) && v > 0).sort((a,b) => a-b);
+    const median = pagesList.length ? pagesList[Math.floor(pagesList.length/2)] : 1;
+    const allowed = [0.25, 0.5, 1, 1.5, 2];
+    let best = 1, bestDiff = Infinity;
+    allowed.forEach(a => { const d = Math.abs(a - median); if(d < bestDiff){ bestDiff = d; best = a; } });
+    dailyPages = best;
   }
   const recorded = items.filter(p => (p.Accomplishment_Status || 'Pending') !== 'Pending').length;
   if(!ranges.length) return toast('تعذّر قراءة مدى الخطة','error');

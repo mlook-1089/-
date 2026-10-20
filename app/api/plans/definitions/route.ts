@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { planDefinitions } from '@/db/schema';
+import { planDefinitions, plans } from '@/db/schema';
 import { and, eq, desc, sql } from 'drizzle-orm';
 import { requireRole, errorResponse } from '@/lib/auth';
 import { genId, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
@@ -139,7 +139,14 @@ export async function PATCH(req: NextRequest) {
     if (!Object.keys(patch).length) return NextResponse.json({ success: false, message: 'لا تعديلات' }, { status: 400 });
 
     await db.update(planDefinitions).set(patch).where(eq(planDefinitions.id, id));
+    // عند أرشفة التعريف، نظّف أورادَه Pending المسبقة التوليد حتى لا تظهر في المتابعة اليومية كأوراد يتيمة.
+    // الأوراد Done/Partial/Missed نُبقيها لأنها جزء من السجل التاريخي.
+    let cleanedPending = 0;
+    if (upd?.active === false) {
+      const del = await db.delete(plans).where(and(eq(plans.planDefId, id), eq(plans.status, 'Pending'))).returning({ id: plans.id });
+      cleanedPending = del.length;
+    }
     const [updated] = await db.select().from(planDefinitions).where(eq(planDefinitions.id, id));
-    return NextResponse.json({ success: true, definition: toClient(updated) });
+    return NextResponse.json({ success: true, definition: toClient(updated), cleanedPending });
   } catch (e: any) { return errorResponse(e); }
 }

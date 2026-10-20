@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { requireRole, errorResponse } from '@/lib/auth';
 import { genId, today, buildPlanTarget, SURAHS, SURAH_AYAH_COUNT } from '@/lib/utils';
 import { applyPlanStatus, revokeRefs } from '@/lib/triggers';
+import { markCompleteIfReached } from '@/lib/plan-progress';
 
 // مسار «الإتقان» أُلغي من الخلفية؛ نقتصر على حفظ ومراجعة، وأي قيمة قادمة
 // mastery تُطوى إلى conserve حتى لا يُكتب النوع الملغى من جديد.
@@ -82,10 +83,16 @@ export async function PATCH(req: NextRequest) {
 
     // تغيّر الحالة → نسحب نقاط الحالة السابقة ونمنح نقاط الجديدة (مرة واحدة لكل ورد).
     let awarded: any[] = [];
+    let completed = false;
     if (upd.Accomplishment_Status !== undefined) {
       awarded = await applyPlanStatus({ id: p.id, studentId: p.studentId, type: patch.type ?? p.type }, p.status, upd.Accomplishment_Status, teacher.id);
+      // أرشف الخطة الأم تلقائياً إن بلغ progressOrd نهاية النطاقات بعد هذا الرصد.
+      // (المسار /record يفعل هذا؛ كان PATCH يُغفله فتبقى plan_definitions.active=true أبد الدهر.)
+      if (p.planDefId && (upd.Accomplishment_Status === 'Done' || upd.Accomplishment_Status === 'Partial')) {
+        completed = await markCompleteIfReached(p.planDefId).catch(() => false);
+      }
     }
-    return NextResponse.json({ success: true, awarded });
+    return NextResponse.json({ success: true, awarded, completed });
   } catch (e: any) { return errorResponse(e); }
 }
 
@@ -104,12 +111,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: true, deleted: ids.length });
     }
     if (studentId && source === 'Manual') {
-      // مسح الخطة كاملة لإعادة بنائها: لا نسحب نقاط أيام سُمّعت فعلاً.
-      // type اختياري: يقصر الحذف على خطة الحفظ أو المراجعة وحدها.
+      // مسح الخطة كاملة: نسحب نقاط الأوراد المُنجَزة أولاً كي لا تبقى pointLogs يتيمة.
+      // (الواجهة في confirmDeleteStudentPlan تَعِد المستخدم بسحب النقاط صراحةً.)
       const conds = [eq(plans.studentId, studentId), eq(plans.source, 'Manual')];
       if (type === 'conserve' || type === 'revision') conds.push(eq(plans.type, type));
+      const existing = await db.select({ id: plans.id, status: plans.status }).from(plans).where(and(...conds));
+      const earnedIds = existing.filter(r => r.status === 'Done' || r.status === 'Partial').map(r => 'plan:' + r.id);
+      if (earnedIds.length) await revokeRefs(earnedIds);
       const ids = (await db.delete(plans).where(and(...conds)).returning({ id: plans.id }));
-      return NextResponse.json({ success: true, deleted: ids.length });
+      return NextResponse.json({ success: true, deleted: ids.length, revoked: earnedIds.length });
     }
     return NextResponse.json({ success: false, message: 'بيانات الحذف ناقصة' }, { status: 400 });
   } catch (e: any) { return errorResponse(e); }
